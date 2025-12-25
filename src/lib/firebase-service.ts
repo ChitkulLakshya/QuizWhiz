@@ -216,6 +216,31 @@ export const updateQuizStatus = async (
   }
 };
 
+/**
+ * Delete a quiz and all its questions
+ * @param quizId - The quiz document ID
+ */
+export const deleteQuiz = async (quizId: string): Promise<void> => {
+  try {
+    console.log("🗑️ Deleting quiz:", quizId);
+    
+    // 1. Delete all questions in the subcollection
+    // We need to fetch them first because we can't delete a collection directly
+    const questions = await getQuestions(quizId);
+    const deletePromises = questions.map(q => deleteQuestion(quizId, q.id));
+    await Promise.all(deletePromises);
+
+    // 2. Delete the quiz document
+    const quizRef = doc(db, "quizzes", quizId);
+    await deleteDoc(quizRef);
+
+    console.log("✅ Quiz deleted");
+  } catch (error) {
+    console.error("❌ Error deleting quiz:", error);
+    throw error;
+  }
+};
+
 // ---------------------- QUESTIONS ----------------------
 
 /**
@@ -273,7 +298,10 @@ export const getQuestions = async (quizId: string): Promise<Question[]> => {
     
     const q = query(questionsRef, orderBy("order", "asc"));
     const snap = await getDocs(q);
-    const questions = snap.docs.map((d) => d.data() as Question);
+    const questions = snap.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+    } as Question));
 
     console.log("✅ Found questions:", questions.length);
     return questions;
@@ -327,6 +355,11 @@ export const joinQuiz = async (
 ): Promise<string> => {
   try {
     console.log("👤 Joining quiz:", { quizId, name });
+
+    // 1. Check if quiz exists and is in lobby state
+    const quiz = await getQuiz(quizId);
+    if (!quiz) throw new Error("Quiz not found");
+    if (quiz.status !== "lobby") throw new Error("Quiz is not open for joining");
     
     // Type-safe participant data with serverTimestamp
     const participantData: Omit<Participant, "id" | "joinedAt"> & {
@@ -376,7 +409,10 @@ export const getParticipants = async (
     ) as ParticipantCollection;
     
     const snap = await getDocs(participantsRef);
-    const participants = snap.docs.map((d) => d.data() as Participant);
+    const participants = snap.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+    } as Participant));
 
     console.log("✅ Found participants:", participants.length);
     return participants;
@@ -440,7 +476,10 @@ export const subscribeToQuestions = (
   const q = query(questionsRef, orderBy("order", "asc"));
   
   return onSnapshot(q, (snap) => {
-    const questions = snap.docs.map((d) => d.data() as Question);
+    const questions = snap.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+    } as Question));
     console.log("📡 Question updates received:", questions.length);
     callback(questions);
   });
@@ -555,6 +594,14 @@ export const submitAnswer = async (
     if (!participantSnap.exists()) throw new Error("Participant not found");
     
     const participant = participantSnap.data();
+
+    // Check if already answered
+    const alreadyAnswered = participant.answers.some(a => a.questionId === answer.questionId);
+    if (alreadyAnswered) {
+      console.warn("⚠️ Participant already answered this question");
+      return; // Idempotency: just return success if already answered
+    }
+
     const newScore = participant.totalScore + answer.pointsEarned;
     const newAnswers = [...participant.answers, answer];
     
