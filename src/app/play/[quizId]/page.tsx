@@ -83,12 +83,37 @@ export default function PlayQuiz() {
 
       if (remaining <= 0 && !hasAnswered) {
         // Time's up - auto submit no answer
-        setHasAnswered(true);
+        handleTimeout();
       }
     }, 100);
 
     return () => clearInterval(interval);
   }, [quiz, questions, hasAnswered]);
+
+  const handleTimeout = async () => {
+    if (!quiz || hasAnswered) return;
+    setHasAnswered(true); // Prevent double submission
+
+    const currentQuestion = questions[quiz.currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    try {
+      await submitAnswer(
+        quizId,
+        participantId,
+        {
+          questionId: currentQuestion.id,
+          selectedOptionIndex: -1, // -1 indicates no answer/timeout
+          answeredAt: Date.now(),
+          isCorrect: false,
+          pointsEarned: 0,
+          timeToAnswer: currentQuestion.timeLimit * 1000
+        }
+      );
+    } catch (error) {
+      console.error('Error submitting timeout:', error);
+    }
+  };
 
   const handleSubmitAnswer = async () => {
     if (selectedOption === null || hasAnswered || !quiz) return;

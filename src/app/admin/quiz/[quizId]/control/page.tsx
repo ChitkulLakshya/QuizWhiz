@@ -108,6 +108,11 @@ export default function QuizControl() {
 
   const currentQuestion = quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
 
+  // Calculate how many participants have answered the current question
+  const answeredCount = currentQuestion && participants.length > 0
+    ? participants.filter(p => p.answers.some(a => a.questionId === currentQuestion.id)).length
+    : 0;
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       <Header />
@@ -173,6 +178,12 @@ export default function QuizControl() {
                       <div className="text-center">
                         <p className="text-sm text-muted-foreground">Time Remaining</p>
                         <p className="text-5xl font-bold">{timeRemaining}s</p>
+                      </div>
+                      <div className="text-center pb-2">
+                        <p className="text-sm text-muted-foreground">Answers Received</p>
+                        <p className="text-2xl font-semibold">
+                          {answeredCount} / {participants.length}
+                        </p>
                       </div>
                       <Button onClick={handleShowResults} className="w-full" size="lg">
                         Show Results

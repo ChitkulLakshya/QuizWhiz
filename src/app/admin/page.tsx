@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { PlusCircle, PlayCircle, Users, Clock, BarChartHorizontal } from 'lucide-react';
+import { PlusCircle, PlayCircle, Users, Clock, BarChartHorizontal, Trash2 } from 'lucide-react';
 import Header from '@/components/header';
-import { getQuizzes } from '@/lib/firebase-service';
+import { getQuizzes, deleteQuiz } from '@/lib/firebase-service';
 import { Quiz } from '@/types/quiz';
 
 export default function AdminDashboard() {
@@ -25,6 +25,20 @@ export default function AdminDashboard() {
       console.error('Error loading quizzes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (quizId: string, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation if inside a link (though it's not here)
+    if (!confirm('Are you sure you want to delete this quiz? This cannot be undone.')) return;
+
+    try {
+      await deleteQuiz(quizId);
+      // Optimistically remove from state
+      setQuizzes(quizzes.filter(q => q.id !== quizId));
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+      alert('Failed to delete quiz');
     }
   };
 
@@ -77,24 +91,35 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/quiz/${quiz.id}/edit`}>
-                      Edit
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/quiz/${quiz.id}/leaderboard`}>
-                      <BarChartHorizontal className="mr-1 h-4 w-4" />
-                      Results
-                    </Link>
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link href={`/admin/quiz/${quiz.id}/control`}>
-                      <PlayCircle className="mr-1 h-4 w-4" />
-                      Control
-                    </Link>
-                  </Button>
+                <CardFooter className="flex flex-wrap gap-2 justify-between">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/quiz/${quiz.id}/edit`}>
+                        Edit
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/quiz/${quiz.id}/leaderboard`}>
+                        <BarChartHorizontal className="mr-1 h-4 w-4" />
+                        Results
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" asChild>
+                      <Link href={`/admin/quiz/${quiz.id}/control`}>
+                        <PlayCircle className="mr-1 h-4 w-4" />
+                        Control
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={(e) => handleDelete(quiz.id, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}

@@ -35,6 +35,10 @@ export default function JoinQuiz() {
     try {
       const foundQuiz = await getQuizByCode(quizCode);
       if (foundQuiz) {
+        if (foundQuiz.status !== 'lobby') {
+          setError('This quiz has already started or ended.');
+          return;
+        }
         setQuiz(foundQuiz);
       } else {
         setError('Quiz not found. Check the code and try again.');
