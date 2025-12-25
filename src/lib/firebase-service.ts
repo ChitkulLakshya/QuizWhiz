@@ -61,7 +61,9 @@ export const createQuiz = async (
     const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
       title,
       description,
-      createdBy: userEmail, // Store email instead of userId
+      // Storing email instead of UID allows us to display "Created by: user@example.com"
+      // without needing a separate user lookup or profile system.
+      createdBy: userEmail, 
       createdAt: serverTimestamp(),
       status: "draft",
       currentQuestionIndex: -1,
@@ -357,6 +359,8 @@ export const joinQuiz = async (
     console.log("👤 Joining quiz:", { quizId, name });
 
     // 1. Check if quiz exists and is in lobby state
+    // We enforce 'lobby' status to prevent users from joining mid-game,
+    // which simplifies the state management and scoring logic.
     const quiz = await getQuiz(quizId);
     if (!quiz) throw new Error("Quiz not found");
     if (quiz.status !== "lobby") throw new Error("Quiz is not open for joining");
@@ -436,6 +440,9 @@ export const subscribeToQuiz = (
 ): (() => void) => {
   console.log("👂 Subscribing to quiz updates:", quizId);
   
+  // Using onSnapshot allows the client to react instantly to state changes
+  // (e.g., Admin clicks "Next Question" -> Client UI updates immediately).
+  // This is the core of the real-time experience.
   const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
   
   return onSnapshot(quizRef, (snap) => {
@@ -589,6 +596,8 @@ export const submitAnswer = async (
     // Ideally use a transaction, but for simplicity we'll read-modify-write here
     // or use arrayUnion if we trust the client. 
     // Since we need to update score too, let's use a transaction or just get/update.
+    // NOTE: In a production app, scoring should happen in a Cloud Function
+    // to prevent clients from manipulating their score or 'isCorrect' status.
     
     const participantSnap = await getDoc(participantRef);
     if (!participantSnap.exists()) throw new Error("Participant not found");
@@ -636,6 +645,9 @@ export const calculateQuestionResults = async (
     
     if (!question) throw new Error("Question not found");
 
+    // Aggregating results on the client side for the Admin view.
+    // This avoids the need for a separate "results" collection or heavy backend logic
+    // for this simple use case.
     const optionCounts = new Array(question.options.length).fill(0);
     let totalResponses = 0;
 
