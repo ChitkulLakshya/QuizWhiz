@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Users, Trophy, Zap } from 'lucide-react';
 import Header from '@/components/header';
+// import { seedFirstAdmin } from '@/lib/seed-admin';
 
 export default function HomePage() {
+  // Uncomment to seed your email as admin, then re-comment
+  // seedFirstAdmin('your-email@example.com');
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       <Header />

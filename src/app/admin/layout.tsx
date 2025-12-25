@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase';
+import { isAdminEmail } from '@/lib/auth';
 
 export default function AdminLayout({
   children,
@@ -14,9 +15,30 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         console.warn('⛔ No user found. Redirecting to login...');
+        router.push('/login');
+        return;
+      }
+
+      // Verify admin status
+      if (user.email) {
+        try {
+          const isAdmin = await isAdminEmail(user.email);
+          if (!isAdmin) {
+            console.warn('⛔ User is not admin. Redirecting to login...');
+            await auth.signOut();
+            router.push('/login');
+            return;
+          }
+        } catch (error) {
+          console.error('Error verifying admin status:', error);
+          // Optionally handle error, maybe allow retry or redirect
+        }
+      } else {
+        // No email, can't verify
+        await auth.signOut();
         router.push('/login');
         return;
       }

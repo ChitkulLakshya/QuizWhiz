@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { PlusCircle, PlayCircle, Users, Clock, BarChartHorizontal } from 'lucide-react';
 import Header from '@/components/header';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/firebase';
+import { getQuizzes } from '@/lib/firebase-service';
 import { Quiz } from '@/types/quiz';
 
 export default function AdminDashboard() {
@@ -20,9 +19,7 @@ export default function AdminDashboard() {
 
   const loadQuizzes = async () => {
     try {
-      const q = query(collection(db, 'quizzes'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      const quizData = snapshot.docs.map(doc => doc.data() as Quiz);
+      const quizData = await getQuizzes();
       setQuizzes(quizData);
     } catch (error) {
       console.error('Error loading quizzes:', error);

@@ -1,7 +1,7 @@
 'use client';
 
 // Re-export db and auth from root firebase.ts (the single source of truth)
-export { db, auth, app } from '../firebase';
+export { db, auth, app } from './firebase';
 
 // Re-export Firebase initialization from firebase.ts (for backward compatibility)
 export { initializeFirebase, getFirestoreInstance as getFirestore } from './firebase';
