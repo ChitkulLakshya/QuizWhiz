@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/header';
-import { getQuiz, getQuestions, addQuestion, deleteQuestion } from '@/lib/firebase-service';
+import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz } from '@/lib/firebase-service';
 import { Quiz, Question } from '@/types/quiz';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -90,6 +90,18 @@ export default function EditQuiz() {
     }
   };
 
+  const handleDeleteQuiz = async () => {
+    if (!confirm('Are you sure you want to delete this ENTIRE quiz? This cannot be undone.')) return;
+
+    try {
+      await deleteQuiz(quizId);
+      router.push('/admin');
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+      alert('Failed to delete quiz');
+    }
+  };
+
   if (loading) return <div className="p-8">Loading...</div>;
   if (!quiz) return <div className="p-8">Quiz not found</div>;
 
@@ -98,12 +110,18 @@ export default function EditQuiz() {
       <Header />
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/admin">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Link>
-          </Button>
+          <div className="flex justify-between items-center mb-4">
+            <Button variant="ghost" asChild>
+              <Link href="/admin">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Link>
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteQuiz}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Quiz
+            </Button>
+          </div>
 
           <div className="mb-6">
             <h1 className="font-headline text-3xl mb-2">{quiz.title}</h1>
@@ -115,7 +133,7 @@ export default function EditQuiz() {
             <h2 className="text-2xl font-semibold mb-4">Questions ({questions.length})</h2>
             <div className="space-y-4">
               {questions.map((q, index) => (
-                <Card key={q.id}>
+                <Card key={q.id || index}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
