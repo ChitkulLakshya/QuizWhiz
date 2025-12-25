@@ -1,91 +1,95 @@
-# QuizWhiz Deployment Guide
+# Deployment Guide
 
-This guide covers how to deploy the QuizWhiz application to **Vercel** (recommended for Next.js) and **Render**.
+This guide details the steps to deploy QuizWhiz to production. It assumes a standard stack of **Vercel** for the frontend and **Firebase** for the backend.
 
-## Prerequisites
+## 1. Prerequisites & Accounts
 
-1.  **GitHub Repository**: Ensure your project is pushed to a GitHub repository.
-2.  **Firebase Project**: You need your Firebase configuration keys ready.
+Before starting, ensure you have administrative access to:
 
-## Environment Variables
+*   **GitHub**: The repository must be pushed to a remote repo.
+*   **Firebase Console**: You need a project with Firestore and Authentication enabled.
+*   **Vercel Account**: For hosting the Next.js frontend.
+*   **Google Cloud Console**: (Automatically linked to Firebase) for managing OAuth credentials.
 
-For both platforms, you will need to configure the following environment variables. These are found in your `.env.local` file.
+## 2. Environment Variables
 
-| Variable Name | Description |
-| :--- | :--- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Your Firebase API Key |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Your Firebase Auth Domain |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Your Firebase Project ID |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Your Firebase Storage Bucket |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Your Firebase Messaging Sender ID |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Your Firebase App ID |
-| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Analytics ID |
+You must configure these variables in your deployment platform (Vercel). Do **not** commit `.env.local` to GitHub.
 
----
+| Variable | Description | Source |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase API Key | Firebase Console > Project Settings |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Auth Domain | Firebase Console > Project Settings |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Project ID | Firebase Console > Project Settings |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage Bucket | Firebase Console > Project Settings |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID | Firebase Console > Project Settings |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | App ID | Firebase Console > Project Settings |
 
-## Option 1: Deploy to Vercel (Recommended)
+## 3. Backend Deployment (Firebase)
 
-Vercel is the creators of Next.js, offering the best performance and easiest setup.
+### A. Firestore Database
+1.  Go to **Firebase Console** > **Firestore Database**.
+2.  Click **Create Database** (if not created). Select a region close to your users.
+3.  **Indexes**: The app requires composite indexes for querying.
+    *   Deploy `firestore.indexes.json` using the Firebase CLI:
+        ```bash
+        firebase deploy --only firestore:indexes
+        ```
+    *   *Alternatively*: Run the app locally, trigger a query (e.g., view leaderboard), and click the link in the console error to create the index automatically.
 
-1.  **Create Account**: Go to [vercel.com](https://vercel.com) and sign up with GitHub.
-2.  **Import Project**:
-    *   Click **"Add New..."** -> **"Project"**.
-    *   Select your `QuizWhiz` repository.
-3.  **Configure Project**:
-    *   **Framework Preset**: Next.js (should be auto-detected).
-    *   **Root Directory**: `./` (or `QuizWhiz` if it's in a subdirectory).
-    *   **Build Command**: `npm run build` (default).
-    *   **Output Directory**: `.next` (default).
-4.  **Environment Variables**:
-    *   Expand the **"Environment Variables"** section.
-    *   Copy-paste all the keys and values from your `.env.local` file.
-5.  **Deploy**:
-    *   Click **"Deploy"**.
-    *   Wait for the build to complete.
-6.  **Update Firebase Auth**:
-    *   Once deployed, you will get a URL (e.g., `https://quizwhiz.vercel.app`).
-    *   Go to your **Firebase Console** -> **Authentication** -> **Settings** -> **Authorized Domains**.
-    *   Add your new Vercel domain to the list.
-    *   **Google Sign-In**: If using Google Auth, go to **Google Cloud Console** -> **APIs & Services** -> **Credentials**. Edit your OAuth 2.0 Client ID and add the Vercel URL to **"Authorized JavaScript origins"** and **"Authorized redirect URIs"**.
+### B. Security Rules
+1.  Go to **Firebase Console** > **Firestore Database** > **Rules**.
+2.  Copy the content of `firestore.rules` from this repository.
+3.  Paste it into the editor and click **Publish**.
+    *   *CLI Method*: `firebase deploy --only firestore:rules`
 
----
+### C. Authentication
+1.  Go to **Firebase Console** > **Authentication** > **Sign-in method**.
+2.  Enable **Google**.
+3.  **IMPORTANT**: Add your production domain (e.g., `quizwhiz.vercel.app`) to **Authorized Domains** under the **Settings** tab in Authentication.
 
-## Option 2: Deploy to Render
+## 4. Frontend Deployment (Vercel)
 
-Render is a great alternative for hosting Node.js web services.
+1.  **Import Project**:
+    *   Log in to Vercel and click **Add New > Project**.
+    *   Select your GitHub repository.
 
-1.  **Create Account**: Go to [render.com](https://render.com) and sign up.
-2.  **New Web Service**:
-    *   Click **"New +"** -> **"Web Service"**.
-    *   Connect your GitHub repository.
-3.  **Configure Service**:
-    *   **Name**: `quizwhiz` (or your choice).
-    *   **Region**: Choose one close to you.
-    *   **Branch**: `main`.
-    *   **Runtime**: **Node** (Important!).
-    *   **Build Command**: `npm install && npm run build`.
-    *   **Start Command**: `npm start`.
-4.  **Environment Variables**:
-    *   Scroll down to **"Environment Variables"**.
-    *   Add each key-value pair from your `.env.local`.
-5.  **Deploy**:
-    *   Click **"Create Web Service"**.
-    *   Render will start building your app. This might take a few minutes.
-6.  **Update Firebase Auth**:
-    *   Once live, copy your Render URL (e.g., `https://quizwhiz.onrender.com`).
-    *   Add this domain to **Firebase Console** -> **Authentication** -> **Authorized Domains**.
-    *   Update **Google Cloud Console** credentials if using Google Sign-In.
+2.  **Configure Build**:
+    *   **Framework Preset**: Next.js
+    *   **Root Directory**: `./`
+    *   **Build Command**: `npm run build`
+    *   **Output Directory**: `.next`
 
----
+3.  **Add Environment Variables**:
+    *   Copy all values from your local `.env.local` into the Vercel Environment Variables panel.
 
-## Troubleshooting
+4.  **Deploy**:
+    *   Click **Deploy**. Vercel will build the app and assign a domain.
 
-### "Build Failed"
-*   Check the logs. Common issues include TypeScript errors. Run `npm run typecheck` locally to verify.
-*   Ensure all dependencies are in `package.json`.
+## 5. Post-Deployment Configuration
 
-### "Firebase: Error (auth/unauthorized-domain)"
-*   This means you forgot to add your new deployment domain to the Firebase Console's **Authorized Domains** list.
+### Google OAuth Redirect URI
+After Vercel assigns a domain (e.g., `https://quizwhiz.vercel.app`):
 
-### "Hydration Error" or UI Glitches
-*   Ensure your `NEXT_PUBLIC_` environment variables are set correctly in the dashboard. If they are missing during build time, some parts of the app might not work.
+1.  Go to **Google Cloud Console** > **APIs & Services** > **Credentials**.
+2.  Find the **OAuth 2.0 Client ID** auto-created by Firebase.
+3.  Add your Vercel URL to:
+    *   **Authorized JavaScript origins**: `https://quizwhiz.vercel.app`
+    *   **Authorized redirect URIs**: `https://quizwhiz.vercel.app/__/auth/handler`
+
+## 6. Common Pitfalls & Troubleshooting
+
+### "Missing or insufficient permissions"
+*   **Cause**: Firestore rules are blocking the request.
+*   **Fix**: Check `firestore.rules`. Ensure the user is authenticated for writes. For the demo, ensure rules aren't too restrictive if you haven't implemented full role checks yet.
+
+### "Auth/unauthorized-domain"
+*   **Cause**: The Vercel domain is not whitelisted in Firebase.
+*   **Fix**: Add the domain to **Firebase Console > Authentication > Settings > Authorized Domains**.
+
+### "Suspense" / Build Errors
+*   **Cause**: Using `useSearchParams` without a Suspense boundary in Next.js App Router.
+*   **Fix**: Ensure pages using search params are wrapped in `<Suspense>`. (Already fixed in `src/app/join/page.tsx`).
+
+### Real-time listeners not updating
+*   **Cause**: Client connectivity issues or missing indexes.
+*   **Fix**: Check the browser console. If it says "index needed", click the link provided to generate it.
