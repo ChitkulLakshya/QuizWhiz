@@ -12,11 +12,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase app (singleton)
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 // Singleton Firestore & Auth instances
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+export const initializeFirebase = () => app;
+export const getFirestoreInstance = () => db;
 
 // Optional: debug log
 console.log("🔥 Firebase initialized (client-side)");

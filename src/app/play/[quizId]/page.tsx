@@ -110,11 +110,14 @@ export default function PlayQuiz() {
       await submitAnswer(
         quizId,
         participantId,
-        currentQuestion.id,
-        selectedOption,
-        isCorrect,
-        pointsEarned,
-        timeToAnswer
+        {
+          questionId: currentQuestion.id,
+          selectedOptionIndex: selectedOption,
+          answeredAt: Date.now(),
+          isCorrect,
+          pointsEarned,
+          timeToAnswer
+        }
       );
       setHasAnswered(true);
     } catch (error) {

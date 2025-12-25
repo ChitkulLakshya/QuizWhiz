@@ -18,13 +18,14 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  Timestamp,
   type DocumentReference,
   type CollectionReference,
   type FieldValue,
 } from "firebase/firestore";
 
 import { db } from "@/firebase";
-import { Quiz, Question, Participant } from "@/types/quiz";
+import { Quiz, Question, Participant, ParticipantAnswer, LeaderboardEntry, QuestionResult } from "@/types/quiz";
 
 // Type helpers for Firestore operations
 type QuizCollection = CollectionReference<Omit<Quiz, "id">>;
@@ -94,6 +95,34 @@ export const createQuiz = async (
   }
 };
 
+/**
+ * Get all quizzes ordered by creation date
+ * @returns Promise resolving to array of Quiz objects
+ */
+export const getQuizzes = async (): Promise<Quiz[]> => {
+  try {
+    console.log("🔍 Fetching all quizzes");
+    const quizzesRef = collection(db, "quizzes");
+    const q = query(quizzesRef, orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    
+    const quizzes = snap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+      } as Quiz;
+    });
+
+    console.log("✅ Found quizzes:", quizzes.length);
+    return quizzes;
+  } catch (error) {
+    console.error("❌ Error fetching quizzes:", error);
+    throw error;
+  }
+};
+
 // ---------------------- GET QUIZ ----------------------
 
 /**
@@ -110,9 +139,14 @@ export const getQuiz = async (quizId: string): Promise<Quiz | null> => {
     const snap = await getDoc(quizRef);
 
     if (snap.exists()) {
-      const data = snap.data() as Quiz;
-      console.log("✅ Quiz found:", data.title);
-      return data;
+      const data = snap.data();
+      const quiz = {
+        ...data,
+        id: snap.id,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+      } as Quiz;
+      console.log("✅ Quiz found:", quiz.title);
+      return quiz;
     }
 
     console.log("⚠️ Quiz not found:", quizId);
@@ -144,9 +178,16 @@ export const getQuizByCode = async (code: string): Promise<Quiz | null> => {
       return null;
     }
 
-    const data = snap.docs[0].data() as Quiz;
-    console.log("✅ Quiz found by code:", data.title);
-    return data;
+    const doc = snap.docs[0];
+    const data = doc.data();
+    const quiz = {
+      ...data,
+      id: doc.id,
+      createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+    } as Quiz;
+    
+    console.log("✅ Quiz found by code:", quiz.title);
+    return quiz;
   } catch (error) {
     console.error("❌ Error searching quiz by code:", error);
     throw error;
@@ -363,9 +404,14 @@ export const subscribeToQuiz = (
   
   return onSnapshot(quizRef, (snap) => {
     if (snap.exists()) {
-      const data = snap.data() as Quiz;
-      console.log("📡 Quiz update received:", data.title);
-      callback(data);
+      const data = snap.data();
+      const quiz = {
+        ...data,
+        id: snap.id,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+      } as Quiz;
+      console.log("📡 Quiz update received:", quiz.title);
+      callback(quiz);
     } else {
       console.log("⚠️ Quiz document does not exist");
     }
@@ -398,4 +444,207 @@ export const subscribeToQuestions = (
     console.log("📡 Question updates received:", questions.length);
     callback(questions);
   });
+};
+
+/**
+ * Subscribe to real-time participant updates for a quiz
+ * @param quizId - The quiz document ID
+ * @param callback - Callback function that receives Participant[] updates
+ * @returns Unsubscribe function
+ */
+export const subscribeToParticipants = (
+  quizId: string,
+  callback: (participants: Participant[]) => void
+): (() => void) => {
+  console.log("👂 Subscribing to participant updates:", quizId);
+  
+  const participantsRef: ParticipantCollection = collection(
+    db,
+    "quizzes",
+    quizId,
+    "participants"
+  ) as ParticipantCollection;
+  
+  const q = query(participantsRef, orderBy("totalScore", "desc"));
+  
+  return onSnapshot(q, (snap) => {
+    const participants = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Participant);
+    console.log("📡 Participant updates received:", participants.length);
+    callback(participants);
+  });
+};
+
+// ---------------------- GAME CONTROL ----------------------
+
+/**
+ * Start a specific question (moves quiz to active state for that question)
+ * @param quizId - The quiz document ID
+ * @param questionIndex - The index of the question to start
+ */
+export const startQuestion = async (
+  quizId: string,
+  questionIndex: number
+): Promise<void> => {
+  try {
+    console.log("▶️ Starting question:", { quizId, questionIndex });
+    
+    const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
+    
+    await updateDoc(quizRef, {
+      status: "active",
+      currentQuestionIndex: questionIndex,
+      questionStartTime: Date.now(), // Using client timestamp for simplicity, ideally serverTimestamp
+    });
+
+    console.log("✅ Question started");
+  } catch (error) {
+    console.error("❌ Error starting question:", error);
+    throw error;
+  }
+};
+
+/**
+ * End the quiz
+ * @param quizId - The quiz document ID
+ */
+export const endQuiz = async (quizId: string): Promise<void> => {
+  try {
+    console.log("🏁 Ending quiz:", quizId);
+    
+    const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
+    
+    await updateDoc(quizRef, {
+      status: "completed",
+    });
+
+    console.log("✅ Quiz ended");
+  } catch (error) {
+    console.error("❌ Error ending quiz:", error);
+    throw error;
+  }
+};
+
+/**
+ * Submit an answer for a participant
+ * @param quizId - The quiz ID
+ * @param participantId - The participant ID
+ * @param answer - The answer object
+ */
+export const submitAnswer = async (
+  quizId: string,
+  participantId: string,
+  answer: ParticipantAnswer
+): Promise<void> => {
+  try {
+    console.log("📝 Submitting answer:", { quizId, participantId, answer });
+    
+    const participantRef = doc(
+      db,
+      "quizzes",
+      quizId,
+      "participants",
+      participantId
+    ) as DocumentReference<Participant>;
+
+    // We need to atomically update the answers array and totalScore
+    // Ideally use a transaction, but for simplicity we'll read-modify-write here
+    // or use arrayUnion if we trust the client. 
+    // Since we need to update score too, let's use a transaction or just get/update.
+    
+    const participantSnap = await getDoc(participantRef);
+    if (!participantSnap.exists()) throw new Error("Participant not found");
+    
+    const participant = participantSnap.data();
+    const newScore = participant.totalScore + answer.pointsEarned;
+    const newAnswers = [...participant.answers, answer];
+    
+    await updateDoc(participantRef, {
+      answers: newAnswers,
+      totalScore: newScore
+    });
+
+    console.log("✅ Answer submitted");
+  } catch (error) {
+    console.error("❌ Error submitting answer:", error);
+    throw error;
+  }
+};
+
+/**
+ * Calculate results for a specific question
+ * @param quizId - The quiz ID
+ * @param questionId - The question ID
+ * @returns Promise resolving to QuestionResult
+ */
+export const calculateQuestionResults = async (
+  quizId: string,
+  questionId: string
+): Promise<QuestionResult> => {
+  try {
+    console.log("📊 Calculating results:", { quizId, questionId });
+    
+    const participants = await getParticipants(quizId);
+    const questions = await getQuestions(quizId);
+    const question = questions.find(q => q.id === questionId);
+    
+    if (!question) throw new Error("Question not found");
+
+    const optionCounts = new Array(question.options.length).fill(0);
+    let totalResponses = 0;
+
+    participants.forEach(p => {
+      const answer = p.answers.find(a => a.questionId === questionId);
+      if (answer) {
+        if (answer.selectedOptionIndex >= 0 && answer.selectedOptionIndex < optionCounts.length) {
+          optionCounts[answer.selectedOptionIndex]++;
+        }
+        totalResponses++;
+      }
+    });
+
+    return {
+      quizId,
+      questionId,
+      optionCounts,
+      totalResponses,
+      correctOptionIndex: question.correctOptionIndex
+    };
+  } catch (error) {
+    console.error("❌ Error calculating results:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get the leaderboard for a quiz
+ * @param quizId - The quiz ID
+ * @returns Promise resolving to LeaderboardEntry[]
+ */
+export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]> => {
+  try {
+    console.log("🏆 Fetching leaderboard:", quizId);
+    
+    const participants = await getParticipants(quizId);
+    
+    const leaderboard: LeaderboardEntry[] = participants.map(p => ({
+      participantId: p.id,
+      name: p.name,
+      totalScore: p.totalScore,
+      correctAnswers: p.answers.filter(a => a.isCorrect).length,
+      rank: 0 // Will calculate below
+    }));
+
+    // Sort by score desc
+    leaderboard.sort((a, b) => b.totalScore - a.totalScore);
+
+    // Assign ranks
+    leaderboard.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+
+    return leaderboard;
+  } catch (error) {
+    console.error("❌ Error fetching leaderboard:", error);
+    throw error;
+  }
 };
