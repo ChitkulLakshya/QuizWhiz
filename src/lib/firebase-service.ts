@@ -288,7 +288,7 @@ export const addQuestion = async (
  * @param quizId - The quiz document ID
  * @param questionsData - Array of question data (without id and quizId)
  */
-export const addQuestionsBatch = async (
+export const addQuestions = async (
   quizId: string,
   questionsData: Omit<Question, "id" | "quizId">[]
 ): Promise<void> => {

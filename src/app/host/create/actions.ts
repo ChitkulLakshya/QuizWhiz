@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation';
 import { collection, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { v4 as uuidv4 } from 'uuid';
+import { addQuestions } from '@/lib/firebase-service';
+import { Question } from '@/types/quiz';
 
 const generateQuestionsSchema = z.object({
   subject: z.string().min(3, 'Subject must be at least 3 characters long.'),
@@ -136,30 +138,20 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
     // Log the created document ID for debugging
     console.log('Quiz created successfully with ID:', quizId);
 
-    // Add questions to the questions subcollection
-    for (let i = 0; i < questions.length; i++) {
-      const questionData = questions[i];
-      const questionId = quizData.questionIds[i];
-      
-      // The form gives us the option text as the `correctAnswer`. We need the index.
-      const correctAnswerIndex = questionData.options.indexOf(questionData.correctAnswer);
-
-      const questionPayload = {
-        id: questionId,
-        quizId: quizId,
-        text: questionData.question,
-        options: questionData.options,
-        correctAnswerIndex: correctAnswerIndex,
-        timer: questionData.timeLimit,
-        createdAt: serverTimestamp(),
+    // Add questions to the questions subcollection using batch write
+    const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = questions.map((q, i) => {
+      const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
+      return {
+        questionText: q.question,
+        options: q.options,
+        correctOptionIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+        timeLimit: q.timeLimit,
+        order: i,
+        points: 100, // Default points
       };
+    });
 
-      // Use addDoc for questions subcollection
-      await addDoc(
-        collection(db, 'quizzes', quizId, 'questions'),
-        questionPayload
-      );
-    }
+    await addQuestions(quizId, questionsToAdd);
 
     // Revalidate the path after successful creation
     revalidatePath('/');

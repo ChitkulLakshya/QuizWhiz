@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/header';
-import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQuestionsBatch } from '@/lib/firebase-service';
+import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQuestions } from '@/lib/firebase-service';
 import { Quiz, Question } from '@/types/quiz';
 import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X } from 'lucide-react';
 import Link from 'next/link';
@@ -101,7 +101,7 @@ export default function EditQuiz() {
             order: startOrder + i
         }));
         
-        await addQuestionsBatch(quizId, questionsToSave);
+        await addQuestions(quizId, questionsToSave);
         setPendingQuestions([]);
         loadData();
         toast({ title: 'Success', description: 'Questions added to quiz.' });
