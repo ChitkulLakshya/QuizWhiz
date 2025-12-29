@@ -26,6 +26,8 @@ export async function generateQuestionsAction(
   prevState: GenerateQuestionsState,
   formData: FormData
 ): Promise<GenerateQuestionsState> {
+  console.log('🤖 generateQuestionsAction started');
+  
   const validatedFields = generateQuestionsSchema.safeParse({
     subject: formData.get('subject'),
     skillLevel: formData.get('skillLevel'),
@@ -33,14 +35,19 @@ export async function generateQuestionsAction(
   });
 
   if (!validatedFields.success) {
+    console.log('❌ Validation failed:', validatedFields.error.flatten());
     return {
       status: 'error',
       message: validatedFields.error.flatten().fieldErrors.subject?.[0] || 'Invalid input.',
     };
   }
 
+  console.log('✅ Input validated, calling AI...', validatedFields.data);
+
   try {
     const result = await generateQuizQuestions(validatedFields.data);
+    console.log('✅ AI response received');
+    
     if (result && result.questions && result.questions.length > 0) {
       // The AI returns correctAnswer, but the form needs correctAnswerIndex.
       const questionsWithIndex = result.questions.map(q => {
