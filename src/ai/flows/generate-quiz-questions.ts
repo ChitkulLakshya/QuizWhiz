@@ -55,27 +55,31 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   name: 'generateQuizQuestionsPrompt',
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema},
-  prompt: `You are a quiz generator expert. Generate multiple-choice quiz questions based on the provided subject and skill level. The number of questions should be equal to numberOfQuestions.
+  prompt: `You are an expert quiz creator. Your task is to generate high-quality multiple-choice questions based on the provided subject and skill level.
 
 Subject: {{{subject}}}
 Skill Level: {{{skillLevel}}}
 Number of Questions: {{{numberOfQuestions}}}
 
-Each question should have four options, one of which is the correct answer. Return the questions in JSON format as specified in the output schema.  The schema descriptions should be used to guide the structure of the JSON. Return a JSON array of questions. Each question object must contain a question (string), options (array of strings), and correctAnswer (string; must match one of the options). Ensure the questions and options are appropriate for the specified skill level. Do NOT include any introductory or concluding remarks.  Just the JSON.
+Guidelines:
+1. **Diversity**: Ensure questions cover different aspects of the subject and vary in style (e.g., definitions, applications, problem-solving). Avoid repetition.
+2. **Distractors**: The wrong options (distractors) must be plausible and related to the context. Avoid obviously incorrect or silly answers.
+3. **Difficulty**:
+   - If Skill Level is 'hard', questions should require deep reasoning, analysis, or synthesis of concepts, not just rote memorization.
+   - If Skill Level is 'easy', focus on fundamental concepts and definitions.
+   - If Skill Level is 'normal', balance between recall and application.
+4. **Format**: Strictly follow the output JSON schema.
+   - Each question must have exactly 4 options.
+   - 'correctAnswer' must be an exact string match to one of the 'options'.
+   - Do NOT include any markdown formatting (like \`\`\`json), introductory text, or explanations. Return ONLY the raw JSON object.
 
-For example:
-
+Example Output Structure:
 {
   "questions": [
     {
-      "question": "What is the capital of France?",
-      "options": ["Berlin", "Madrid", "Paris", "Rome"],
-      "correctAnswer": "Paris"
-    },
-    {
-      "question": "What is the value of Pi to two decimal places?",
-      "options": ["3.14", "3.15", "3.16", "3.17"],
-      "correctAnswer": "3.14"
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": "Option C"
     }
   ]
 }
