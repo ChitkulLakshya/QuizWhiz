@@ -1,6 +1,9 @@
 import Header from '@/components/header';
 import { QuizForm } from './quiz-form';
 
+// Allow AI generation to run for up to 60 seconds
+export const maxDuration = 60;
+
 export default function CreateQuizPage() {
   return (
     <div className="flex flex-col w-full">

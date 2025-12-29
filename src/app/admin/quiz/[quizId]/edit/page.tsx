@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
+// Allow AI generation to run for up to 60 seconds
+export const maxDuration = 60;
+
 function SubmitButton({ isSaving }: { isSaving: boolean }) {
   const { pending } = useFormStatus();
   const isLoading = pending || isSaving;
