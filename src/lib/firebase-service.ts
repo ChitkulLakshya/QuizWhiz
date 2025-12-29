@@ -145,7 +145,7 @@ export const getQuiz = async (quizId: string): Promise<Quiz | null> => {
       const quiz = {
         ...data,
         id: snap.id,
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+        createdAt: (data.createdAt as any) instanceof Timestamp ? (data.createdAt as any).toMillis() : Date.now(),
       } as Quiz;
       console.log("✅ Quiz found:", quiz.title);
       return quiz;
@@ -185,7 +185,7 @@ export const getQuizByCode = async (code: string): Promise<Quiz | null> => {
     const quiz = {
       ...data,
       id: doc.id,
-      createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+      createdAt: (data.createdAt as any) instanceof Timestamp ? (data.createdAt as any).toMillis() : Date.now(),
     } as Quiz;
     
     console.log("✅ Quiz found by code:", quiz.title);
@@ -451,7 +451,7 @@ export const subscribeToQuiz = (
       const quiz = {
         ...data,
         id: snap.id,
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+        createdAt: (data.createdAt as any) instanceof Timestamp ? (data.createdAt as any).toMillis() : Date.now(),
       } as Quiz;
       console.log("📡 Quiz update received:", quiz.title);
       callback(quiz);

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+
+function SubmitButton({ isSaving }: { isSaving: boolean }) {
+  const { pending } = useFormStatus();
+  const isLoading = pending || isSaving;
+  
+  return (
+    <Button 
+      type="submit" 
+      className="w-full sm:w-auto"
+      disabled={isLoading}
+    >
+      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+      Generate
+    </Button>
+  );
+}
 
 export default function EditQuiz() {
   const params = useParams();
@@ -55,11 +71,12 @@ export default function EditQuiz() {
         try {
           let currentOrder = questions.length;
           for (const q of generateState.data!) {
-             const correctIdx = q.options.indexOf(q.correctAnswer);
+             // The action returns correctAnswer as a string index (e.g. "0")
+             const correctIdx = parseInt(q.correctAnswer);
              await addQuestion(quizId, {
                questionText: q.question,
                options: q.options,
-               correctOptionIndex: correctIdx >= 0 ? correctIdx : 0,
+               correctOptionIndex: !isNaN(correctIdx) ? correctIdx : 0,
                timeLimit: 30,
                points: 100,
                order: currentOrder++
@@ -264,14 +281,7 @@ export default function EditQuiz() {
                       </SelectContent>
                     </Select>
                 </div>
-                 <Button 
-                    type="submit" 
-                    className="w-full sm:w-auto"
-                    disabled={isGenerating}
-                >
-                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    Generate
-                 </Button>
+                 <SubmitButton isSaving={isGenerating} />
               </form>
             </CardContent>
           </Card>
