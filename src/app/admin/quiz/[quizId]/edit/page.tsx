@@ -9,9 +9,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/header';
-import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz } from '@/lib/firebase-service';
+import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQuestionsBatch } from '@/lib/firebase-service';
 import { Quiz, Question } from '@/types/quiz';
-import { ArrowLeft, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { generateQuestionsAction } from '@/app/host/create/actions';
 import {
@@ -52,6 +52,7 @@ export default function EditQuiz() {
   // AI Generation
   const [generateState, generateAction] = useFormState(generateQuestionsAction, { status: 'idle', message: '' });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pendingQuestions, setPendingQuestions] = useState<Omit<Question, 'id' | 'quizId'>[]>([]);
 
   // New question form
   const [questionText, setQuestionText] = useState('');
@@ -66,36 +67,51 @@ export default function EditQuiz() {
 
   useEffect(() => {
     if (generateState.status === 'success' && generateState.data) {
-      const saveGeneratedQuestions = async () => {
-        setIsGenerating(true);
-        try {
-          let currentOrder = questions.length;
-          for (const q of generateState.data!) {
-             // The action returns correctAnswer as a string index (e.g. "0")
-             const correctIdx = parseInt(q.correctAnswer);
-             await addQuestion(quizId, {
-               questionText: q.question,
-               options: q.options,
-               correctOptionIndex: !isNaN(correctIdx) ? correctIdx : 0,
-               timeLimit: 30,
-               points: 100,
-               order: currentOrder++
-             });
-          }
-          toast({ title: 'Success', description: 'AI questions added successfully' });
-          loadData();
-        } catch (err) {
-          console.error(err);
-          toast({ title: 'Error', description: 'Failed to save generated questions', variant: 'destructive' });
-        } finally {
-          setIsGenerating(false);
-        }
-      };
-      saveGeneratedQuestions();
+      const newPending = generateState.data.map(q => {
+         const correctIdx = parseInt(q.correctAnswer);
+         return {
+           questionText: q.question,
+           options: q.options,
+           correctOptionIndex: !isNaN(correctIdx) ? correctIdx : 0,
+           timeLimit: 30,
+           points: 100,
+           order: 0 // Will be set when saving
+         };
+      });
+      setPendingQuestions(prev => [...prev, ...newPending]);
+      toast({ title: 'Generated', description: 'Review questions before adding.' });
+      setIsGenerating(false);
     } else if (generateState.status === 'error') {
         toast({ title: 'Error', description: generateState.message, variant: 'destructive' });
+        setIsGenerating(false);
     }
-  }, [generateState, quizId]); // Removed questions dependency to avoid loop, handled by currentOrder logic roughly or just append
+  }, [generateState]);
+
+  const handleDiscardPending = (index: number) => {
+    setPendingQuestions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSavePendingQuestions = async () => {
+    if (pendingQuestions.length === 0) return;
+    setIsGenerating(true);
+    try {
+        const startOrder = questions.length;
+        const questionsToSave = pendingQuestions.map((q, i) => ({
+            ...q,
+            order: startOrder + i
+        }));
+        
+        await addQuestionsBatch(quizId, questionsToSave);
+        setPendingQuestions([]);
+        loadData();
+        toast({ title: 'Success', description: 'Questions added to quiz.' });
+    } catch (error) {
+        console.error(error);
+        toast({ title: 'Error', description: 'Failed to save questions.', variant: 'destructive' });
+    } finally {
+        setIsGenerating(false);
+    }
+  };
 
 
   const loadData = async () => {
@@ -285,6 +301,66 @@ export default function EditQuiz() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Pending Questions Review */}
+          {pendingQuestions.length > 0 && (
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Pending Review ({pendingQuestions.length})</h2>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setPendingQuestions([])}>
+                        Discard All
+                    </Button>
+                    <Button onClick={handleSavePendingQuestions} disabled={isGenerating}>
+                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                        Add All to Quiz
+                    </Button>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {pendingQuestions.map((q, index) => (
+                  <Card key={index} className="border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-900/10">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">
+                            {q.questionText}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Time: {q.timeLimit}s | Points: {q.points}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDiscardPending(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {q.options.map((option: string, optIndex: number) => (
+                          <div
+                            key={optIndex}
+                            className={`p-2 rounded ${
+                              optIndex === q.correctOptionIndex
+                                ? 'bg-green-100 dark:bg-green-900'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            {String.fromCharCode(65 + optIndex)}. {option}
+                            {optIndex === q.correctOptionIndex && ' ✓'}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Add New Question */}
           <Card>
