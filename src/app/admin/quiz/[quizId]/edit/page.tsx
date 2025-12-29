@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,7 +50,7 @@ export default function EditQuiz() {
   const [loading, setLoading] = useState(true);
 
   // AI Generation
-  const [generateState, generateAction] = useFormState(generateQuestionsAction, { status: 'idle', message: '' });
+  const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<Omit<Question, 'id' | 'quizId'>[]>([]);
 

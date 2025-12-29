@@ -3,8 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
-import { useFormState } from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -53,7 +52,7 @@ type QuizFormValues = z.infer<typeof quizFormSchema>;
 export function QuizForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [generateState, generateAction] = useFormState(generateQuestionsAction, { status: 'idle', message: '' });
+  const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
   
   // React state for form fields and loading
   const [title, setTitle] = useState('');
