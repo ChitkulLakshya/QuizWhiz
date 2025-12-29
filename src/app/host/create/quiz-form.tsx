@@ -33,9 +33,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateQuestionsAction } from './actions';
 import { PlusCircle, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from '@/firebase';
-import { v4 as uuidv4 } from 'uuid';
+import { createQuiz, addQuestions } from '@/lib/firebase-service';
+import { Question } from '@/types/quiz';
 
 const questionSchema = z.object({
   question: z.string().min(1, 'Question cannot be empty'),
@@ -114,56 +113,30 @@ export function QuizForm() {
 
       console.log('📝 Form data validated:', { title: formData.title, questionCount: formData.questions.length });
       
-      // Prepare quiz data with createdAt timestamp
-      const questionIds = formData.questions.map(() => uuidv4());
-      const quizData = {
-        title: formData.title,
-        description: description || `A quiz about ${formData.title}`,
-        questionIds: questionIds,
-        createdAt: serverTimestamp(),
-      };
+      // 1. Create Quiz Document
+      console.log('🚀 Creating quiz document...');
+      // Note: We don't have user email here easily without auth context, using placeholder or passing it if available.
+      // For now, we'll use a placeholder or empty string as the service expects a string.
+      const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous');
+      console.log('✅ Quiz created with ID:', quizId);
 
-      console.log('🚀 Starting Firestore write for quiz...');
-      
-      // Use addDoc with await - Firestore will create collection if it doesn't exist
-      const quizRef = await addDoc(collection(db, 'quizzes'), quizData);
-      const quizId = quizRef.id;
-
-      console.log('✅ Quiz document created with ID:', quizId);
-
-      // Update the document to include the id field matching the document ID
-      await setDoc(quizRef, { id: quizId }, { merge: true });
-      console.log('📄 Quiz document updated with id field');
-
-      // Add questions to the questions subcollection
-      console.log('🚀 Starting Firestore writes for questions...');
-      for (let i = 0; i < formData.questions.length; i++) {
-        const questionData = formData.questions[i];
-        const questionId = questionIds[i];
-        
-        // The form gives us the option text as the `correctAnswer`. We need the index.
-        const correctAnswerIndex = questionData.options.indexOf(questionData.correctAnswer);
-
-        const questionPayload = {
-          id: questionId,
-          quizId: quizId,
-          text: questionData.question,
-          options: questionData.options,
-          correctAnswerIndex: correctAnswerIndex,
-          timer: questionData.timeLimit,
-          createdAt: serverTimestamp(),
+      // 2. Prepare Questions for Batch Write
+      console.log('🚀 Preparing questions for batch write...');
+      const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = formData.questions.map((q, i) => {
+        const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
+        return {
+            questionText: q.question,
+            options: q.options,
+            correctOptionIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+            timeLimit: q.timeLimit,
+            points: 100, // Default points
+            order: i
         };
+      });
 
-        // Use addDoc for questions subcollection - Firestore creates collection if it doesn't exist
-        await addDoc(
-          collection(db, 'quizzes', quizId, 'questions'),
-          questionPayload
-        );
-        console.log(`✅ Question ${i + 1} created with ID: ${questionId}`);
-      }
-
-      console.log('✅ All Firestore writes completed successfully!');
-      console.log('📄 Final quiz ID:', quizId);
+      // 3. Batch Write Questions
+      await addQuestions(quizId, questionsToAdd);
+      console.log('✅ All questions added successfully');
 
       // Reset form fields after successful submission
       form.reset();
@@ -176,8 +149,7 @@ export function QuizForm() {
       });
       
       // Navigate to the quiz lobby ONLY after successful Firestore write
-      const quizSlug = formData.title.toLowerCase().replace(/\s/g, '-');
-      router.push(`/quiz/${quizSlug}-${quizId.substring(0, 7)}/lobby`);
+      router.push(`/quiz/${quizId}/lobby`);
     } catch (error) {
       // Clear console error messages
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
