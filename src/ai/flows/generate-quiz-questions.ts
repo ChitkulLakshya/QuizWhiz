@@ -19,12 +19,12 @@ const GenerateQuizQuestionsInputSchema = z.object({
   skillLevel: z
     .string()
     .describe(
-      'The skill level of the quiz questions (e.g., beginner, intermediate, advanced).'
+      'The skill level of the quiz questions (e.g., easy, normal, hard).'
     ),
   numberOfQuestions: z
     .number()
     .describe('The number of questions to generate.')
-    .default(5),
+    .default(10),
 });
 
 export type GenerateQuizQuestionsInput = z.infer<

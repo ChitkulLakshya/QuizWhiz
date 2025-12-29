@@ -221,20 +221,20 @@ export function QuizForm() {
             </div>
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="skillLevel">Skill Level</Label>
-              <Select name="skillLevel" defaultValue="beginner">
+              <Select name="skillLevel" defaultValue="normal">
                 <SelectTrigger>
                   <SelectValue placeholder="Select skill level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-               <Select name="numberOfQuestions" defaultValue="5">
+               <Select name="numberOfQuestions" defaultValue="10">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

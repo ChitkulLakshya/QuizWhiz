@@ -58,6 +58,7 @@ The application relies on a unidirectional data flow driven by Firestore:
     NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
     NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+    GOOGLE_GENAI_API_KEY=your_gemini_api_key
     # ... add other Firebase config keys
     ```
 

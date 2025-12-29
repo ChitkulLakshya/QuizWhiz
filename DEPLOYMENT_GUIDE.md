@@ -23,6 +23,7 @@ You must configure these variables in your deployment platform (Vercel). Do **no
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage Bucket | Firebase Console > Project Settings |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID | Firebase Console > Project Settings |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | App ID | Firebase Console > Project Settings |
+| `GOOGLE_GENAI_API_KEY` | Gemini API Key | Google AI Studio |
 
 ## 3. Backend Deployment (Firebase)
 
