@@ -113,6 +113,20 @@ export default function EditQuiz() {
     }
   };
 
+  const handleGenerateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    const subject = formData.get('subject') as string;
+    
+    if (!subject || subject.trim().length === 0) {
+        e.preventDefault();
+        toast({ 
+            title: "Validation Error", 
+            description: "Please enter a subject for the quiz.",
+            variant: "destructive" 
+        });
+        return;
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -268,10 +282,14 @@ export default function EditQuiz() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={generateAction} className="grid sm:grid-cols-4 gap-4 items-end">
+              <form 
+                action={generateAction} 
+                onSubmit={handleGenerateSubmit}
+                className="grid sm:grid-cols-4 gap-4 items-end"
+              >
                 <div className="space-y-2 col-span-4 sm:col-span-1">
                   <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" name="subject" placeholder="e.g., Science" required />
+                  <Input id="subject" name="subject" placeholder="e.g., Science" />
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="skillLevel">Skill Level</Label>

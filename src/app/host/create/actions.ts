@@ -39,7 +39,7 @@ export async function generateQuestionsAction(
 
   try {
     const result = await generateQuizQuestions(validatedFields.data);
-    if (result && result.questions) {
+    if (result && result.questions && result.questions.length > 0) {
       // The AI returns correctAnswer, but the form needs correctAnswerIndex.
       const questionsWithIndex = result.questions.map(q => {
         const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
@@ -60,13 +60,22 @@ export async function generateQuestionsAction(
         })),
       };
     } else {
-      throw new Error('AI did not return any questions.');
+      throw new Error('AI returned an empty list of questions.');
     }
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error('AI Generation Error:', error);
+    
+    let errorMessage = 'Failed to generate questions. Please try again.';
+    
+    if (error.message?.includes('429') || error.message?.includes('Resource has been exhausted')) {
+      errorMessage = 'AI service is currently busy (Rate Limit Reached). Please wait a moment and try again.';
+    } else if (error.message?.includes('empty list')) {
+      errorMessage = 'The AI could not generate questions for this topic. Try a different subject.';
+    }
+
     return {
       status: 'error',
-      message: 'Failed to generate questions. Please try again.',
+      message: errorMessage,
     };
   }
 }
