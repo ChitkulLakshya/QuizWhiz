@@ -25,6 +25,10 @@ const GenerateQuizQuestionsInputSchema = z.object({
     .number()
     .describe('The number of questions to generate.')
     .default(10),
+  image: z
+    .string()
+    .optional()
+    .describe('Base64 encoded image data (data:image/...) to generate questions from.'),
 });
 
 export type GenerateQuizQuestionsInput = z.infer<
@@ -51,49 +55,48 @@ export async function generateQuizQuestions(
   return generateQuizQuestionsFlow(input);
 }
 
-const generateQuizQuestionsPrompt = ai.definePrompt({
-  name: 'generateQuizQuestionsPrompt',
-  input: {schema: GenerateQuizQuestionsInputSchema},
-  output: {schema: GenerateQuizQuestionsOutputSchema},
-  prompt: `You are an expert quiz creator. Your task is to generate high-quality multiple-choice questions based on the provided subject and skill level.
-
-Subject: {{{subject}}}
-Skill Level: {{{skillLevel}}}
-Number of Questions: {{{numberOfQuestions}}}
-
-Guidelines:
-1. **Diversity**: Ensure questions cover different aspects of the subject and vary in style (e.g., definitions, applications, problem-solving). Avoid repetition.
-2. **Distractors**: The wrong options (distractors) must be plausible and related to the context. Avoid obviously incorrect or silly answers.
-3. **Difficulty**:
-   - If Skill Level is 'hard', questions should require deep reasoning, analysis, or synthesis of concepts, not just rote memorization.
-   - If Skill Level is 'easy', focus on fundamental concepts and definitions.
-   - If Skill Level is 'normal', balance between recall and application.
-4. **Format**: Strictly follow the output JSON schema.
-   - Each question must have exactly 4 options.
-   - 'correctAnswer' must be an exact string match to one of the 'options'.
-   - Do NOT include any markdown formatting (like \`\`\`json), introductory text, or explanations. Return ONLY the raw JSON object.
-
-Example Output Structure:
-{
-  "questions": [
-    {
-      "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "Option C"
-    }
-  ]
-}
-`,
-});
-
 const generateQuizQuestionsFlow = ai.defineFlow(
   {
     name: 'generateQuizQuestionsFlow',
     inputSchema: GenerateQuizQuestionsInputSchema,
     outputSchema: GenerateQuizQuestionsOutputSchema,
   },
-  async input => {
-    const {output} = await generateQuizQuestionsPrompt(input);
-    return output!;
+  async (input) => {
+    const promptText = `You are an expert quiz creator. Your task is to generate high-quality multiple-choice questions based on the provided subject${input.image ? ', the attached image,' : ''} and skill level.
+
+Subject: ${input.subject}
+Skill Level: ${input.skillLevel}
+Number of Questions: ${input.numberOfQuestions}
+
+Guidelines:
+1. **Source Material**: ${input.image ? 'Analyze the attached image thoroughly. Generate questions based on visual details, text, charts, or concepts presented in the image. If the image is not sufficient for all questions, supplement with general knowledge about the Subject.' : 'Generate questions based on the Subject.'}
+2. **Diversity**: Ensure questions cover different aspects and vary in style (e.g., definitions, applications, problem-solving). Avoid repetition.
+3. **Distractors**: The wrong options (distractors) must be plausible and related to the context. Avoid obviously incorrect or silly answers.
+4. **Difficulty**:
+   - If Skill Level is 'hard', questions should require deep reasoning, analysis, or synthesis of concepts.
+   - If Skill Level is 'easy', focus on fundamental concepts and definitions.
+   - If Skill Level is 'normal', balance between recall and application.
+5. **Format**: Strictly follow the output JSON schema.
+   - Each question must have exactly 4 options.
+   - 'correctAnswer' must be an exact string match to one of the 'options'.
+   - Do NOT include any markdown formatting, introductory text, or explanations. Return ONLY the raw JSON object.
+`;
+
+    const promptParts: any[] = [{ text: promptText }];
+    
+    if (input.image) {
+      promptParts.push({ media: { url: input.image } });
+    }
+
+    const { output } = await ai.generate({
+      prompt: promptParts,
+      output: { schema: GenerateQuizQuestionsOutputSchema },
+    });
+
+    if (!output) {
+      throw new Error('Failed to generate questions');
+    }
+
+    return output;
   }
 );
