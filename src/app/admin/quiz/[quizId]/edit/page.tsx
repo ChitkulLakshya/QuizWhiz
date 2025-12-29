@@ -1,25 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/header';
 import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz } from '@/lib/firebase-service';
 import { Quiz, Question } from '@/types/quiz';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { generateQuestionsAction } from '@/app/host/create/actions';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EditQuiz() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const quizId = params.quizId as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // AI Generation
+  const [generateState, generateAction] = useFormState(generateQuestionsAction, { status: 'idle', message: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // New question form
   const [questionText, setQuestionText] = useState('');
@@ -31,6 +46,39 @@ export default function EditQuiz() {
   useEffect(() => {
     loadData();
   }, [quizId]);
+
+  useEffect(() => {
+    if (generateState.status === 'success' && generateState.data) {
+      const saveGeneratedQuestions = async () => {
+        setIsGenerating(true);
+        try {
+          let currentOrder = questions.length;
+          for (const q of generateState.data!) {
+             const correctIdx = q.options.indexOf(q.correctAnswer);
+             await addQuestion(quizId, {
+               questionText: q.question,
+               options: q.options,
+               correctOptionIndex: correctIdx >= 0 ? correctIdx : 0,
+               timeLimit: 30,
+               points: 100,
+               order: currentOrder++
+             });
+          }
+          toast({ title: 'Success', description: 'AI questions added successfully' });
+          loadData();
+        } catch (err) {
+          console.error(err);
+          toast({ title: 'Error', description: 'Failed to save generated questions', variant: 'destructive' });
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+      saveGeneratedQuestions();
+    } else if (generateState.status === 'error') {
+        toast({ title: 'Error', description: generateState.message, variant: 'destructive' });
+    }
+  }, [generateState, quizId]); // Removed questions dependency to avoid loop, handled by currentOrder logic roughly or just append
+
 
   const loadData = async () => {
     try {
@@ -174,6 +222,58 @@ export default function EditQuiz() {
               ))}
             </div>
           </div>
+
+          {/* AI Question Generator */}
+          <Card className="mb-8 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2">
+                <Sparkles className="text-primary fill-primary" /> AI Question Generator
+              </CardTitle>
+              <CardDescription>
+                Generate questions automatically using AI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={generateAction} className="grid sm:grid-cols-4 gap-4 items-end">
+                <div className="space-y-2 col-span-4 sm:col-span-1">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input id="subject" name="subject" placeholder="e.g., Science" required />
+                </div>
+                <div className="space-y-2 col-span-2 sm:col-span-1">
+                  <Label htmlFor="skillLevel">Skill Level</Label>
+                  <Select name="skillLevel" defaultValue="normal">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select skill level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 col-span-2 sm:col-span-1">
+                  <Label htmlFor="numberOfQuestions">Count</Label>
+                   <Select name="numberOfQuestions" defaultValue="5">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1,2,3,4,5,10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                </div>
+                 <Button 
+                    type="submit" 
+                    className="w-full sm:w-auto"
+                    disabled={isGenerating}
+                >
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate
+                 </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Add New Question */}
           <Card>
