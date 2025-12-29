@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -95,9 +95,9 @@ export default function EditQuiz() {
     }
   };
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
+  const handleAddQuestion = async (e: FormEvent) => {
     e.preventDefault();
-    if (!questionText.trim() || options.some(o => !o.trim())) {
+    if (!questionText.trim() || options.some((o: string) => !o.trim())) {
       alert('Please fill all fields');
       return;
     }
@@ -105,7 +105,7 @@ export default function EditQuiz() {
     try {
       await addQuestion(quizId, {
         questionText,
-        options: options.filter(o => o.trim()),
+        options: options.filter((o: string) => o.trim()),
         correctOptionIndex: correctIndex,
         timeLimit,
         points,
@@ -180,7 +180,7 @@ export default function EditQuiz() {
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Questions ({questions.length})</h2>
             <div className="space-y-4">
-              {questions.map((q, index) => (
+              {questions.map((q: Question, index: number) => (
                 <Card key={q.id || index}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -203,7 +203,7 @@ export default function EditQuiz() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {q.options.map((option, optIndex) => (
+                      {q.options.map((option: string, optIndex: number) => (
                         <div
                           key={optIndex}
                           className={`p-2 rounded ${
@@ -290,7 +290,7 @@ export default function EditQuiz() {
                   <Input
                     id="question"
                     value={questionText}
-                    onChange={(e) => setQuestionText(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setQuestionText(e.target.value)}
                     placeholder="Enter your question"
                     required
                   />
@@ -298,12 +298,12 @@ export default function EditQuiz() {
 
                 <div className="space-y-2">
                   <Label>Options *</Label>
-                  {options.map((option, index) => (
+                  {options.map((option: string, index: number) => (
                     <div key={index} className="flex gap-2 items-center">
                       <span className="font-semibold w-8">{String.fromCharCode(65 + index)}.</span>
                       <Input
                         value={option}
-                        onChange={(e) => {
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
                           const newOptions = [...options];
                           newOptions[index] = e.target.value;
                           setOptions(newOptions);
@@ -332,7 +332,7 @@ export default function EditQuiz() {
                       min="5"
                       max="300"
                       value={timeLimit}
-                      onChange={(e) => setTimeLimit(parseInt(e.target.value))}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setTimeLimit(parseInt(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -344,7 +344,7 @@ export default function EditQuiz() {
                       max="1000"
                       step="10"
                       value={points}
-                      onChange={(e) => setPoints(parseInt(e.target.value))}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setPoints(parseInt(e.target.value))}
                     />
                   </div>
                 </div>
