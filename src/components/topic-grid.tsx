@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles } from 'lucide-react';
+import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles, Rocket, Target, Gamepad2, Palette } from 'lucide-react';
 import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
 import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
 import {
@@ -71,6 +72,45 @@ export default function TopicGrid() {
 
     return (
         <section className="py-24 bg-[#F2FAF7] relative overflow-hidden">
+            {/* Background Icons - Unique Set */}
+            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+                {/* Rocket - flying up-right from bottom left */}
+                <motion.div 
+                    className="absolute bottom-[10%] -left-[2%] opacity-[0.05] text-indigo-500"
+                    animate={{ y: [0, -40, 0], x: [0, 20, 0] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <Rocket className="w-40 h-40 md:w-72 md:h-72 rotate-45" />
+                </motion.div>
+
+                {/* Target - Top Right */}
+                <motion.div 
+                    className="absolute top-[8%] -right-[4%] opacity-[0.05] text-rose-500"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <Target className="w-32 h-32 md:w-64 md:h-64" />
+                </motion.div>
+
+                {/* Gamepad - Top Left */}
+                <motion.div 
+                    className="absolute top-[15%] left-[5%] opacity-[0.04] text-purple-600 -rotate-12"
+                    animate={{ rotate: [-12, -20, -12] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <Gamepad2 className="w-24 h-24 md:w-48 md:h-48" />
+                </motion.div>
+
+                 {/* Palette - Bottom Right */}
+                 <motion.div 
+                    className="absolute bottom-[20%] right-[8%] opacity-[0.04] text-orange-500 rotate-12"
+                    animate={{ y: [0, 15, 0] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <Palette className="w-28 h-28 md:w-52 md:h-52" />
+                </motion.div>
+            </div>
+
             <div className="container mx-auto px-4 relative z-10 w-full max-w-7xl">
                 <div className="flex flex-col items-center justify-center mb-16 text-center">
                     <div className="flex items-center gap-3 mb-4">
