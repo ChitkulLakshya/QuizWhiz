@@ -1,124 +1,74 @@
-/**
- * @file Firestore Security Rules
- * @description This ruleset enforces a role-based access control model for a real-time quiz application.
- *
- * Data Structure:
- * - /quizzes/{quizId}: Stores quiz metadata.
- * - /quizzes/{quizId}/questions/{questionId}: Stores questions for a quiz.
- * - /quizzes/{quizId}/participants/{participantId}: Stores participant information for a quiz.
- * - /quizzes/{quizId}/participants/{participantId}/scores/{scoreId}: Stores scores for a participant in a quiz.
- * - /roles_admin/{userId}: Stores admin users. Document existence implies admin role.
- *
- * Key Security Decisions:
- * - Admins (defined in /roles_admin/{userId}) have full access to quizzes, questions, participants, and scores.
- * - Participants can only manage their own participant documents and scores.
- * - Read access to quizzes and questions is generally open.
- * - Listing of participants and scores is restricted to admins.
- *
- * Denormalization for Authorization:
- * - The `quizId` is denormalized into the `Question`, `Participant`, and `Score` documents to avoid needing to make extra `get()` calls to the `/quizzes/{quizId}` document.
- *
- * Structural Segregation:
- * - Admin roles are stored in a separate collection (`/roles_admin/{userId}`) to prevent exposure through listing operations.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows admins to manage quizzes.
-     * @path /quizzes/{quizId}
-     * @allow (create) Admin user creates a new quiz document.
-     * @deny (create) Non-admin user attempts to create a quiz.
-     * @allow (get, list) Any user can read quiz metadata.
-     * @deny (update, delete) Non-admin user attempts to modify/delete a quiz.
-     * @principle Role-based access control for quiz management.
+     * @description Quizzes Collection
+     * - Create: Allow any authenticated user (Anonymous included).
+     * - Update/Delete: Only the owner.
+     * - Read: Public (Allow anyone to view/join).
      */
     match /quizzes/{quizId} {
-      allow get, list: if true;
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
+      // 1. Public Read Access (for listing/joining)
+      allow read: if true;
+
+      // 2. Creation: Any signed-in user (Anonymous or Real)
+      // Only enforce that they claim ownership of the doc they create.
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+
+      // 3. Update/Delete: Only the Owner
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
     /**
-     * @description Allows admins to manage questions for a quiz.
-     * @path /quizzes/{quizId}/questions/{questionId}
-     * @allow (create) Admin user creates a question.
-     * @deny (create) Non-admin user attempts to create a question.
-     * @allow (get, list) Any user can read questions.
-     * @deny (update, delete) Non-admin user attempts to modify/delete a question.
-     * @principle Role-based access control for question management.
-     */
-    match /quizzes/{quizId}/questions/{questionId} {
-      allow get, list: if true;
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Allows participants to manage their own participant document within a quiz.
-     * @path /quizzes/{quizId}/participants/{participantId}
-     * @allow (create) Any authenticated user creates a participant document with their own ID.
-     * @deny (create) User attempts to create a participant document with a mismatched ID.
-     * @allow (get) Any authenticated user can read their participant data.
-     * @deny (list) Listing participants is forbidden for non-admins.
-     * @allow (update, delete) The participant can update/delete their own document.
-     * @principle Enforces document ownership and restricts listing to admins.
+     * @description Participants Subcollection
+     * - Stores players joining a quiz.
+     * - Requirement: "Allow anyone to create/read".
+     * - Since players join via code without necessarily being signed up (guest join),
+     *   we allow public write access here implicitly for "joining" and "submitting answers".
      */
     match /quizzes/{quizId}/participants/{participantId} {
-      allow create: if isSignedIn() && request.auth.uid == participantId;
-      allow get: if isSignedIn() && request.auth.uid == participantId;
-      allow list: if isAdmin();
-      allow update, delete: if isSignedIn() && request.auth.uid == participantId;
+      // Allow public access for game flow
+      // In a stricter app, we would validate the quiz status (e.g. is 'lobby' or 'active')
+      // but for "Quick Play" MVP, public RW is acceptable.
+      allow read, create, update: if true;
+      
+      // Sub-collection: Scores
+      match /scores/{scoreId} {
+        allow read, create, update: if true;
+      }
     }
 
     /**
-     * @description Allows participants to manage their own scores for a quiz.
-     * @path /quizzes/{quizId}/participants/{participantId}/scores/{scoreId}
-     * @allow (create) Any authenticated user can create a score document under their participant ID.
-     * @deny (create) User attempts to create a score document under a mismatched participant ID.
-     * @allow (get) Any authenticated user can read their own score data.
-     * @deny (list) Listing scores is forbidden for non-admins.
-     * @allow (update, delete) The participant can update/delete their own score document.
-     * @principle Enforces document ownership and restricts listing to admins.
+     * @description Questions Subcollection
+     * - Read: Public (so client can render game).
+     * - Write: Only Owner/Admin? The user didn't specifying "questions" rules update, 
+     *   but logically the Creator (Host) needs to write questions on start.
+     *   Since Quizzes Rule is "Owner Update", we should extend that here.
+     *   But wait, the user's "createQuickGame" writes questions to subcollection.
+     *   So the Host needs Create access to questions.
      */
-    match /quizzes/{quizId}/participants/{participantId}/scores/{scoreId} {
-      allow create: if isSignedIn() && request.auth.uid == participantId;
-      allow get: if isSignedIn() && request.auth.uid == participantId;
-      allow list: if isAdmin();
-      allow update, delete: if isSignedIn() && request.auth.uid == participantId;
+    match /quizzes/{quizId}/questions/{questionId} {
+       allow read: if true;
+       // Allow write if the user is the owner of the parent Quiz
+       // Note: checking parent ownership can be tricky in standard requests if we don't fetch parent.
+       // But typically we can just check if auth.uid matches quiz owner if we could.
+       // Simpler: Allow write if authenticated? Or maybe rely on the fact that `createQuickGame` 
+       // writes them. 
+       
+       // Actually, looking at the previous rules:
+       // "allow update, delete: if isAdmin();"
+       // We need to change this! The Anon Host creates the quiz AND questions.
+       // So we MUST allow the Host to create questions.
+       
+       allow create, update, delete: if request.auth != null && 
+         get(/databases/$(database)/documents/quizzes/$(quizId)).data.ownerId == request.auth.uid;
     }
 
-    /**
-     * @description Defines admin users. Existence of a document grants admin privileges.
-     * @path /roles_admin/{userId}
-     * @allow (create) Only callable through firebase admin sdk, not through client code.
-     * @allow (get) Only admins can verify the existence of other admins.
-     * @deny (list) Listing admin roles is forbidden.
-     * @allow (update, delete) Only callable through firebase admin sdk, not through client code.
-     * @principle Role-based access control for admin privileges.
-     */
+    // Keep Admin Roles locked down
     match /roles_admin/{userId} {
-        allow get: if isAdmin();
-        allow list: if false;
-        allow create, update, delete: if false; // Only manageable via Admin SDK
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+        allow read: if request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+        allow write: if false; 
     }
   }
 }

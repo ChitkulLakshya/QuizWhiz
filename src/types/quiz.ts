@@ -5,8 +5,11 @@ export interface Quiz {
   title: string;
   description?: string;
   createdBy: string;
+  ownerId?: string; // UID of creator
   createdAt: number;
   status: 'draft' | 'lobby' | 'active' | 'completed';
+  source?: 'manual' | 'ai' | 'api';
+  questions?: Question[]; // Optional: for API/AI generated quizzes that store questions inline
   currentQuestionIndex: number;
   questionStartTime?: number;
   code: string; // 6-digit join code

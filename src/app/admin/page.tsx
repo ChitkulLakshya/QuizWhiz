@@ -8,18 +8,28 @@ import { PlusCircle, PlayCircle, Users, Clock, BarChartHorizontal, Trash2 } from
 import Header from '@/components/header';
 import { getQuizzes, deleteQuiz } from '@/lib/firebase-service';
 import { Quiz } from '@/types/quiz';
+import { onAuthStateChanged } from 'firebase/auth'; // Import auth listener
+import { auth } from '@/firebase'; // Import auth instance
 
 export default function AdminDashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadQuizzes();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loadQuizzes(user.uid);
+      } else {
+        setQuizzes([]);
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadQuizzes = async () => {
+  const loadQuizzes = async (userId: string) => {
     try {
-      const quizData = await getQuizzes();
+      const quizData = await getQuizzes(userId);
       setQuizzes(quizData);
     } catch (error) {
       console.error('Error loading quizzes:', error);
@@ -112,9 +122,9 @@ export default function AdminDashboard() {
                         Control
                       </Link>
                     </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={(e) => handleDelete(quiz.id, e)}
                     >
                       <Trash2 className="h-4 w-4" />

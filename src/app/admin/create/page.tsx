@@ -65,7 +65,7 @@ export default function CreateQuiz() {
 
     try {
       console.log('🚀 Creating quiz...', { title, description, userEmail });
-      const quizId = await createQuiz(title, description, userEmail);
+      const quizId = await createQuiz(title, description, userEmail, auth.currentUser?.uid || "");
 
       console.log('✅ Quiz created with ID:', quizId);
       router.push(`/admin/quiz/${quizId}/edit`);

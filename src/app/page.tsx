@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Users, Trophy, Zap } from 'lucide-react';
 import Header from '@/components/header';
+import TopicGrid from '@/components/topic-grid';
 // import { seedFirstAdmin } from '@/lib/seed-admin';
 
 export default function HomePage() {
@@ -34,8 +35,10 @@ export default function HomePage() {
           </div>
         </section>
 
+        <TopicGrid />
+
         {/* Features Section */}
-        <section className="py-16 px-4 md:px-8">
+        <section className="md:py-20 py-16 bg-white">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
             <div className="grid md:grid-cols-3 gap-8">
@@ -83,7 +86,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="space-y-6">
-              {['Create Your Quiz','Share Join Code','Control the Flow','View Final Results'].map((step, idx) => (
+              {['Create Your Quiz', 'Share Join Code', 'Control the Flow', 'View Final Results'].map((step, idx) => (
                 <div key={idx} className="flex gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">
                     {idx + 1}
