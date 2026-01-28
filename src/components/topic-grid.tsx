@@ -4,9 +4,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Film, Trophy, Globe, BookOpen, Monitor } from 'lucide-react';
-import { createQuickGame } from '@/lib/firebase-service';
+import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles } from 'lucide-react';
+import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
 import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const TOPICS = [
     { id: TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE, name: 'General Knowledge', icon: BookOpen, color: 'bg-blue-100 text-blue-600' },
@@ -19,7 +29,9 @@ const TOPICS = [
 
 export default function TopicGrid() {
     const router = useRouter();
-    const [loading, setLoading] = useState<number | null>(null); // storing category ID
+    const [loading, setLoading] = useState<number | string | null>(null); // storing category ID or 'custom'
+    const [isCustomOpen, setIsCustomOpen] = useState(false);
+    const [customTopic, setCustomTopic] = useState('');
 
     const handleTopicClick = async (categoryId: number, topicName: string) => {
         setLoading(categoryId);
@@ -36,6 +48,22 @@ export default function TopicGrid() {
         } catch (error) {
             console.error('❌ Error starting game:', error);
             alert('Failed to start game. Please try again.');
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleCustomGenerate = async () => {
+        if (!customTopic.trim()) return;
+        setLoading('custom');
+        try {
+            console.log(`✨ Generating AI Quiz: ${customTopic}`);
+            const quizId = await createAIQuickQuiz(customTopic);
+            setIsCustomOpen(false);
+            router.push(`/play/${quizId}`);
+        } catch (error) {
+            console.error('❌ Error generating quiz:', error);
+            alert('Failed to generate quiz. Please try again.');
         } finally {
             setLoading(null);
         }
@@ -71,7 +99,56 @@ export default function TopicGrid() {
                             </CardContent>
                         </Card>
                     ))}
+
+                    {/* Custom Topic Card */}
+                    <Card
+                        className={`cursor-pointer transition-all hover:scale-105 hover:shadow-lg border-2 border-dashed border-indigo-300 bg-indigo-50/50 ${loading === 'custom' ? 'opacity-70' : ''}`}
+                        onClick={() => setIsCustomOpen(true)}
+                    >
+                        <CardContent className="p-6 flex flex-col items-center justify-center aspect-square text-center gap-4">
+                            <div className="p-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+                                {loading === 'custom' ? (
+                                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                ) : (
+                                    <Sparkles className="h-6 w-6" />
+                                )}
+                            </div>
+                            <h3 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                                Custom Topic
+                            </h3>
+                        </CardContent>
+                    </Card>
                 </div>
+
+                <Dialog open={isCustomOpen} onOpenChange={setIsCustomOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Create Your Own</DialogTitle>
+                            <DialogDescription>
+                                Enter any topic, and our AI will generate a unique quiz for you!
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="topic">Topic</Label>
+                                <Input
+                                    id="topic"
+                                    placeholder="e.g. Taylor Swift, Python Programming, 90s Sitcoms"
+                                    value={customTopic}
+                                    onChange={(e) => setCustomTopic(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleCustomGenerate()}
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsCustomOpen(false)}>Cancel</Button>
+                            <Button onClick={handleCustomGenerate} disabled={!customTopic.trim() || loading === 'custom'}>
+                                {loading === 'custom' ? 'Generating...' : 'Generate Quiz'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </section>
     );

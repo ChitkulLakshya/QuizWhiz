@@ -7,25 +7,54 @@ import he from 'he';
  * Found at https://opentdb.com/api_config.php
  */
 export const TRIVIA_CATEGORIES = {
-    GENERAL_KNOWLEDGE: 9, // "General"
-    MOVIES: 11,           // "Movies"
-    SPORTS: 21,           // "Sports"
-    GEOGRAPHY: 22,        // "Geography"
-    HISTORY: 23,          // "History"
+    GENERAL_KNOWLEDGE: 9,
+    MOVIES: 11,
+    MUSIC: 12,
+    TV: 14,
     VIDEO_GAMES: 15,
-    SCIENCE_NATURE: 17,   // "Science"
+    SCIENCE_NATURE: 17,
     COMPUTERS: 18,
-    MYTHOLOGY: 20,
+    SPORTS: 21,
+    GEOGRAPHY: 22,
+    HISTORY: 23,
+    ANIME: 31,
+    CARTOONS: 32,
 };
 
-// Map user-friendly strings to IDs
+// Map user-friendly strings to IDs (Case-insensitive matching will be applied)
 const CATEGORY_MAP: Record<string, number> = {
-    'General': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
-    'Movies': TRIVIA_CATEGORIES.MOVIES,
-    'Sports': TRIVIA_CATEGORIES.SPORTS,
-    'History': TRIVIA_CATEGORIES.HISTORY,
-    'Geography': TRIVIA_CATEGORIES.GEOGRAPHY,
-    'Science': TRIVIA_CATEGORIES.SCIENCE_NATURE,
+    'general': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
+    'gk': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
+
+    'movies': TRIVIA_CATEGORIES.MOVIES,
+    'film': TRIVIA_CATEGORIES.MOVIES,
+    'cinema': TRIVIA_CATEGORIES.MOVIES,
+
+    'music': TRIVIA_CATEGORIES.MUSIC,
+
+    'tv': TRIVIA_CATEGORIES.TV,
+    'television': TRIVIA_CATEGORIES.TV,
+
+    'videogames': TRIVIA_CATEGORIES.VIDEO_GAMES,
+    'games': TRIVIA_CATEGORIES.VIDEO_GAMES,
+
+    'science': TRIVIA_CATEGORIES.SCIENCE_NATURE,
+    'nature': TRIVIA_CATEGORIES.SCIENCE_NATURE,
+
+    'computers': TRIVIA_CATEGORIES.COMPUTERS,
+    'tech': TRIVIA_CATEGORIES.COMPUTERS,
+
+    'sports': TRIVIA_CATEGORIES.SPORTS,
+    'sport': TRIVIA_CATEGORIES.SPORTS,
+
+    'geography': TRIVIA_CATEGORIES.GEOGRAPHY,
+
+    'history': TRIVIA_CATEGORIES.HISTORY,
+
+    'anime': TRIVIA_CATEGORIES.ANIME,
+    'manga': TRIVIA_CATEGORIES.ANIME,
+
+    'cartoons': TRIVIA_CATEGORIES.CARTOONS,
 };
 
 interface OpenTDBQuestion {
@@ -65,9 +94,16 @@ export const fetchQuestionsFromAPI = async (
 ): Promise<Question[]> => {
     try {
         // 1. Resolve Category ID
+        // 1. Resolve Category ID
         let categoryId: number;
         if (typeof category === 'string') {
-            categoryId = CATEGORY_MAP[category] || TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE;
+            const normalizedCategory = category.toLowerCase().trim();
+            categoryId = CATEGORY_MAP[normalizedCategory];
+
+            if (!categoryId) {
+                console.warn(`⚠️ Category "${category}" not found in map. Defaulting to General Knowledge.`);
+                categoryId = TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE;
+            }
         } else {
             categoryId = category;
         }

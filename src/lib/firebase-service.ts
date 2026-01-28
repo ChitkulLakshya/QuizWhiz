@@ -103,6 +103,119 @@ export const createQuickGame = async (
 };
 
 /**
+ * Create a Quick Game using AI
+ * @param topic - Custom user topic
+ */
+export const createAIQuickQuiz = async (topic: string): Promise<string> => {
+  console.log("🤖 createAIQuickQuiz called:", topic);
+
+  try {
+    // 1. Ensure Auth (Anonymous)
+    let user = auth.currentUser;
+    if (!user) {
+      console.log('👤 Signing in anonymously...');
+      const userCred = await signInAnonymously(auth);
+      user = userCred.user;
+    }
+    console.log('✅ User ID:', user.uid);
+
+    // 2. Fetch AI Questions from API
+    console.log("🧠 calling /api/generate-quiz...");
+    const response = await fetch('/api/generate-quiz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Generation failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const aiQuestions = data.questions; // Array of { question, options, correctAnswer }
+
+    // 3. Transform to our Question format
+    // We reuse uuidv4 from existing imports? Need to check imports
+    // Actually, uuidv4 is not imported in this file. 
+    // We can use a simpler ID generator or import one.
+    // Let's rely on Firestore auto-ids for subcollections, but for the local object we need IDs.
+    // We can just use Math.random for now or import uuid.
+
+    // Actually, looking at `createQuickGame`, it imports `fetchQuestionsFromAPI` which handles transformation.
+    // Here we need to transform manually.
+
+    const formattedQuestions: Question[] = aiQuestions.map((q: any, index: number) => {
+      // Shuffle options and find correct index
+      const allOptions = q.options;
+      const correctAnswer = q.correctAnswer;
+
+      // Note: AI usually returns options including correct one. 
+      // We trust the AI output structure valid per schema.
+
+      // We still shuffle to be safe, although AI might randomize.
+      // Let's shuffle.
+      const shuffled = [...allOptions]
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+
+      const correctIndex = shuffled.findIndex(opt => opt === correctAnswer);
+
+      return {
+        id: Math.random().toString(36).substring(2, 15), // Simple client-side ID
+        quizId: "", // Will be set later or unused in doc creation
+        questionText: q.question,
+        options: shuffled,
+        correctOptionIndex: correctIndex >= 0 ? correctIndex : 0, // Fallback if mismatch
+        timeLimit: 20,
+        points: 100,
+        order: index
+      } as Question;
+    });
+
+
+    // 4. Create Quiz Document
+    const quizzesRef = collection(db, "quizzes");
+    const quizDocRef = doc(quizzesRef);
+    const quizId = quizDocRef.id;
+
+    // Update IDs
+    formattedQuestions.forEach(q => q.quizId = quizId);
+
+    const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
+      title: `${topic}`,
+      description: `an AI-generated quiz about ${topic}.`,
+      createdBy: 'AI Gen',
+      ownerId: user.uid,
+      createdAt: serverTimestamp(),
+      status: "lobby", // Ready to join
+      source: 'ai',
+      questions: formattedQuestions,
+      currentQuestionIndex: -1,
+      code: generateQuizCode(),
+    };
+
+    console.log("💾 Saving AI quiz document...");
+    await setDoc(quizDocRef, quizData);
+
+    // 5. Populate Subcollection
+    // We can reuse addQuestions helper
+    // We need to strip IDs because addQuestions might expect Omit<Question, 'id'> or handle it
+    // addQuestions takes Omit<Question, "id" | "quizId">[]
+
+    const questionsPayload = formattedQuestions.map(({ id, quizId, ...rest }) => rest);
+    await addQuestions(quizId, questionsPayload);
+
+    console.log("✅ AI Quick Game created:", quizId);
+    return quizId;
+
+  } catch (error) {
+    console.error("❌ Failed to create AI game:", error);
+    throw error;
+  }
+};
+
+/**
  * Create a new quiz in Firestore
  * @param title - Quiz title
  * @param description - Quiz description
@@ -458,20 +571,24 @@ export const deleteQuestion = async (
  * Join a quiz as a participant
  * @param quizId - The quiz document ID
  * @param name - Participant name
+ * @param userId - Optional explicit User ID (e.g. for Host or logged-in users)
  * @returns Promise resolving to the created participant document ID
  */
 export const joinQuiz = async (
   quizId: string,
-  name: string
+  name: string,
+  userId?: string
 ): Promise<string> => {
   try {
-    console.log("👤 Joining quiz:", { quizId, name });
+    console.log("👤 Joining quiz:", { quizId, name, userId });
 
-    // 1. Check if quiz exists and is in lobby state
-    // We enforce 'lobby' status to prevent users from joining mid-game,
-    // which simplifies the state management and scoring logic.
+    // 1. Check if quiz exists and is in lobby status
+    // Relax check for Host? Maybe host joins even if not in lobby? 
+    // For now, strict 'lobby' rule is fine, as Host should join before starting.
     const quiz = await getQuiz(quizId);
     if (!quiz) throw new Error("Quiz not found");
+    // Allow owner to join anytime? Or stick to lobby. 
+    // It's safer to stick to lobby for now to verify standard flow.
     if (quiz.status !== "lobby") throw new Error("Quiz is not open for joining");
 
     // Type-safe participant data with serverTimestamp
@@ -485,18 +602,28 @@ export const joinQuiz = async (
       answers: [],
     };
 
-    // Type-safe subcollection reference
-    const participantsRef: ParticipantCollection = collection(
+    const participantsRef = collection(
       db,
       "quizzes",
       quizId,
       "participants"
-    ) as ParticipantCollection;
+    );
 
-    const docRef = await addDoc(participantsRef, participantData);
+    let docId = "";
 
-    console.log("✅ Participant joined:", docRef.id);
-    return docRef.id;
+    if (userId) {
+      // Deterministic ID (e.g. Host)
+      const userDocRef = doc(participantsRef, userId);
+      await setDoc(userDocRef, participantData);
+      docId = userId;
+    } else {
+      // Random ID (Guest)
+      const docRef = await addDoc(participantsRef, participantData);
+      docId = docRef.id;
+    }
+
+    console.log("✅ Participant joined:", docId);
+    return docId;
   } catch (error) {
     console.error("❌ Error joining quiz:", error);
     throw error;
@@ -675,6 +802,60 @@ export const endQuiz = async (quizId: string): Promise<void> => {
     console.log("✅ Quiz ended");
   } catch (error) {
     console.error("❌ Error ending quiz:", error);
+    throw error;
+  }
+};
+
+/**
+ * Restart the quiz (Reset to Lobby and clear scores)
+ * @param quizId - The quiz document ID
+ */
+export const restartGame = async (quizId: string): Promise<void> => {
+  try {
+    console.log("🔄 Restarting quiz:", quizId);
+
+    // 1. Auth Check (Client-side check, security rules should also enforce)
+    if (!auth.currentUser) throw new Error("Must be logged in to restart");
+
+    // We fetch the quiz to check owner (and to get ref)
+    const quizRef = doc(db, "quizzes", quizId);
+    const quizSnap = await getDoc(quizRef);
+
+    if (!quizSnap.exists()) throw new Error("Quiz not found");
+    const quizData = quizSnap.data();
+
+    if (quizData.ownerId !== auth.currentUser.uid) {
+      throw new Error("Only the owner can restart the game");
+    }
+
+    // 2. Prepare Batch
+    const batch = writeBatch(db);
+
+    // 3. Reset Quiz Status
+    batch.update(quizRef, {
+      status: 'lobby',
+      currentQuestionIndex: -1, // Reset to -1 for Lobby state (0 would call Q1 immediately if active)
+      stateUpdatedAt: serverTimestamp()
+    });
+
+    // 4. Reset Participants (Scores 0, Answers [])
+    // We need to fetch all participants first
+    const participantsRef = collection(db, "quizzes", quizId, "participants");
+    const participantsSnap = await getDocs(participantsRef);
+
+    participantsSnap.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        totalScore: 0,
+        answers: []
+      });
+    });
+
+    // 5. Commit
+    await batch.commit();
+    console.log("✅ Quiz restarted successfully (Lobby, Scores Reset)");
+
+  } catch (error) {
+    console.error("❌ Error restarting quiz:", error);
     throw error;
   }
 };

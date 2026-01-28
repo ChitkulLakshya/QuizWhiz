@@ -17,7 +17,8 @@ import {
   endQuiz,
   joinQuiz,
   submitAnswer,
-  calculateQuestionResults
+  calculateQuestionResults,
+  restartGame
 } from '@/lib/firebase-service';
 import { auth } from '@/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -34,6 +35,10 @@ import {
   Share2
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import { ShareModal } from '@/components/game/share-modal';
+import { useGameSounds } from '@/hooks/use-game-sounds';
+import { Volume2, VolumeX } from 'lucide-react';
+import { Podium } from '@/components/game/podium';
 
 export default function PlayPage() {
   const params = useParams();
@@ -54,10 +59,14 @@ export default function PlayPage() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [viewState, setViewState] = useState<'lobby' | 'question' | 'results' | 'completed'>('lobby');
   const [hostResults, setHostResults] = useState<QuestionResult | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Derived State
   const isHost = quiz && user ? quiz.ownerId === user.uid : false;
   const currentQuestion = quiz && quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
+
+  // Sound Hooks
+  const { playCorrect, playWrong, playCountdown, playResults, isMuted, toggleMute } = useGameSounds();
 
   // 1. Auth & Data Subscription
   useEffect(() => {
@@ -68,24 +77,10 @@ export default function PlayPage() {
     const unsubQuiz = subscribeToQuiz(quizId, setQuiz);
     const unsubParticipants = subscribeToParticipants(quizId, (parts) => {
       setParticipants(parts);
-      // Update local participant reference if user is logged in
+      // Sync local participant state
       if (auth.currentUser) {
-        const me = parts.find(p => p.id === auth.currentUser?.uid || (p as any).userId === auth.currentUser?.uid);
-        // Note: Our join logic currently uses random IDs or Auto-IDs. 
-        // We need to match by something unique. 
-        // For simplified "Quick Play", we might rely on localStorage or name matching if Auth ID isn't stored on Participant.
-        // However, `joinQuiz` creates a document. If we want to link it to `auth.currentUser`, we should have stored `userId` in participant.
-        // Looking at `firebase-service.ts`: `joinQuiz` stores `name`, `quizId`. It DOES NOT currently store `userId`.
-        // This is a limitation for re-joining. 
-        // For now, valid for a single session.
-
-        // Workaround: We will find participant by name if we can, or just rely on local state for "Have I joined?"
-        // Actually, for the HOST, they don't necessarily need to be a "Participant" to play, 
-        // BUT the requirement says "Host can play along". 
-        // So the Host should JOIN explicitly or be auto-joined?
-        // Let's assume Host needs to click "Join" too if they want to track score, 
-        // OR we auto-join them.
-        // Let's stick to manual join for now for simplicity.
+        const me = parts.find(p => p.id === auth.currentUser?.uid);
+        if (me) setCurrentParticipant(me);
       }
     });
     const unsubQuestions = subscribeToQuestions(quizId, setQuestions);
@@ -97,6 +92,20 @@ export default function PlayPage() {
       unsubQuestions();
     };
   }, [quizId]);
+
+  // 1b. Host Auto-Join & Participant Sync
+  useEffect(() => {
+    // If I am the host, and I'm not in the participants list, auto-join me.
+    if (isHost && user && quiz && quiz.status === 'lobby') {
+      const amIJoined = participants.some(p => p.id === user.uid);
+      if (!amIJoined) {
+        console.log("👑 Host auto-joining...");
+        // Use "Host" as default name, or user's display name
+        joinQuiz(quizId, user.displayName || "Host", user.uid)
+          .catch(console.error);
+      }
+    }
+  }, [isHost, user, quiz, participants]);
 
   // 2. Timer Logic
   useEffect(() => {
@@ -110,6 +119,18 @@ export default function PlayPage() {
       const remaining = Math.max(0, limit - elapsed);
 
       setTimeRemaining(Math.ceil(remaining / 1000));
+
+      // Play Tick Sound for last 5 seconds
+      if (remaining > 0 && remaining <= 5000) {
+        // Using a simple throttle or checking if we crossed a second boundary might be better
+        // But for now, we rely on the interval being 100ms. calling playTick every 100ms is too fast.
+        // Let's only play if we crossed an integer second boundary.
+        const previousSec = Math.ceil((limit - (elapsed - 100)) / 1000);
+        const currentSec = Math.ceil(remaining / 1000);
+        if (currentSec !== previousSec) {
+          playCountdown(); // Re-using playCountdown/playTick
+        }
+      }
 
       // View State Transition: Question -> Results
       // We use a buffer of 1s to allow animations
@@ -141,52 +162,60 @@ export default function PlayPage() {
     }
   }, [isHost, viewState, currentQuestion, quizId]);
 
+  // 5. Sound Triggers
+  useEffect(() => {
+    if (viewState === 'question') {
+      // playCountdown(); // Removed immediate start sound to focus on Ticks? User asked for playCountdown on status change.
+      // Actually, user said: "When status changes to QUESTION -> playCountdown()".
+      playCountdown();
+    } else if (viewState === 'results' || viewState === 'completed') {
+      playResults();
+    }
+  }, [viewState, playCountdown, playResults]);
+
 
   // Handlers
   const handleJoinGame = async (name: string) => {
     if (!name) return;
     try {
-      // We store the ID in localStorage to reclaim session? 
-      // For now, simpler: just create participant.
-      const pId = await joinQuiz(quizId, name);
-      // We need to know "which participant is me".
-      // Since `joinQuiz` returns ID, we should store it.
-      // But `setParticipants` comes from DB.
-      // Let's just track `myParticipantId` state.
-      // Wait, standard join stores it where?
-      // The `join` page usually redirects to `quiz/[id]/play`.
-      // Here, we are ON the play page.
+      // Use User ID as Participant ID if available (enables recovery)
+      const pId = await joinQuiz(quizId, name, user?.uid);
 
-      // We'll just define that if I have a participant ID, I am joined.
-      // For the "Host Play Along", they trigger this manually.
-      setCurrentParticipant({ id: pId, name, totalScore: 0, answers: [] } as any); // Optimistic
+      // We rely on the subscription to update `participants` and `currentParticipant`
+      // But we can set it optimistically/ensure it's set
+      if (!currentParticipant) {
+        setCurrentParticipant({ id: pId, name, totalScore: 0, answers: [] } as any);
+      }
     } catch (error) {
       console.error(error);
       toast({ variant: 'destructive', title: 'Failed to join' });
     }
   };
 
-  const handleSubmitAnswer = async (option: string) => {
+  const handleSubmitAnswer = async (option: string, index: number) => {
     if (!currentParticipant || !currentQuestion || isAnswerSubmitted) return;
 
     setSelectedAnswer(option);
     setIsAnswerSubmitted(true);
 
-    const isCorrect = option === currentQuestion.questions?.[currentQuestion.correctOptionIndex]?.toString()
-      || questions[quiz!.currentQuestionIndex].options[questions[quiz!.currentQuestionIndex].correctOptionIndex] === option;
-
-    // Fix: logic to match option string
     const actualCorrectOption = currentQuestion.options[currentQuestion.correctOptionIndex];
     const correct = option === actualCorrectOption;
+
+    if (correct) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
 
     try {
       await submitAnswer(quizId, currentParticipant.id, {
         questionId: currentQuestion.id,
-        answer: option,
+        selectedOptionIndex: index,
+        answeredAt: Date.now(),
         isCorrect: correct,
         pointsEarned: correct ? currentQuestion.points : 0,
-        timeSpent: currentQuestion.timeLimit - timeRemaining
-      });
+        timeToAnswer: (currentQuestion.timeLimit - timeRemaining) * 1000 // Convert to ms
+      }); // Cast to ParticipantAnswer is implicit if shape matches
     } catch (error) {
       console.error(error);
       // Revert optimistic if needed, but usually fine
@@ -212,6 +241,17 @@ export default function PlayPage() {
     }
   };
 
+  const handleRestart = async () => {
+    try {
+      await restartGame(quizId);
+      toast({ title: "Game Restarted!", description: "Scores have been reset." });
+      // No need to navigate, the subscription will auto-update viewState to 'lobby'
+    } catch (error) {
+      console.error("Restart failed:", error);
+      toast({ variant: "destructive", title: "Failed to restart", description: "Only the host can restart." });
+    }
+  };
+
   // Render Helpers
   if (!quiz) return <div className="h-screen flex items-center justify-center">Loading Game Room...</div>;
 
@@ -220,6 +260,12 @@ export default function PlayPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <Header />
+
+      <div className="absolute top-20 right-4 z-10">
+        <Button variant="ghost" size="icon" onClick={toggleMute} className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white">
+          {isMuted ? <VolumeX className="h-5 w-5 text-slate-500" /> : <Volume2 className="h-5 w-5 text-indigo-600" />}
+        </Button>
+      </div>
 
       <main className="flex-1 container max-w-4xl mx-auto p-4 pb-32">
         {/* LOBBY VIEW */}
@@ -314,7 +360,7 @@ export default function PlayPage() {
                   <button
                     key={idx}
                     disabled={isAnswerSubmitted || !currentParticipant}
-                    onClick={() => handleSubmitAnswer(option)}
+                    onClick={() => handleSubmitAnswer(option, idx)}
                     className={`
                                             p-6 rounded-xl text-left transition-all transform hover:scale-[1.02] active:scale-95
                                             shadow-md border-2
@@ -375,12 +421,11 @@ export default function PlayPage() {
 
         {/* COMPLETED VIEW */}
         {viewState === 'completed' && (
-          <div className="flex flex-col items-center justify-center py-20 space-y-6">
-            <Trophy className="h-24 w-24 text-yellow-400 animate-bounce" />
-            <h1 className="text-4xl font-bold">Quiz Completed!</h1>
-            <p className="text-xl text-muted-foreground">Thanks for playing!</p>
-            <Button onClick={() => router.push('/')} size="lg">Back to Home</Button>
-          </div>
+          <Podium
+            participants={participants}
+            isHost={isHost}
+            onRestart={handleRestart}
+          />
         )}
 
       </main>
@@ -397,6 +442,16 @@ export default function PlayPage() {
             </div>
 
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsShareModalOpen(true)}
+                title="Invite Friends"
+                className="shrink-0"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+
               {viewState === 'lobby' && (
                 <Button onClick={hostStartGame} size="lg" className="bg-green-600 hover:bg-green-700 text-white shadow-lg w-full md:w-auto">
                   <Play className="mr-2 h-4 w-4" /> Start Game
@@ -409,6 +464,7 @@ export default function PlayPage() {
                 </Button>
               )}
 
+
               {viewState === 'results' && (
                 <Button onClick={hostNextQuestion} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg w-full md:w-auto">
                   Next Question <SkipForward className="ml-2 h-4 w-4" />
@@ -417,6 +473,15 @@ export default function PlayPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {quiz && (
+        <ShareModal
+          quizId={quizId}
+          quizCode={quiz.code}
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+        />
       )}
     </div>
   );
