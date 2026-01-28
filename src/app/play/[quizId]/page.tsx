@@ -39,6 +39,7 @@ import { ShareModal } from '@/components/game/share-modal';
 import { useGameSounds } from '@/hooks/use-game-sounds';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Podium } from '@/components/game/podium';
+import { ResultsChart } from '@/components/game/results-chart';
 
 export default function PlayPage() {
   const params = useParams();
@@ -60,6 +61,7 @@ export default function PlayPage() {
   const [viewState, setViewState] = useState<'lobby' | 'question' | 'results' | 'completed'>('lobby');
   const [hostResults, setHostResults] = useState<QuestionResult | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Double-click protection
 
   // Derived State
   const isHost = quiz && user ? quiz.ownerId === user.uid : false;
@@ -101,7 +103,7 @@ export default function PlayPage() {
       if (!amIJoined) {
         console.log("👑 Host auto-joining...");
         // Use "Host" as default name, or user's display name
-        joinQuiz(quizId, user.displayName || "Host", user.uid)
+        joinQuiz(quizId, user.displayName || "Host")
           .catch(console.error);
       }
     }
@@ -184,12 +186,12 @@ export default function PlayPage() {
     if (!name) return;
     try {
       // Use User ID as Participant ID if available (enables recovery)
-      const pId = await joinQuiz(quizId, name, user?.uid);
+      const pId = await joinQuiz(quizId, name);
 
       // We rely on the subscription to update `participants` and `currentParticipant`
       // But we can set it optimistically/ensure it's set
       if (!currentParticipant) {
-        setCurrentParticipant({ id: pId, name, totalScore: 0, answers: [] } as any);
+        setCurrentParticipant({ id: pId, name, totalScore: 0, currentStreak: 0, answers: {}, quizId } as any);
       }
     } catch (error) {
       console.error(error);
@@ -213,36 +215,47 @@ export default function PlayPage() {
     }
 
     try {
-      await submitAnswer(quizId, currentParticipant.id, {
-        questionId: currentQuestion.id,
-        selectedOptionIndex: index,
-        answeredAt: Date.now(),
-        isCorrect: correct,
-        pointsEarned: correct ? currentQuestion.points : 0,
-        timeToAnswer: (currentQuestion.timeLimit - timeRemaining) * 1000 // Convert to ms
-      }); // Cast to ParticipantAnswer is implicit if shape matches
+      const pointsEarned = correct ? currentQuestion.points : 0;
+      await submitAnswer(
+        quizId,
+        currentParticipant.id,
+        quiz?.currentQuestionIndex ?? 0,
+        index,
+        pointsEarned
+      );
     } catch (error) {
       console.error(error);
-      // Revert optimistic if needed, but usually fine
     }
   };
 
   // Host Actions
   const hostStartGame = async () => {
     if (questions.length === 0) return toast({ title: "No questions loaded!" });
-    await updateQuizStatus(quizId, 'lobby'); // Ensure lobby state
-    await startQuestion(quizId, 0);
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
+      await updateQuizStatus(quizId, 'lobby');
+      await startQuestion(quizId, 0);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const hostNextQuestion = async () => {
     if (!quiz) return;
-    const nextIdx = quiz.currentQuestionIndex + 1;
-    if (nextIdx >= questions.length) {
-      await endQuiz(quizId);
-    } else {
-      await startQuestion(quizId, nextIdx);
-      setIsAnswerSubmitted(false);
-      setSelectedAnswer(null);
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const nextIdx = quiz.currentQuestionIndex + 1;
+      if (nextIdx >= questions.length) {
+        await endQuiz(quizId);
+      } else {
+        await startQuestion(quizId, nextIdx);
+        setIsAnswerSubmitted(false);
+        setSelectedAnswer(null);
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -405,22 +418,38 @@ export default function PlayPage() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-muted-foreground text-sm">Your Points</p>
-                  <p className="text-3xl font-bold text-indigo-600">
-                    {currentParticipant ? currentParticipant.totalScore : 0}
-                  </p>
+            {/* Results Chart for Host */}
+            {isHost && quiz && (
+              <Card className="mt-8">
+                <CardContent className="p-6">
+                  <ResultsChart
+                    participants={participants}
+                    question={currentQuestion}
+                    questionIndex={quiz.currentQuestionIndex}
+                  />
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-muted-foreground text-sm">Rank</p>
-                  <p className="text-3xl font-bold text-slate-700">#1</p>
-                </CardContent>
-              </Card>
-            </div>
+            )}
+
+            {/* Player Stats (only for non-hosts) */}
+            {!isHost && (
+              <div className="grid grid-cols-2 gap-4 mt-8">
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-muted-foreground text-sm">Your Points</p>
+                    <p className="text-3xl font-bold text-indigo-600">
+                      {currentParticipant ? currentParticipant.totalScore : 0}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-muted-foreground text-sm">Rank</p>
+                    <p className="text-3xl font-bold text-slate-700">#1</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         )}
 
@@ -458,8 +487,8 @@ export default function PlayPage() {
               </Button>
 
               {viewState === 'lobby' && (
-                <Button onClick={hostStartGame} size="lg" className="bg-green-600 hover:bg-green-700 text-white shadow-lg w-full md:w-auto">
-                  <Play className="mr-2 h-4 w-4" /> Start Game
+                <Button onClick={hostStartGame} disabled={isProcessing} size="lg" className="bg-green-600 hover:bg-green-700 text-white shadow-lg w-full md:w-auto">
+                  <Play className="mr-2 h-4 w-4" /> {isProcessing ? "Starting..." : "Start Game"}
                 </Button>
               )}
 
@@ -471,8 +500,8 @@ export default function PlayPage() {
 
 
               {viewState === 'results' && (
-                <Button onClick={hostNextQuestion} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg w-full md:w-auto">
-                  Next Question <SkipForward className="ml-2 h-4 w-4" />
+                <Button onClick={hostNextQuestion} disabled={isProcessing} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg w-full md:w-auto">
+                  {isProcessing ? "Loading..." : "Next Question"} <SkipForward className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>

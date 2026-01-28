@@ -33,17 +33,10 @@ export interface Participant {
   joinedAt: number;
   totalScore: number;
   currentStreak: number;
-  answers: ParticipantAnswer[];
+  answers: Record<string, number>; // questionIndex -> selectedOptionIndex
 }
 
-export interface ParticipantAnswer {
-  questionId: string;
-  selectedOptionIndex: number;
-  answeredAt: number;
-  isCorrect: boolean;
-  pointsEarned: number;
-  timeToAnswer: number; // milliseconds
-}
+// ParticipantAnswer interface removed as we use a simple map now
 
 export interface QuestionResult {
   questionId: string;

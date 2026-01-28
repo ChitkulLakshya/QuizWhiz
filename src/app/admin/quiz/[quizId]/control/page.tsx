@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Header from '@/components/header';
-import { 
-  subscribeToQuiz, 
-  subscribeToParticipants, 
+import {
+  subscribeToQuiz,
+  subscribeToParticipants,
   subscribeToQuestions,
   updateQuizStatus,
   startQuestion,
@@ -29,8 +29,8 @@ export default function QuizControl() {
   const [currentResults, setCurrentResults] = useState<QuestionResult | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
 
-  const joinUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/join?code=${quiz?.code}` 
+  const joinUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/join?code=${quiz?.code}`
     : '';
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function QuizControl() {
 
   const handleShowResults = async () => {
     if (!quiz || quiz.currentQuestionIndex < 0) return;
-    
+
     const currentQuestion = questions[quiz.currentQuestionIndex];
     const results = await calculateQuestionResults(quizId, currentQuestion.id);
     setCurrentResults(results);
@@ -89,7 +89,7 @@ export default function QuizControl() {
     if (!quiz) return;
 
     const nextIndex = quiz.currentQuestionIndex + 1;
-    
+
     if (nextIndex >= questions.length) {
       await endQuiz(quizId);
     } else {
@@ -110,7 +110,7 @@ export default function QuizControl() {
 
   // Calculate how many participants have answered the current question
   const answeredCount = currentQuestion && participants.length > 0
-    ? participants.filter(p => p.answers.some(a => a.questionId === currentQuestion.id)).length
+    ? participants.filter(p => String(quiz.currentQuestionIndex) in p.answers).length
     : 0;
 
   return (
@@ -250,16 +250,15 @@ export default function QuizControl() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-xl font-semibold">{currentQuestion.questionText}</p>
-                    
+
                     <div className="space-y-2">
                       {currentQuestion.options.map((option, index) => (
                         <div
                           key={index}
-                          className={`p-4 rounded-lg ${
-                            currentResults && index === currentQuestion.correctOptionIndex
+                          className={`p-4 rounded-lg ${currentResults && index === currentQuestion.correctOptionIndex
                               ? 'bg-green-100 dark:bg-green-900 border-2 border-green-500'
                               : 'bg-muted'
-                          }`}
+                            }`}
                         >
                           <div className="flex justify-between items-center">
                             <span className="font-semibold">
@@ -267,8 +266,8 @@ export default function QuizControl() {
                             </span>
                             {currentResults && (
                               <span className="text-lg font-bold">
-                                {currentResults.optionCounts[index]} 
-                                {currentResults.totalResponses > 0 && 
+                                {currentResults.optionCounts[index]}
+                                {currentResults.totalResponses > 0 &&
                                   ` (${Math.round(currentResults.optionCounts[index] / currentResults.totalResponses * 100)}%)`
                                 }
                               </span>

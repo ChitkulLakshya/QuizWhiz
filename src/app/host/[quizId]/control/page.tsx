@@ -116,7 +116,7 @@ export default function HostQuizControl() {
 
     // Calculate how many participants have answered the current question
     const answeredCount = currentQuestion && participants.length > 0
-        ? participants.filter(p => p.answers.some(a => a.questionId === currentQuestion.id)).length
+        ? participants.filter(p => String(quiz.currentQuestionIndex) in p.answers).length
         : 0;
 
     return (
@@ -289,8 +289,8 @@ export default function HostQuizControl() {
                                                 <div
                                                     key={index}
                                                     className={`p-4 rounded-lg border-2 transition-all ${currentResults && index === currentQuestion.correctOptionIndex
-                                                            ? 'bg-green-50 border-green-500 shadow-sm'
-                                                            : 'bg-white border-transparent shadow-sm hover:border-slate-200'
+                                                        ? 'bg-green-50 border-green-500 shadow-sm'
+                                                        : 'bg-white border-transparent shadow-sm hover:border-slate-200'
                                                         }`}
                                                 >
                                                     <div className="flex justify-between items-center">

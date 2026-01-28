@@ -24,12 +24,13 @@ import {
   type FieldValue,
   writeBatch,
   setDoc,
+  increment,
 } from "firebase/firestore";
 
 import { db, auth } from "@/firebase";
 import { signInAnonymously } from "firebase/auth";
 import { fetchQuestionsFromAPI } from "./trivia-service";
-import { Quiz, Question, Participant, ParticipantAnswer, LeaderboardEntry, QuestionResult } from "@/types/quiz";
+import { Quiz, Question, Participant, LeaderboardEntry, QuestionResult } from "@/types/quiz";
 
 // Type helpers for Firestore operations
 type QuizCollection = CollectionReference<Omit<Quiz, "id">>;
@@ -604,7 +605,7 @@ export const joinQuiz = async (
       joinedAt: serverTimestamp(),
       totalScore: 0,
       currentStreak: 0,
-      answers: [],
+      answers: {},
     };
 
     const participantsRef = collection(
@@ -842,7 +843,7 @@ export const restartGame = async (quizId: string): Promise<void> => {
       batch.update(doc.ref, {
         totalScore: 0,
         currentStreak: 0,
-        answers: []
+        answers: {}
       });
     });
 
@@ -865,10 +866,12 @@ export const restartGame = async (quizId: string): Promise<void> => {
 export const submitAnswer = async (
   quizId: string,
   participantId: string,
-  answer: ParticipantAnswer
+  questionIndex: number,
+  selectedOptionIndex: number,
+  pointsEarned: number
 ): Promise<void> => {
   try {
-    console.log("📝 Submitting answer:", { quizId, participantId, answer });
+    console.log("📝 Submitting answer:", { quizId, participantId, questionIndex });
 
     const participantRef = doc(
       db,
@@ -876,36 +879,15 @@ export const submitAnswer = async (
       quizId,
       "participants",
       participantId
-    ) as DocumentReference<Participant>;
+    );
 
-    // We need to atomically update the answers array and totalScore
-    // Ideally use a transaction, but for simplicity we'll read-modify-write here
-    // or use arrayUnion if we trust the client. 
-    // Since we need to update score too, let's use a transaction or just get/update.
-    // NOTE: In a production app, scoring should happen in a Cloud Function
-    // to prevent clients from manipulating their score or 'isCorrect' status.
-
-    const participantSnap = await getDoc(participantRef);
-    if (!participantSnap.exists()) throw new Error("Participant not found");
-
-    const participant = participantSnap.data();
-
-    // Check if already answered
-    const alreadyAnswered = participant.answers.some(a => a.questionId === answer.questionId);
-    if (alreadyAnswered) {
-      console.warn("⚠️ Participant already answered this question");
-      return; // Idempotency: just return success if already answered
-    }
-
-    const newScore = participant.totalScore + answer.pointsEarned;
-    const newAnswers = [...participant.answers, answer];
-
+    // Atomic update using dot notation for the Map
     await updateDoc(participantRef, {
-      answers: newAnswers,
-      totalScore: newScore
+      [`answers.${questionIndex}`]: selectedOptionIndex,
+      totalScore: increment(pointsEarned)
     });
 
-    console.log("✅ Answer submitted");
+    console.log("✅ Answer submitted (atomic)");
   } catch (error) {
     console.error("❌ Error submitting answer:", error);
     throw error;
@@ -921,27 +903,28 @@ export const submitAnswer = async (
 export const calculateQuestionResults = async (
   quizId: string,
   questionId: string
-): Promise<QuestionResult> => {
+): Promise<QuestionResult> => { // Modified to tolerate missing questionId search if needed, but we used ID search.
+  // Actually, we store answers by INDEX now. So we need the index of this questionId.
   try {
-    console.log("📊 Calculating results:", { quizId, questionId });
-
-    const participants = await getParticipants(quizId);
     const questions = await getQuestions(quizId);
-    const question = questions.find(q => q.id === questionId);
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+    const question = questions[questionIndex];
 
     if (!question) throw new Error("Question not found");
 
-    // Aggregating results on the client side for the Admin view.
-    // This avoids the need for a separate "results" collection or heavy backend logic
-    // for this simple use case.
+    const participants = await getParticipants(quizId);
+
+    // Aggregating results
     const optionCounts = new Array(question.options.length).fill(0);
     let totalResponses = 0;
 
     participants.forEach(p => {
-      const answer = p.answers.find(a => a.questionId === questionId);
-      if (answer) {
-        if (answer.selectedOptionIndex >= 0 && answer.selectedOptionIndex < optionCounts.length) {
-          optionCounts[answer.selectedOptionIndex]++;
+      // Look up by Index
+      const selectedIdx = p.answers[String(questionIndex)];
+
+      if (typeof selectedIdx === 'number') {
+        if (selectedIdx >= 0 && selectedIdx < optionCounts.length) {
+          optionCounts[selectedIdx]++;
         }
         totalResponses++;
       }
@@ -970,14 +953,31 @@ export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]
     console.log("🏆 Fetching leaderboard:", quizId);
 
     const participants = await getParticipants(quizId);
+    // Needed to calculate correct answers count? 
+    // For MVP, we can skip correctAnswers count if it's expensive, OR fetch questions.
+    // Let's just return 0 for correctAnswers for now to save a read, or fix it properly.
+    // The previous implementation filtered `isCorrect`. We don't have that valid anymore.
+    // Let's ESTIMATE or Fetch. Fetching is safer.
+    const questions = await getQuestions(quizId);
 
-    const leaderboard: LeaderboardEntry[] = participants.map(p => ({
-      participantId: p.id,
-      name: p.name,
-      totalScore: p.totalScore,
-      correctAnswers: p.answers.filter(a => a.isCorrect).length,
-      rank: 0 // Will calculate below
-    }));
+    const leaderboard: LeaderboardEntry[] = participants.map(p => {
+      let correctCount = 0;
+      // Iterate over answer keys
+      Object.entries(p.answers).forEach(([qIdxStr, aIdx]) => {
+        const qIdx = parseInt(qIdxStr);
+        if (questions[qIdx] && questions[qIdx].correctOptionIndex === aIdx) {
+          correctCount++;
+        }
+      });
+
+      return {
+        participantId: p.id,
+        name: p.name,
+        totalScore: p.totalScore,
+        correctAnswers: correctCount,
+        rank: 0
+      };
+    });
 
     // Sort by score desc
     leaderboard.sort((a, b) => b.totalScore - a.totalScore);

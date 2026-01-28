@@ -53,7 +53,7 @@ export function QuizForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
-  
+
   // React state for form fields and loading
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -94,15 +94,15 @@ export function QuizForm() {
       });
     }
   }, [generateState, append, toast]);
-  
+
   const createQuizFormRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('🟢 handleSubmit called');
-    
+
     setLoading(true);
-    
+
     try {
       // Validate form data
       const formData = form.getValues();
@@ -111,12 +111,12 @@ export function QuizForm() {
       }
 
       console.log('📝 Form data validated:', { title: formData.title, questionCount: formData.questions.length });
-      
+
       // 1. Create Quiz Document
       console.log('🚀 Creating quiz document...');
       // Note: We don't have user email here easily without auth context, using placeholder or passing it if available.
       // For now, we'll use a placeholder or empty string as the service expects a string.
-      const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous');
+      const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous', 'anonymous-user');
       console.log('✅ Quiz created with ID:', quizId);
 
       // 2. Prepare Questions for Batch Write
@@ -124,12 +124,12 @@ export function QuizForm() {
       const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = formData.questions.map((q, i) => {
         const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
         return {
-            questionText: q.question,
-            options: q.options,
-            correctOptionIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-            timeLimit: q.timeLimit,
-            points: 100, // Default points
-            order: i
+          questionText: q.question,
+          options: q.options,
+          correctOptionIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+          timeLimit: q.timeLimit,
+          points: 100, // Default points
+          order: i
         };
       });
 
@@ -141,12 +141,12 @@ export function QuizForm() {
       form.reset();
       setTitle('');
       setDescription('');
-      
+
       toast({
         title: 'Success!',
         description: 'Quiz created successfully.',
       });
-      
+
       // Navigate to the quiz lobby ONLY after successful Firestore write
       router.push(`/quiz/${quizId}/lobby`);
     } catch (error) {
@@ -154,7 +154,7 @@ export function QuizForm() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('❌ Error creating quiz:', errorMessage);
       console.error('🔍 Error details:', error);
-      
+
       toast({
         title: 'Error',
         description: `Failed to create quiz: ${errorMessage}`,
@@ -166,7 +166,7 @@ export function QuizForm() {
       console.log('🔵 Loading state reset');
     }
   };
-  
+
   const aiFormRef = React.useRef<HTMLFormElement>(null);
 
   return (
@@ -205,25 +205,25 @@ export function QuizForm() {
             </div>
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-               <Select name="numberOfQuestions" defaultValue="10">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1,2,3,4,5,10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <Select name="numberOfQuestions" defaultValue="10">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-             <Button 
-                type="submit" 
-                className="w-full sm:w-auto"
-                disabled={form.formState.isSubmitting}
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={form.formState.isSubmitting}
             >
-                <Sparkles className="mr-2" />
-                Generate
-             </Button>
+              <Sparkles className="mr-2" />
+              Generate
+            </Button>
           </form>
-           {generateState.status === 'error' && <p className="text-sm font-medium text-destructive mt-2">{generateState.message}</p>}
+          {generateState.status === 'error' && <p className="text-sm font-medium text-destructive mt-2">{generateState.message}</p>}
         </CardContent>
       </Card>
       <Form {...form}>
@@ -240,8 +240,8 @@ export function QuizForm() {
                   <FormItem>
                     <FormLabel>Quiz Title</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="e.g., Fun Facts Friday" 
+                      <Input
+                        placeholder="e.g., Fun Facts Friday"
                         {...field}
                         value={title}
                         onChange={(e) => {
@@ -257,7 +257,7 @@ export function QuizForm() {
               <FormItem className="mt-4">
                 <FormLabel>Description (Optional)</FormLabel>
                 <FormControl>
-                  <Input 
+                  <Input
                     placeholder="Enter quiz description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -289,24 +289,24 @@ export function QuizForm() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.from({ length: 4 }).map((_, optionIndex) => (
-                        <FormField
-                            key={optionIndex}
-                            control={form.control}
-                            name={`questions.${index}.options.${optionIndex}`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Option {optionIndex + 1}</FormLabel>
-                                <FormControl>
-                                <Input placeholder={`Option ${optionIndex + 1}`} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    ))}
+                  {Array.from({ length: 4 }).map((_, optionIndex) => (
+                    <FormField
+                      key={optionIndex}
+                      control={form.control}
+                      name={`questions.${index}.options.${optionIndex}`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Option {optionIndex + 1}</FormLabel>
+                          <FormControl>
+                            <Input placeholder={`Option ${optionIndex + 1}`} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
                 </div>
 
                 <FormField
@@ -315,20 +315,20 @@ export function QuizForm() {
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel>Correct Answer</FormLabel>
-                       <FormControl>
+                      <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
                           value={field.value}
                           className="grid grid-cols-1 md:grid-cols-2 gap-4"
                         >
                           {form.watch(`questions.${index}.options`).map((option, optionIndex) => (
-                             <FormItem key={optionIndex} className="flex items-center space-x-3 space-y-0 rounded-md border p-4 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
-                                <FormControl>
-                                    <RadioGroupItem value={option || ''} disabled={!option} className="text-primary-foreground" />
-                                </FormControl>
-                                <FormLabel className="font-normal w-full cursor-pointer">
-                                    {option || `Option ${optionIndex+1}`}
-                                </FormLabel>
+                            <FormItem key={optionIndex} className="flex items-center space-x-3 space-y-0 rounded-md border p-4 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                              <FormControl>
+                                <RadioGroupItem value={option || ''} disabled={!option} className="text-primary-foreground" />
+                              </FormControl>
+                              <FormLabel className="font-normal w-full cursor-pointer">
+                                {option || `Option ${optionIndex + 1}`}
+                              </FormLabel>
                             </FormItem>
                           ))}
                         </RadioGroup>
@@ -337,7 +337,7 @@ export function QuizForm() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name={`questions.${index}.timeLimit`}
                   render={({ field }) => (
@@ -353,13 +353,13 @@ export function QuizForm() {
               </CardContent>
             </Card>
           ))}
-          
+
           <Button type="button" variant="outline" onClick={() => append({ question: '', options: ['', '', '', ''], correctAnswer: '', timeLimit: 30 })}>
             <PlusCircle className="mr-2" /> Add Question Manually
           </Button>
 
           <Separator />
-          
+
           <div className="flex justify-end">
             <Button type="submit" size="lg" disabled={loading || !form.formState.isValid}>
               {loading ? (
