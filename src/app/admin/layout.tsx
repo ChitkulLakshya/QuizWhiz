@@ -25,16 +25,28 @@ export default function AdminLayout({
       // Verify admin status
       if (user.email) {
         try {
-          const isAdmin = await isAdminEmail(user.email);
+          // Check admin status
+          let isAdmin = await isAdminEmail(user.email);
+
           if (!isAdmin) {
-            console.warn('⛔ User is not admin. Redirecting to login...');
+            // Retry once after a brief delay to handle eventual consistency if user was just created
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            isAdmin = await isAdminEmail(user.email);
+          }
+
+          if (!isAdmin) {
+            console.warn(`⛔ User ${user.email} is not admin after retry. Redirecting to login...`);
             await auth.signOut();
             router.push('/login');
             return;
           }
         } catch (error) {
           console.error('Error verifying admin status:', error);
-          // Optionally handle error, maybe allow retry or redirect
+          // If error (e.g. network), we might not want to kick them out immediately, 
+          // but for security we usually should. Let's redirect to login with error.
+          await auth.signOut();
+          router.push('/login');
+          return;
         }
       } else {
         // No email, can't verify

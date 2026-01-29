@@ -1,31 +1,19 @@
 import { google } from 'googleapis';
 
-interface UserData {
-    name: string;
-    email: string;
-    phone: string;
-    date: string;
-}
-
-/**
- * Logs user data to a Google Sheet.
- * 
- * @param userData Object containing user details.
- */
-export async function logUserToSheet(userData: UserData): Promise<void> {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    // Handle newlines in private key which might be escaped in .env
-    const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-    if (!spreadsheetId || !clientEmail || !privateKey) {
-        throw new Error('Missing Google Sheets credentials in environment variables.');
-    }
-
+export const logUserToSheet = async (userData: any) => {
     try {
+        // --- KEY FIX START ---
+        // 1. Get the key
+        const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "";
+
+        // 2. FORCE correct formatting
+        // This turns "Line1\nLine2" into actual separate lines
+        const privateKey = rawKey.replace(/\\n/g, '\n');
+        // --- KEY FIX END ---
+
         const auth = new google.auth.GoogleAuth({
             credentials: {
-                client_email: clientEmail,
+                client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
                 private_key: privateKey,
             },
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -33,23 +21,28 @@ export async function logUserToSheet(userData: UserData): Promise<void> {
 
         const sheets = google.sheets({ version: 'v4', auth });
 
+        // Prepare the row data
         const request = {
-            spreadsheetId,
-            range: 'Sheet1!A:D', // Adjust Sheet name if necessary, appends to columns A-D
+            spreadsheetId: process.env.GOOGLE_SHEET_ID,
+            range: 'Sheet1!A:D', // Adjust "Sheet1" if your tab is named differently
             valueInputOption: 'USER_ENTERED',
-            insertDataOption: 'INSERT_ROWS',
             requestBody: {
                 values: [
-                    [userData.name, userData.email, userData.phone, userData.date]
+                    [
+                        userData.name,
+                        userData.email,
+                        userData.phone || 'N/A', // Handle missing phone
+                        new Date().toLocaleString()
+                    ]
                 ],
             },
         };
 
         const response = await sheets.spreadsheets.values.append(request);
-        console.log('User logged to sheet, response:', response.status);
+        console.log('✅ User logged to sheet. Status:', response.status);
 
     } catch (error) {
-        console.error('Error logging user to sheet:', error);
-        throw error;
+        console.error('❌ Sheet Logging Failed:', error);
+        // Don't throw error here, so the user login doesn't crash if sheets fail
     }
-}
+};
