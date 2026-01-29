@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb; margin: 0; padding: 0; color: #1f2937; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-top: 40px; border: 1px solid #e5e7eb; }
+    .header { background-color: #111827; padding: 32px 24px; text-align: center; }
+    .logo { font-size: 28px; font-weight: bold; color: #ffffff; }
+    .content { padding: 40px 32px; text-align: center; }
+    .welcome-img { font-size: 48px; margin-bottom: 16px; display: block; }
+    .btn { display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: 600; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin-top: 24px; }
+    .features-grid { text-align: left; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; }
+    .feature-row { margin-bottom: 16px; display: table; width: 100%; }
+    .icon { display: table-cell; width: 40px; vertical-align: top; font-size: 20px; }
+    .text { display: table-cell; vertical-align: top; }
+    .footer { text-align: center; font-size: 12px; color: #6b7280; padding: 24px; border-top: 1px solid #e5e7eb; background-color: #f9fafb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">QuizWhiz</div>
+    </div>
+    <div class="content">
+      <span class="welcome-img">🎉</span>
+      <h1 style="margin-top: 0; color: #111827;">Welcome, {{USER_NAME}}!</h1>
+      <p style="font-size: 18px; color: #4b5563; line-height: 1.6;">We're thrilled to have you on board. QuizWhiz is the ultimate platform for creating and hosting engaging, real-time quizzes.</p>
+      
+      <div class="features-grid">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #374151;">What you can do now:</h3>
+        
+        <div class="feature-row">
+          <div class="icon">✨</div>
+          <div class="text"><strong>AI Generation:</strong> Create quizzes on any topic in seconds using artificial intelligence.</div>
+        </div>
+        
+        <div class="feature-row">
+          <div class="icon">🏆</div>
+          <div class="text"><strong>Host Live Games:</strong> Compete with friends or students in real-time with live updates.</div>
+        </div>
+        
+        <div class="feature-row">
+          <div class="icon">📊</div>
+          <div class="text"><strong>Track Progress:</strong> View detailed leaderboards and analytics after every game.</div>
+        </div>
+      </div>
+
+      <a href="https://quiz-whiz-indol.vercel.app/admin/create" class="btn">Create Your First Quiz</a>
+    </div>
+    <div class="footer">
+      &copy; 2026 QuizWhiz. All rights reserved. <br>
+      You are receiving this email because you signed up for QuizWhiz.
+    </div>
+  </div>
+</body>
+</html>

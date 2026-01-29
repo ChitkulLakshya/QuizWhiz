@@ -54,3 +54,6 @@ ui-debug.log
 
 # Genkit
 .genkit/
+
+# Google Credentials
+google-credentials.json

@@ -1,23 +1,19 @@
 import { google } from 'googleapis';
 
-export const logUserToSheet = async (userData: any) => {
-    try {
-        // --- KEY FIX START ---
-        // 1. Get the key
-        const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "";
+import path from 'path';
 
-        // 2. FORCE correct formatting
-        // This turns "Line1\nLine2" into actual separate lines
-        const privateKey = rawKey.replace(/\\n/g, '\n');
-        // --- KEY FIX END ---
+export const logUserToSheet = async (userData: any) => {
+    console.log(`📢 TRIGGERED: logUserToSheet called for ${userData.email}`);
+    try {
+        const keyFilePath = path.join(process.cwd(), 'google-credentials.json');
+        console.log(`📂 Key file path resolved to: ${keyFilePath}`);
 
         const auth = new google.auth.GoogleAuth({
-            credentials: {
-                client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-                private_key: privateKey,
-            },
+            keyFile: keyFilePath,
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
+
+        console.log("🔐 Auth successful, appending...");
 
         const sheets = google.sheets({ version: 'v4', auth });
 
@@ -39,10 +35,10 @@ export const logUserToSheet = async (userData: any) => {
         };
 
         const response = await sheets.spreadsheets.values.append(request);
-        console.log('✅ User logged to sheet. Status:', response.status);
+        console.log('✅ SUCCESS: Row added. Status:', response.status);
 
     } catch (error) {
-        console.error('❌ Sheet Logging Failed:', error);
+        console.error('❌ ERROR: Sheet Logging Failed:', error);
         // Don't throw error here, so the user login doesn't crash if sheets fail
     }
 };

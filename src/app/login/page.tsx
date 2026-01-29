@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/firebase';
 import { isAdminEmail, registerAdmin } from '@/lib/auth';
+import { sendWelcomeEmailAction } from '@/app/actions/auth';
 import { Icons } from '@/components/icons';
 import { sendOtp, logNewUser } from '@/app/actions/auth-actions';
 
@@ -175,6 +176,9 @@ export default function LoginPage() {
         // Log user and send admin notification
         const nameGuess = emailToCheck.split('@')[0];
         await logNewUser({ name: nameGuess, email: emailToCheck });
+
+        // Send Welcome Email
+        sendWelcomeEmailAction(emailToCheck, nameGuess).catch(console.error);
 
         console.log('✅ Admin registered. Redirecting...');
         router.push('/admin');

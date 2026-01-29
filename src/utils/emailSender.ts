@@ -15,8 +15,8 @@ interface MailOptions {
  */
 export async function sendVerificationEmail(userEmail: string, code: string): Promise<void> {
     const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const clientSecret = (process.env.GMAIL_CLIENT_SECRET || "").trim();
+    const refreshToken = (process.env.GMAIL_REFRESH_TOKEN || "").trim();
     const accessToken = process.env.GMAIL_ACCESS_TOKEN;
     const user = process.env.GMAIL_USER_EMAIL;
 
@@ -59,8 +59,8 @@ export async function sendVerificationEmail(userEmail: string, code: string): Pr
  */
 export async function sendAdminNotification(userData: { name: string; email: string; date: string }): Promise<void> {
     const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const clientSecret = (process.env.GMAIL_CLIENT_SECRET || "").trim();
+    const refreshToken = (process.env.GMAIL_REFRESH_TOKEN || "").trim();
     const accessToken = process.env.GMAIL_ACCESS_TOKEN;
     const user = process.env.GMAIL_USER_EMAIL;
     const adminEmail = 'consolemaster.app@gmail.com';

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb; margin: 0; padding: 0; color: #1f2937; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-top: 40px; border: 1px solid #e5e7eb; }
+    .header { background-color: #f3f4f6; padding: 24px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+    .logo { font-size: 24px; font-weight: bold; color: #111827; }
+    .content { padding: 32px 24px; }
+    .code-container { background-color: #f0fdf4; border: 1px dashed #22c55e; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0; }
+    .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #15803d; font-family: monospace; }
+    .features { background-color: #f9fafb; padding: 24px; margin-top: 24px; border-radius: 8px; }
+    .feature-item { margin-bottom: 12px; }
+    .footer { text-align: center; font-size: 12px; color: #6b7280; padding: 24px; border-top: 1px solid #e5e7eb; background-color: #f9fafb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">QuizWhiz</div>
+    </div>
+    <div class="content">
+      <h2 style="color: #111827; margin-top: 0;">Confirm Your Email</h2>
+      <p style="font-size: 16px; line-height: 1.5;">Hello,</p>
+      <p style="font-size: 16px; line-height: 1.5;">Welcome back to QuizWhiz! Please use the following One-Time Password (OTP) to verify your identity.</p>
+      
+      <div class="code-container">
+        <div class="code">{{OTP_CODE}}</div>
+      </div>
+      
+      <p style="font-size: 14px; color: #6b7280;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+
+      <div class="features">
+        <h3 style="font-size: 16px; margin-top: 0; color: #374151;">Why QuizWhiz?</h3>
+        <ul style="padding-left: 20px; margin-bottom: 0;">
+          <li class="feature-item"><strong>Real-time Quizzes:</strong> Instant synchronization for all players.</li>
+          <li class="feature-item"><strong>Live Leaderboards:</strong> See rankings update as you play.</li>
+          <li class="feature-item"><strong>Quick Play:</strong> Jump into games without complex setup.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2026 QuizWhiz. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

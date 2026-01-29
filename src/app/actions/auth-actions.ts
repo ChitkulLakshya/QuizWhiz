@@ -24,6 +24,7 @@ export async function logNewUser(userData: { name: string; email: string; phone?
         };
 
         // run both in parallel and handle errors independently
+        console.log("▶️ Calling logUserToSheet...");
         const results = await Promise.allSettled([
             logUserToSheet(dataToLog),
             sendAdminNotification({
