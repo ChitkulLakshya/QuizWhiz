@@ -133,17 +133,17 @@ export default function HomePage() {
         {/* Header */}
         <header className="flex items-center justify-between p-6 pb-2 bg-gradient-to-b from-[#050505] to-transparent sticky top-0 z-50 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <div className="bg-[#ccff00] text-black p-1 rounded-sm">
-              <Smartphone className="w-5 h-5" />
+            <div className="bg-[#ccff00] text-black p-1.5 rounded-none border border-black shadow-[0_0_10px_rgba(204,255,0,0.3)]">
+              <Brain className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-white/50 font-mono tracking-widest leading-none">ID_X99</span>
-              <span className="text-white text-sm font-bold tracking-tight leading-none mt-1">PLAYER 1</span>
+              <span className="text-[10px] text-[#ccff00]/60 font-mono tracking-[0.2em] leading-none uppercase">Uplink_Stable</span>
+              <span className="text-white text-xs font-black tracking-tight leading-none mt-1 uppercase font-mono">Guest Operator</span>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 bg-[#1a1a1a] px-3 py-1 border border-white/10 rounded-none">
-            <span className="block w-2 h-2 rounded-full bg-[#ccff00] animate-pulse"></span>
-            <p className="text-[#ccff00] text-xs font-mono font-bold tracking-wider">CREDITS: 24</p>
+          <div className="flex items-center justify-end gap-2 bg-black/50 px-3 py-1.5 border border-[#ccff00]/20 rounded-none backdrop-blur-md shadow-[inset_0_0_15px_rgba(204,255,0,0.05)]">
+            <span className="block w-1.5 h-1.5 bg-[#ccff00] animate-pulse"></span>
+            <p className="text-[#ccff00] text-[10px] font-mono font-bold tracking-[0.3em] uppercase">System Online</p>
           </div>
         </header>
 

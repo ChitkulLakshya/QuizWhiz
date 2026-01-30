@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQuestions } from '@/lib/firebase-service';
 import { Quiz, Question } from '@/types/quiz';
-import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X, Terminal, Cpu, Save, Clock, Target } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X, Terminal, Cpu, Save, Clock, Target, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { generateQuestionsAction } from '@/app/host/create/actions';
 import {

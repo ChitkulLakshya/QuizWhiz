@@ -66,16 +66,16 @@ export const mockQuizzes: Quiz[] = [
 ];
 
 export const mockParticipants: Participant[] = [
-    { id: 'p1', name: 'Alice', quizId: 'space-odyssey-101' },
-    { id: 'p2', name: 'Bob', quizId: 'space-odyssey-101' },
-    { id: 'p3', name: 'Charlie', quizId: 'space-odyssey-101' },
-    { id: 'p4', name: 'Diana', quizId: 'space-odyssey-101' },
+  { id: 'p1', name: 'Alice', quizId: 'space-odyssey-101' },
+  { id: 'p2', name: 'Bob', quizId: 'space-odyssey-101' },
+  { id: 'p3', name: 'Charlie', quizId: 'space-odyssey-101' },
+  { id: 'p4', name: 'Diana', quizId: 'space-odyssey-101' },
 ];
 
 export const mockLeaderboard: LeaderboardEntry[] = [
-    { rank: 1, participantId: 'p2', participantName: 'Bob', score: 5, totalTime: 85.3 },
-    { rank: 2, participantId: 'p4', participantName: 'Diana', score: 5, totalTime: 91.1 },
-    { rank: 3, participantId: 'p1', participantName: 'Alice', score: 4, totalTime: 75.6 },
-    { rank: 4, participantId: 'p3', participantName: 'Charlie', score: 3, totalTime: 99.8 },
-    { rank: 5, participantId: 'p5', participantName: 'Eve', score: 2, totalTime: 65.2 },
+  { rank: 1, participantId: 'p2', participantName: 'Bob', score: 5, totalTime: 85.3 },
+  { rank: 2, participantId: 'p4', participantName: 'Diana', score: 5, totalTime: 91.1 },
+  { rank: 3, participantId: 'p1', participantName: 'Alice', score: 4, totalTime: 75.6 },
+  { rank: 4, participantId: 'p3', participantName: 'Charlie', score: 3, totalTime: 99.8 },
+  { rank: 5, participantId: 'p5', participantName: 'Eve', score: 2, totalTime: 65.2 },
 ];
