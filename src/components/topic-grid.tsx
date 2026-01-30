@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles, Rocket, Target, Gamepad2, Palette } from 'lucide-react';
+import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles, Rocket, Target, Gamepad2, Palette, Atom } from 'lucide-react';
 import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
 import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
 import {
@@ -26,6 +26,7 @@ const TOPICS = [
     { id: TRIVIA_CATEGORIES.GEOGRAPHY, name: 'Geography', icon: Globe, borderColor: 'border-emerald-200', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50', hoverBorder: 'hover:border-emerald-400' },
     { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Monitor, borderColor: 'border-fuchsia-200', iconColor: 'text-fuchsia-600', iconBg: 'bg-fuchsia-50', hoverBorder: 'hover:border-fuchsia-400' },
     { id: TRIVIA_CATEGORIES.HISTORY, name: 'History', icon: BookOpen, borderColor: 'border-amber-200', iconColor: 'text-amber-600', iconBg: 'bg-amber-50', hoverBorder: 'hover:border-amber-400' },
+    { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science', icon: Atom, borderColor: 'border-teal-200', iconColor: 'text-teal-600', iconBg: 'bg-teal-50', hoverBorder: 'hover:border-teal-400' },
 ];
 
 export default function TopicGrid() {
@@ -75,7 +76,7 @@ export default function TopicGrid() {
             {/* Background Icons - Unique Set */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
                 {/* Rocket - flying up-right from bottom left */}
-                <motion.div 
+                <motion.div
                     className="absolute bottom-[10%] -left-[2%] opacity-[0.05] text-indigo-500"
                     animate={{ y: [0, -40, 0], x: [0, 20, 0] }}
                     transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -84,7 +85,7 @@ export default function TopicGrid() {
                 </motion.div>
 
                 {/* Target - Top Right */}
-                <motion.div 
+                <motion.div
                     className="absolute top-[8%] -right-[4%] opacity-[0.05] text-rose-500"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -93,7 +94,7 @@ export default function TopicGrid() {
                 </motion.div>
 
                 {/* Gamepad - Top Left */}
-                <motion.div 
+                <motion.div
                     className="absolute top-[15%] left-[5%] opacity-[0.04] text-purple-600 -rotate-12"
                     animate={{ rotate: [-12, -20, -12] }}
                     transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
@@ -101,8 +102,8 @@ export default function TopicGrid() {
                     <Gamepad2 className="w-24 h-24 md:w-48 md:h-48" />
                 </motion.div>
 
-                 {/* Palette - Bottom Right */}
-                 <motion.div 
+                {/* Palette - Bottom Right */}
+                <motion.div
                     className="absolute bottom-[20%] right-[8%] opacity-[0.04] text-orange-500 rotate-12"
                     animate={{ y: [0, 15, 0] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -115,7 +116,7 @@ export default function TopicGrid() {
                 <div className="flex flex-col items-center justify-center mb-16 text-center">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-3 rounded-full bg-white shadow-sm ring-1 ring-slate-100">
-                           <Zap className="h-6 w-6 text-slate-700 fill-slate-700" />
+                            <Zap className="h-6 w-6 text-slate-700 fill-slate-700" />
                         </div>
                         <h2 className="text-4xl font-bold text-slate-800 tracking-tight">Quick Play</h2>
                     </div>

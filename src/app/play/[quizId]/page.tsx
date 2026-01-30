@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/header';
 import { useToast } from '@/hooks/use-toast';
@@ -26,20 +24,19 @@ import type { Quiz, Question, Participant, QuestionResult } from '@/types/quiz';
 import {
   Play,
   SkipForward,
-  Trophy,
-  Users,
   Timer,
-  CheckCircle,
-  XCircle,
-  Crown,
-  Share2
+  Share2,
+  Volume2,
+  VolumeX,
+  Smartphone
 } from 'lucide-react';
-import QRCode from 'react-qr-code';
 import { ShareModal } from '@/components/game/share-modal';
 import { useGameSounds } from '@/hooks/use-game-sounds';
-import { Volume2, VolumeX } from 'lucide-react';
-import { Podium } from '@/components/game/podium';
-import { ResultsChart } from '@/components/game/results-chart';
+
+// View Components
+import { LobbyView } from '@/components/game/state-views/lobby-view';
+import { QuestionView } from '@/components/game/state-views/question-view';
+import { ResultsView } from '@/components/game/state-views/results-view';
 
 export default function PlayPage() {
   const params = useParams();
@@ -61,7 +58,7 @@ export default function PlayPage() {
   const [viewState, setViewState] = useState<'lobby' | 'question' | 'results' | 'completed'>('lobby');
   const [hostResults, setHostResults] = useState<QuestionResult | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // Double-click protection
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Derived State
   const isHost = quiz && user ? quiz.ownerId === user.uid : false;
@@ -79,7 +76,6 @@ export default function PlayPage() {
     const unsubQuiz = subscribeToQuiz(quizId, setQuiz);
     const unsubParticipants = subscribeToParticipants(quizId, (parts) => {
       setParticipants(parts);
-      // Sync local participant state
       if (auth.currentUser) {
         const me = parts.find(p => p.id === auth.currentUser?.uid);
         if (me) setCurrentParticipant(me);
@@ -95,16 +91,12 @@ export default function PlayPage() {
     };
   }, [quizId]);
 
-  // 1b. Host Auto-Join & Participant Sync
+  // 1b. Host Auto-Join
   useEffect(() => {
-    // If I am the host, and I'm not in the participants list, auto-join me.
     if (isHost && user && quiz && quiz.status === 'lobby') {
       const amIJoined = participants.some(p => p.id === user.uid);
       if (!amIJoined) {
-        console.log("👑 Host auto-joining...");
-        // Use "Host" as default name, or user's display name
-        joinQuiz(quizId, user.displayName || "Host")
-          .catch(console.error);
+        joinQuiz(quizId, user.displayName || "Host").catch(console.error);
       }
     }
   }, [isHost, user, quiz, participants]);
@@ -122,20 +114,14 @@ export default function PlayPage() {
 
       setTimeRemaining(Math.ceil(remaining / 1000));
 
-      // Play Tick Sound for last 5 seconds
       if (remaining > 0 && remaining <= 5000) {
-        // Using a simple throttle or checking if we crossed a second boundary might be better
-        // But for now, we rely on the interval being 100ms. calling playTick every 100ms is too fast.
-        // Let's only play if we crossed an integer second boundary.
         const previousSec = Math.ceil((limit - (elapsed - 100)) / 1000);
         const currentSec = Math.ceil(remaining / 1000);
         if (currentSec !== previousSec) {
-          playCountdown(); // Re-using playCountdown/playTick
+          playCountdown();
         }
       }
 
-      // View State Transition: Question -> Results
-      // We use a buffer of 1s to allow animations
       if (remaining <= 0) {
         setViewState('results');
       } else {
@@ -144,9 +130,9 @@ export default function PlayPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [quiz, currentQuestion]);
+  }, [quiz, currentQuestion, playCountdown]);
 
-  // 3. Status Synchronization & Late Join
+  // 3. Status Synchro
   useEffect(() => {
     if (!quiz) return;
     if (quiz.status === 'lobby' || quiz.status === 'draft') {
@@ -154,13 +140,22 @@ export default function PlayPage() {
     } else if (quiz.status === 'completed') {
       setViewState('completed');
     } else if (quiz.status === 'active') {
-      // Late Join: Immediately show question view.
-      // The timer effect will move to 'results' if time is actually up.
-      setViewState('question');
+      if (viewState !== 'results') {
+        setViewState('question');
+      }
     }
   }, [quiz?.status]);
 
-  // 4. Host: Calculate Results when entering Results view
+  // 3b. Reset Local State on New Question
+  useEffect(() => {
+    if (currentQuestion) {
+      setIsAnswerSubmitted(false);
+      setSelectedAnswer(null);
+    }
+  }, [currentQuestion?.id]);
+
+
+  // 4. Host: Calculate Results
   useEffect(() => {
     if (isHost && viewState === 'results' && currentQuestion) {
       calculateQuestionResults(quizId, currentQuestion.id).then(setHostResults);
@@ -172,8 +167,6 @@ export default function PlayPage() {
   // 5. Sound Triggers
   useEffect(() => {
     if (viewState === 'question') {
-      // playCountdown(); // Removed immediate start sound to focus on Ticks? User asked for playCountdown on status change.
-      // Actually, user said: "When status changes to QUESTION -> playCountdown()".
       playCountdown();
     } else if (viewState === 'results' || viewState === 'completed') {
       playResults();
@@ -185,11 +178,7 @@ export default function PlayPage() {
   const handleJoinGame = async (name: string) => {
     if (!name) return;
     try {
-      // Use User ID as Participant ID if available (enables recovery)
       const pId = await joinQuiz(quizId, name);
-
-      // We rely on the subscription to update `participants` and `currentParticipant`
-      // But we can set it optimistically/ensure it's set
       if (!currentParticipant) {
         setCurrentParticipant({ id: pId, name, totalScore: 0, currentStreak: 0, answers: {}, quizId } as any);
       }
@@ -199,7 +188,7 @@ export default function PlayPage() {
     }
   };
 
-  const handleSubmitAnswer = async (option: string, index: number) => {
+  const handleAnswerSubmit = async (option: string, index: number) => {
     if (!currentParticipant || !currentQuestion || isAnswerSubmitted) return;
 
     setSelectedAnswer(option);
@@ -208,11 +197,8 @@ export default function PlayPage() {
     const actualCorrectOption = currentQuestion.options[currentQuestion.correctOptionIndex];
     const correct = option === actualCorrectOption;
 
-    if (correct) {
-      playCorrect();
-    } else {
-      playWrong();
-    }
+    if (correct) playCorrect();
+    else playWrong();
 
     try {
       const pointsEarned = correct ? currentQuestion.points : 0;
@@ -228,7 +214,6 @@ export default function PlayPage() {
     }
   };
 
-  // Host Actions
   const hostStartGame = async () => {
     if (questions.length === 0) return toast({ title: "No questions loaded!" });
     if (isProcessing) return;
@@ -251,8 +236,7 @@ export default function PlayPage() {
         await endQuiz(quizId);
       } else {
         await startQuestion(quizId, nextIdx);
-        setIsAnswerSubmitted(false);
-        setSelectedAnswer(null);
+        setViewState('question'); // Force view update immediately
       }
     } finally {
       setIsProcessing(false);
@@ -262,216 +246,77 @@ export default function PlayPage() {
   const handleRestart = async () => {
     try {
       await restartGame(quizId);
-      toast({ title: "Game Restarted!", description: "Scores have been reset." });
-      // No need to navigate, the subscription will auto-update viewState to 'lobby'
+      toast({ title: "Game Restarted!" });
     } catch (error) {
       console.error("Restart failed:", error);
-      toast({ variant: "destructive", title: "Failed to restart", description: "Only the host can restart." });
     }
   };
 
-  // Render Helpers
-  if (!quiz) return <div className="h-screen flex items-center justify-center">Loading Game Room...</div>;
+  if (!quiz) return <div className="h-screen w-full bg-[#050505] flex items-center justify-center text-[#ccff00] font-mono">LOADING GAME_HUD...</div>;
 
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/join?code=${quiz.code}` : '';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Header />
+    <div className="min-h-screen bg-[#050505] flex flex-col font-sans overflow-hidden">
 
-      <div className="absolute top-20 right-4 z-10">
-        <Button variant="ghost" size="icon" onClick={toggleMute} className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white">
-          {isMuted ? <VolumeX className="h-5 w-5 text-slate-500" /> : <Volume2 className="h-5 w-5 text-indigo-600" />}
+      {/* Sound Toggle (Absolute) */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button variant="ghost" size="icon" onClick={toggleMute} className="bg-black/50 text-white hover:bg-black/80 hover:text-[#ccff00]">
+          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </Button>
       </div>
 
-      <main className="flex-1 container max-w-4xl mx-auto p-4 pb-32">
-        {/* LOBBY VIEW */}
-        {viewState === 'lobby' && (quiz.status === 'lobby' || quiz.status === 'draft') && (
-          <div className="flex flex-col items-center space-y-8 py-10">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl md:text-6xl font-black text-indigo-900 tracking-tight">{quiz.title}</h1>
-              <Badge variant="outline" className="text-lg px-4 py-1 border-indigo-200 text-indigo-600">
-                Code: {quiz.code}
-              </Badge>
-            </div>
+      <main className="flex-1 w-full relative">
 
-            {!currentParticipant ? (
-              <Card className="w-full max-w-md border-2 border-indigo-100 shadow-xl">
-                <CardHeader>
-                  <CardTitle>Join the Game</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.target as HTMLFormElement;
-                    handleJoinGame((form.elements.namedItem('name') as HTMLInputElement).value);
-                  }} className="space-y-4">
-                    <input
-                      name="name"
-                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-lg ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Enter your nickname..."
-                      autoFocus
-                      defaultValue={isHost ? "Host" : ""}
-                    />
-                    <Button type="submit" size="lg" className="w-full text-lg">
-                      Join Lobby
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="text-center animate-pulse">
-                <p className="text-2xl font-bold text-indigo-600">You are in!</p>
-                <p className="text-muted-foreground">Waiting for host to start...</p>
-              </div>
-            )}
-
-            {/* Participants Grid */}
-            <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              {participants.map(p => (
-                <div key={p.id} className="bg-white p-3 rounded-lg shadow-sm flex items-center gap-2 animate-in fade-in zoom-in">
-                  <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                    {p.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="font-medium truncate">{p.name} {p.id === currentParticipant?.id && '(You)'}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Only show QR code if not joined or just generically */}
-            <div className="mt-8 p-4 bg-white rounded-xl shadow-sm">
-              <QRCode value={joinUrl} size={150} />
-              <p className="text-center text-xs mt-2 text-muted-foreground">Scan to Join</p>
-            </div>
-          </div>
-        )}
-
-        {/* QUESTION VIEW */}
-        {viewState === 'question' && currentQuestion && (
-          <div className="space-y-6 max-w-2xl mx-auto py-8">
-            {/* Timer Bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm font-semibold text-muted-foreground">
-                <span>Question {quiz.currentQuestionIndex + 1}/{questions.length}</span>
-                <span className={timeRemaining < 5 ? "text-red-500 animate-pulse" : ""}>
-                  {timeRemaining}s
-                </span>
-              </div>
-              <Progress value={(timeRemaining / currentQuestion.timeLimit) * 100} className="h-3" />
-            </div>
-
-            {/* Question Card */}
-            <Card className="border-0 shadow-lg overflow-hidden">
-              <CardContent className="p-8 text-center bg-white">
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-800 leading-snug">
-                  {currentQuestion.questionText}
-                </h2>
-              </CardContent>
-            </Card>
-
-            {/* Options Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {currentQuestion.options.map((option, idx) => {
-                const isSelected = selectedAnswer === option;
-                return (
-                  <button
-                    key={idx}
-                    disabled={isAnswerSubmitted || !currentParticipant}
-                    onClick={() => handleSubmitAnswer(option, idx)}
-                    className={`
-                                            p-6 rounded-xl text-left transition-all transform hover:scale-[1.02] active:scale-95
-                                            shadow-md border-2
-                                            ${isSelected
-                        ? 'bg-indigo-600 border-indigo-600 text-white'
-                        : 'bg-white border-transparent hover:border-indigo-200 text-slate-700'}
-                                            ${!currentParticipant && 'opacity-50 cursor-not-allowed'}
-                                        `}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`
-                                                w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
-                                                ${isSelected ? 'bg-white text-indigo-600' : 'bg-slate-100 text-slate-500'}
-                                            `}>
-                        {String.fromCharCode(65 + idx)}
-                      </div>
-                      <span className="text-lg font-semibold">{option}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* RESULTS VIEW */}
-        {viewState === 'results' && currentQuestion && (
-          <div className="space-y-6 max-w-2xl mx-auto py-8 text-center">
-            <Badge className="bg-orange-500 text-white px-4 py-1 text-lg mb-4">Time's Up!</Badge>
-
-            <h2 className="text-2xl font-bold mb-8">The correct answer is:</h2>
-
-            <Card className="bg-green-600 text-white border-0 shadow-xl transform scale-105">
-              <CardContent className="p-8">
-                <CheckCircle className="h-12 w-12 mx-auto mb-4" />
-                <h3 className="text-3xl font-black">{currentQuestion.options[currentQuestion.correctOptionIndex]}</h3>
-              </CardContent>
-            </Card>
-
-            {/* Results Chart for Host */}
-            {isHost && quiz && (
-              <Card className="mt-8">
-                <CardContent className="p-6">
-                  <ResultsChart
-                    participants={participants}
-                    question={currentQuestion}
-                    questionIndex={quiz.currentQuestionIndex}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Player Stats (only for non-hosts) */}
-            {!isHost && (
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                <Card>
-                  <CardContent className="p-4">
-                    <p className="text-muted-foreground text-sm">Your Points</p>
-                    <p className="text-3xl font-bold text-indigo-600">
-                      {currentParticipant ? currentParticipant.totalScore : 0}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <p className="text-muted-foreground text-sm">Rank</p>
-                    <p className="text-3xl font-bold text-slate-700">#1</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* COMPLETED VIEW */}
-        {viewState === 'completed' && (
-          <Podium
+        {viewState === 'lobby' && (
+          <LobbyView
+            quiz={quiz}
             participants={participants}
+            currentParticipant={currentParticipant}
+            joinUrl={joinUrl}
+            isHost={isHost}
+            onJoin={handleJoinGame}
+          />
+        )}
+
+        {viewState === 'question' && currentQuestion && (
+          <QuestionView
+            question={currentQuestion}
+            questionIndex={quiz.currentQuestionIndex}
+            totalQuestions={questions.length}
+            timeRemaining={timeRemaining}
+            currentParticipant={currentParticipant}
+            selectedAnswer={selectedAnswer}
+            isAnswerSubmitted={isAnswerSubmitted}
+            onAnswerSubmit={handleAnswerSubmit}
+            streak={currentParticipant?.currentStreak}
+            totalParticipants={participants.length}
+          />
+        )}
+
+        {(viewState === 'results' || viewState === 'completed') && (
+          <ResultsView
+            quiz={quiz}
+            question={currentQuestion}
+            participants={participants}
+            currentParticipant={currentParticipant}
             isHost={isHost}
             onRestart={handleRestart}
+            isFinalResult={viewState === 'completed'}
           />
         )}
 
       </main>
 
-      {/* HOST OVERLAY */}
+      {/* HOST CONTROLS OVERLAY */}
       {isHost && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-2xl z-50 safe-area-bottom">
-          <div className="container max-w-4xl mx-auto flex items-center justify-between gap-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-[#ccff00] p-4 shadow-[0_-5px_20px_rgba(0,0,0,0.8)] z-50">
+          <div className="container max-w-lg mx-auto flex items-center justify-between gap-4">
+
             <div className="flex items-center gap-3">
-              <Badge variant="default" className="bg-indigo-600">HOST</Badge>
-              <span className="text-sm font-semibold hidden md:inline">
-                {participants.length} Players • {quiz.status.toUpperCase()}
+              <div className="bg-[#ccff00] text-black px-2 py-0.5 text-xs font-black rounded-sm">HOST</div>
+              <span className="text-xs font-mono text-gray-400 hidden md:inline">
+                {participants.length} AGENTS // STATUS: {quiz.status.toUpperCase()}
               </span>
             </div>
 
@@ -480,28 +325,27 @@ export default function PlayPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => setIsShareModalOpen(true)}
-                title="Invite Friends"
-                className="shrink-0"
+                className="bg-transparent border-gray-700 text-gray-400 hover:text-white shrink-0 rounded-none w-10 h-10"
               >
                 <Share2 className="h-4 w-4" />
               </Button>
 
               {viewState === 'lobby' && (
-                <Button onClick={hostStartGame} disabled={isProcessing} size="lg" className="bg-green-600 hover:bg-green-700 text-white shadow-lg w-full md:w-auto">
-                  <Play className="mr-2 h-4 w-4" /> {isProcessing ? "Starting..." : "Start Game"}
+                <Button onClick={hostStartGame} disabled={isProcessing} className="bg-[#ccff00] hover:bg-[#bbee00] text-black font-bold uppercase rounded-none w-full md:w-auto h-10 px-6">
+                  <Play className="mr-2 h-4 w-4" /> {isProcessing ? "INITIATING..." : "START SECTOR"}
                 </Button>
               )}
 
               {viewState === 'question' && (
-                <Button disabled variant="secondary" className="w-full md:w-auto">
+                <Button disabled variant="secondary" className="bg-[#1a1a1a] text-[#ccff00] font-mono border border-[#ccff00]/30 rounded-none h-10 w-full md:w-auto">
                   <Timer className="mr-2 h-4 w-4 animate-spin" /> {timeRemaining}s
                 </Button>
               )}
 
 
               {viewState === 'results' && (
-                <Button onClick={hostNextQuestion} disabled={isProcessing} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg w-full md:w-auto">
-                  {isProcessing ? "Loading..." : "Next Question"} <SkipForward className="ml-2 h-4 w-4" />
+                <Button onClick={hostNextQuestion} disabled={isProcessing} className="bg-[#ccff00] hover:bg-[#bbee00] text-black font-bold uppercase rounded-none w-full md:w-auto h-10 px-6">
+                  {isProcessing ? "LOADING..." : "NEXT SECTOR"} <SkipForward className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>

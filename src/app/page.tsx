@@ -1,328 +1,311 @@
 'use client';
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Home, Settings, Smartphone, Trophy, Zap, BookOpen, Film, Globe, Monitor, Sparkles, Brain, History as HistoryIcon, Gamepad2, Plane, Atom } from 'lucide-react';
+import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
+import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Users, Trophy, Zap, Plane, Tv, BookOpen, PenTool, Share2, PlayCircle, BarChart3, GraduationCap, Lightbulb, Puzzle, Music, Smartphone, QrCode, Download, Smile } from 'lucide-react';
-import Header from '@/components/header';
-import TopicGrid from '@/components/topic-grid';
-// import { seedFirstAdmin } from '@/lib/seed-admin';
+import Link from 'next/link';
+import clsx from 'clsx';
+import MobileNav from '@/components/mobile-nav';
+
+// Visual Assets Mapping with Curated Unsplash Images
+const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingClass: string; aspect: string }> = {
+  [TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE]: {
+    bgImage: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1000&auto=format&fit=crop", // Abstract Neon/Brain vibe
+    bleedingText: "TRIVIA",
+    bleedingClass: "absolute -top-4 -left-8 text-8xl font-black text-white/5 uppercase rotate-90 origin-bottom-left whitespace-nowrap select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.MOVIES]: {
+    bgImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000&auto=format&fit=crop", // Cinema/Movie Theater
+    bleedingText: "CINEMA",
+    bleedingClass: "absolute -right-8 top-10 text-8xl font-black text-white/10 uppercase tracking-tighter leading-none select-none writing-vertical-rl",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.SPORTS]: {
+    bgImage: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop", // Dark Stadium/Action
+    bleedingText: "SPORT",
+    bleedingClass: "absolute top-0 right-0 text-7xl font-black text-white/5 uppercase rotate-180 writing-mode-vertical origin-top-right whitespace-nowrap select-none",
+    aspect: "aspect-square"
+  },
+  [TRIVIA_CATEGORIES.GEOGRAPHY]: {
+    bgImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop", // Earth from space/Global
+    bleedingText: "WORLD",
+    bleedingClass: "absolute -bottom-12 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.VIDEO_GAMES]: {
+    bgImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop", // Retro Arcade/Neon
+    bleedingText: "8-BIT",
+    bleedingClass: "absolute -bottom-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[4/5]"
+  },
+  [TRIVIA_CATEGORIES.HISTORY]: {
+    bgImage: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1000&auto=format&fit=crop", // Old Technology/Camera/History
+    bleedingText: "HISTORY",
+    bleedingClass: "absolute top-0 -right-8 text-7xl font-black text-white/5 uppercase rotate-90 origin-top-right whitespace-nowrap select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.SCIENCE_NATURE]: {
+    bgImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000&auto=format&fit=crop", // Lab/DNA/Science
+    bleedingText: "SCIENCE",
+    bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  }
+};
+
+// Data Source - Cleaned up to match user request and removed levels
+const TOPICS = [
+  { id: TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE, name: 'General Knowledge', icon: Brain },
+  { id: TRIVIA_CATEGORIES.MOVIES, name: 'Movies', icon: Film },
+  { id: TRIVIA_CATEGORIES.SPORTS, name: 'Sports', icon: Trophy },
+  { id: TRIVIA_CATEGORIES.GEOGRAPHY, name: 'Geography', icon: Globe },
+  { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Gamepad2 },
+  { id: TRIVIA_CATEGORIES.HISTORY, name: 'History', icon: HistoryIcon },
+  { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science', icon: Atom },
+];
 
 export default function HomePage() {
-  // Uncomment to seed your email as admin, then re-comment
-  // seedFirstAdmin('your-email@example.com');
+  const router = useRouter();
+  const [loading, setLoading] = useState<number | string | null>(null);
+  const [isCustomOpen, setIsCustomOpen] = useState(false);
+  const [customTopic, setCustomTopic] = useState('');
+
+  const handleTopicClick = async (categoryId: number, topicName: string) => {
+    if (loading) return;
+    setLoading(categoryId);
+    try {
+      const quizId = await createQuickGame(topicName, 'medium');
+      router.push(`/play/${quizId}`);
+    } catch (error) {
+      console.error('Error starting game:', error);
+      alert('Failed to start game.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCustomGenerate = async () => {
+    if (!customTopic.trim() || loading) return;
+    setLoading('custom');
+    try {
+      const quizId = await createAIQuickQuiz(customTopic);
+      setIsCustomOpen(false);
+      router.push(`/play/${quizId}`);
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+      alert('Failed to generate quiz.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Split Logic
+  const leftColumnIndices = [0, 2, 4, 6];
+  const rightColumnIndices = [1, 3, 5];
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#FDFCF6] text-slate-800 relative overflow-hidden font-sans">
-      {/* Background Gradients */}
-      <div 
-        className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full blur-[100px] opacity-60 z-0 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #E0F2FE 0%, #D1FAE5 100%)' }} 
-      />
-      <div 
-        className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] rounded-full blur-[80px] opacity-40 z-0 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #BEF264 0%, transparent 70%)' }} 
-      />
+    <div className="min-h-[100dvh] bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-[#ccff00] selection:text-black">
 
-      {/* Decorative Background Icons */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
-        {/* Airplane - Top Right floating */}
-        <motion.div 
-          className="absolute top-[12%] right-[8%] opacity-10 text-sky-500"
-          animate={{ y: [0, -20, 0], rotate: [12, 10, 12] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Plane className="w-32 h-32 md:w-64 md:h-64" />
-        </motion.div>
-        
-        {/* Trophy - Bottom Left static */}
-        <div className="absolute bottom-[15%] left-[2%] opacity-10 text-amber-500 -rotate-12">
-          <Trophy className="w-40 h-40 md:w-72 md:h-72" />
-        </div>
-
-        {/* TV - Top Left floating */}
-        <motion.div 
-          className="absolute top-[22%] left-[5%] opacity-10 text-purple-500"
-          animate={{ y: [0, 15, 0], rotate: [-6, -4, -6] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        >
-          <Tv className="w-24 h-24 md:w-48 md:h-48" />
-        </motion.div>
-
-        {/* Book - Middle/Lower Right */}
-        <div className="absolute top-[55%] right-[2%] opacity-10 text-pink-500 rotate-6">
-          <BookOpen className="w-36 h-36 md:w-60 md:h-60" />
-        </div>
-
-        {/* Lightning - Center/Left area */}
-        <motion.div 
-          className="absolute top-[40%] left-[15%] opacity-10 text-yellow-500"
-          animate={{ scale: [1, 1.05, 1], rotate: [45, 40, 45] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        >
-          <Zap className="w-16 h-16 md:w-32 md:h-32" />
-        </motion.div>
-
-        {/* Lightbulb - Top Center/Left */}
-        <motion.div 
-          className="absolute top-[8%] left-[45%] opacity-10 text-emerald-500"
-          animate={{ opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        >
-          <Lightbulb className="w-20 h-20 md:w-40 md:h-40" />
-        </motion.div>
-
-        {/* Puzzle - Bottom Center/Left */}
-        <motion.div 
-          className="absolute bottom-[25%] left-[35%] opacity-10 text-indigo-500"
-           animate={{ rotate: [0, 10, 0] }}
-           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        >
-          <Puzzle className="w-24 h-24 md:w-52 md:h-52" />
-        </motion.div>
-
-        {/* Music - Middle Left Edge */}
-        <motion.div 
-          className="absolute top-[65%] left-[3%] opacity-10 text-rose-400"
-          animate={{ y: [0, -15, 0], rotate: [-10, -5, -10] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        >
-          <Music className="w-16 h-16 md:w-36 md:h-36" />
-        </motion.div>
-
-       {/* Graduation Cap - Bottom Right */}
-        <motion.div 
-          className="absolute bottom-[8%] right-[12%] opacity-10 text-slate-800"
-          animate={{ scale: [1, 1.1, 1], rotate: [-5, 0, -5] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        >
-          <GraduationCap className="w-28 h-28 md:w-56 md:h-56" />
-        </motion.div>
-      </div>
-      
-      <div className="z-10 relative">
-        <Header />
+      {/* Background Texture*/}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-0">
+        <span className="material-symbols-outlined text-[600px] text-white opacity-[0.03] -rotate-[15deg] select-none translate-x-12 translate-y-20 transform">bolt</span>
+        <Zap strokeWidth={1} className="w-[600px] h-[600px] text-white opacity-[0.03] -rotate-[15deg] absolute translate-x-12 translate-y-20" />
       </div>
 
-      <main className="flex-1 relative z-10">
-        
-        {/* Hero Section */}
-        <section className="py-24 px-4 text-center relative">
-          <div className="max-w-4xl mx-auto flex flex-col items-center">
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="font-sans font-extrabold text-5xl md:text-7xl mb-6 tracking-tight text-slate-900"
-            >
-              QuizWhiz
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-xl md:text-2xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed"
-            >
-              Create engaging real-time quizzes with live results and leaderboards
-            </motion.p>
- 
-            {/* Buttons */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex gap-4 sm:gap-6 justify-center flex-wrap"
-            >
-              <Button 
-                asChild 
-                size="lg" 
-                className="rounded-full px-8 py-6 text-lg bg-[#93C5FD] hover:bg-[#60A5FA] text-slate-900 font-semibold shadow-sm hover:-translate-y-1 transition-all duration-300 border-none"
-              >
-                <Link href="/join">Join Quiz</Link>
-              </Button>
-              <Button 
-                asChild 
-                size="lg" 
-                className="rounded-full px-8 py-6 text-lg bg-[#86EFAC] hover:bg-[#4ADE80] text-slate-900 font-semibold shadow-sm hover:-translate-y-1 transition-all duration-300 border-none"
-              >
-                <Link href="/login">Admin Login</Link>
-              </Button>
-            </motion.div>
+      <div className="relative z-10 flex flex-col min-h-[100dvh] pb-24 w-full max-w-md mx-auto border-x border-white/5 bg-[#050505]">
 
+        {/* Mobile Navigation Bar */}
+        <MobileNav />
+
+        {/* Header */}
+        <header className="flex items-center justify-between p-6 pb-2 bg-gradient-to-b from-[#050505] to-transparent sticky top-0 z-50 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <div className="bg-[#ccff00] text-black p-1 rounded-sm">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-white/50 font-mono tracking-widest leading-none">ID_X99</span>
+              <span className="text-white text-sm font-bold tracking-tight leading-none mt-1">PLAYER 1</span>
+            </div>
           </div>
+          <div className="flex items-center justify-end gap-2 bg-[#1a1a1a] px-3 py-1 border border-white/10 rounded-none">
+            <span className="block w-2 h-2 rounded-full bg-[#ccff00] animate-pulse"></span>
+            <p className="text-[#ccff00] text-xs font-mono font-bold tracking-wider">CREDITS: 24</p>
+          </div>
+        </header>
+
+        {/* Headline */}
+        <section className="px-6 py-6">
+          <h1 className="text-white text-5xl font-black leading-[0.85] tracking-tighter uppercase font-display">
+            Select<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-yellow-400 opacity-90">Cartridge</span>
+          </h1>
+          <div className="h-1 w-24 bg-[#ccff00] mt-4"></div>
         </section>
 
-        <TopicGrid />
-        
-        {/* Feature Showcase (Bento Grid) */}
-        <section className="py-32 px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6 h-auto md:h-[600px] w-full">
-            
-            {/* Large Hero Box: Instant Sync */}
-            <div className="md:col-span-2 md:row-span-2 bg-[#F0FDF4]/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group hover:shadow-lg transition-all border border-white/40">
-              <div className="z-10 relative h-full flex flex-col justify-between">
-                <div>
-                  <h3 className="text-3xl font-bold text-slate-800 mb-2">Instant Sync</h3>
-                  <p className="text-slate-500 text-lg">Real-time connection between host and players. Zero lag.</p>
-                </div>
-                {/* Illustration Placeholder */}
-                <div className="mt-8 flex items-center justify-center gap-4 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <div className="w-24 h-16 bg-emerald-200 rounded-lg flex items-center justify-center shadow-sm">
-                    <Tv className="w-8 h-8 text-emerald-600" />
-                  </div>
-                  <Zap className="w-8 h-8 text-emerald-400 animate-pulse" />
-                  <div className="w-12 h-20 bg-emerald-200 rounded-lg flex items-center justify-center shadow-sm">
-                    <Smartphone className="w-6 h-6 text-emerald-600" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-emerald-100 rounded-full blur-[80px]" />
-            </div>
+        {/* Grid */}
+        <div className="flex px-4 gap-4 items-start">
 
-            {/* Small Box: No Installs */}
-            <div className="md:col-span-1 md:row-span-1 bg-[#EEF2FF]/80 backdrop-blur-xl rounded-[2.5rem] p-8 relative overflow-hidden group hover:shadow-lg transition-all border border-white/40 flex flex-col justify-between">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-full blur-[40px] -mr-8 -mt-8" />
-              <div className="w-14 h-14 bg-indigo-100/80 rounded-2xl flex items-center justify-center mb-4 text-indigo-500">
-                <QrCode className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">No Installs</h3>
-                <p className="text-slate-500 text-sm mt-1">Scan & play instantly.</p>
-              </div>
-            </div>
+          {/* Left Column */}
+          <div className="flex flex-col gap-6 w-1/2">
+            {leftColumnIndices.map((index) => {
+              const topic = TOPICS[index];
+              const theme = THEMES[topic.id];
+              return (
+                <div
+                  key={topic.id}
+                  onClick={() => handleTopicClick(topic.id, topic.name)}
+                  className={clsx(
+                    "group relative w-full bg-[#111] border-4 border-[#ccff00] flex flex-col justify-end overflow-hidden transition-transform active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(204,255,0,0.1)] hover:shadow-[0_0_30px_rgba(204,255,0,0.2)]",
+                    theme.aspect
+                  )}>
+                  <div
+                    className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-500"
+                    style={{ backgroundImage: `url('${theme.bgImage}')` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
 
-            {/* Small Box: Live Reactions */}
-            <div className="md:col-span-1 md:row-span-1 bg-[#FFF1F2]/80 backdrop-blur-xl rounded-[2.5rem] p-8 relative overflow-hidden group hover:shadow-lg transition-all border border-white/40 flex flex-col justify-between">
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-rose-100 rounded-full blur-[40px] -ml-8 -mb-8" />
-              <div className="relative h-14 mb-4">
-                 <Smile className="w-10 h-10 text-rose-400 absolute top-0 left-0 animate-bounce" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">Live Reactions</h3>
-                <p className="text-slate-500 text-sm mt-1">Interactive emojis.</p>
-              </div>
-            </div>
+                  {theme.bleedingText && (
+                    <span
+                      className={theme.bleedingClass}
+                      style={theme.bleedingClass.includes('writing-vertical-rl') ? { writingMode: 'vertical-rl' } : {}}
+                    >
+                      {theme.bleedingText}
+                    </span>
+                  )}
 
-            {/* Medium Box: Export Results */}
-            <div className="md:col-span-2 md:row-span-1 bg-[#FDF4FF]/80 backdrop-blur-xl rounded-[2.5rem] p-8 relative overflow-hidden group hover:shadow-lg transition-all border border-white/40 flex items-center justify-between">
-               <div className="max-w-[60%] z-10">
-                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Export Results</h3>
-                 <p className="text-slate-500">Download detailed reports and analytics in one click.</p>
-               </div>
-               <div className="w-16 h-16 bg-fuchsia-100 rounded-2xl flex items-center justify-center text-fuchsia-500 shadow-sm group-hover:scale-110 transition-transform">
-                 <Download className="w-8 h-8" />
-               </div>
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-fuchsia-100/50 rounded-full blur-[60px]" />
-            </div>
-
-          </div>
-        </section>
-
-        {/* How It Works Section */}
-        <section className="py-32 px-4 md:px-8 relative overflow-hidden">
-          {/* Blobs */}
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[100px] -z-10 translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[80px] -z-10 -translate-x-1/3 translate-y-1/3" />
-
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-24 relative z-10">
-              <h2 className="text-4xl md:text-6xl font-extrabold text-[#0F172A] tracking-tight mb-6">How it Works</h2>
-              <p className="text-slate-500 text-xl font-medium max-w-2xl mx-auto">
-                 Launch your first game in four simple steps.
-              </p>
-            </div>
-
-            <div className="relative z-10 w-full">
-              
-              <div className="grid md:grid-cols-4 gap-6 relative">
-                {[
-                  { 
-                    title: 'Create', 
-                    desc: "Draft questions, set timers, and customize flow.",
-                    icon: PenTool,
-                    color: "text-blue-500",
-                    bg: "bg-blue-100/50"
-                  },
-                  { 
-                    title: 'Share', 
-                    desc: "Instant join via QR code or PIN. No install needed.",
-                    icon: Share2,
-                    color: "text-purple-500",
-                    bg: "bg-purple-100/50"
-                  },
-                  { 
-                    title: 'Control', 
-                    desc: "Manage the live pace. Reveal answers in real-time.",
-                    icon: PlayCircle,
-                    color: "text-amber-500",
-                    bg: "bg-amber-100/50"
-                  },
-                  { 
-                    title: 'Results', 
-                    desc: "Live leaderboards and detailed performance stats.",
-                    icon: BarChart3,
-                    color: "text-pink-500",
-                    bg: "bg-pink-100/50"
-                  }
-                ].map((step, idx) => (
-                  <div key={idx} className={`relative flex flex-col ${idx % 2 === 1 ? 'md:mt-32' : ''}`}>
-                    
-                    {/* Arrow Connections (Desktop Only) */}
-                    {idx < 3 && (
-                      <div className={`hidden md:block absolute top-1/2 -right-12 w-24 h-24 pointer-events-none z-0 ${idx % 2 === 0 ? 'translate-y-4' : '-translate-y-20'}`}>
-                         <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-300">
-                           {idx % 2 === 0 ? (
-                             // Downward curve (High to Low)
-                             <path d="M0 20 C 40 20, 40 80, 100 80" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" />
-                           ) : (
-                             // Upward curve (Low to High)
-                             <path d="M0 80 C 40 80, 40 20, 100 20" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" />
-                           )}
-                           {/* Arrowhead */}
-                           <path d={idx % 2 === 0 ? "M90 70 L100 80 L90 90" : "M90 10 L100 20 L90 30"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                         </svg>
-                      </div>
-                    )}
-
-                    <div className="
-                      bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 
-                      shadow-[0_8px_30px_rgb(0,0,0,0.04)]
-                      hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]
-                      transition-all duration-300 border border-white/50
-                      flex flex-col items-center text-center h-full relative z-10
-                    ">
-                      
-                      {/* Icon */}
-                      <div className={`
-                        w-14 h-14 rounded-2xl mb-4 flex items-center justify-center 
-                        ${step.bg} ${step.color} shadow-sm
-                      `}>
-                        <step.icon className="w-7 h-7" strokeWidth={2} />
-                      </div>
-
-                      {/* Content */}
-                      <h3 className="text-lg font-bold text-slate-800 mb-2">
-                        {step.title}
+                  <div className="relative z-10 p-3 border-t-2 border-[#ccff00]/50 bg-black/80 backdrop-blur-md flex justify-between items-end">
+                    <div>
+                      <h3 className="text-white text-lg font-bold leading-none tracking-tight uppercase font-display">
+                        {topic.name}
                       </h3>
-                      <p className="text-slate-500 text-sm leading-relaxed">
-                        {step.desc}
-                      </p>
                     </div>
+                    {/* Replaced 'Level' with Icon */}
+                    <topic.icon className="w-5 h-5 text-[#ccff00]" />
                   </div>
-                ))}
-              </div>
+
+                  {loading === topic.id && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+                      <div className="w-8 h-8 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Right Column */}
+          <div className="flex flex-col gap-6 w-1/2 mt-12">
+            {rightColumnIndices.map((index) => {
+              const topic = TOPICS[index];
+              const theme = THEMES[topic.id];
+              return (
+                <div
+                  key={topic.id}
+                  onClick={() => handleTopicClick(topic.id, topic.name)}
+                  className={clsx(
+                    "group relative w-full bg-[#111] border-4 border-[#ccff00] flex flex-col justify-end overflow-hidden transition-transform active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(204,255,0,0.1)] hover:shadow-[0_0_30px_rgba(204,255,0,0.2)]",
+                    theme.aspect
+                  )}>
+                  <div
+                    className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-500"
+                    style={{ backgroundImage: `url('${theme.bgImage}')` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+
+                  {theme.bleedingText && (
+                    <span
+                      className={theme.bleedingClass}
+                      style={theme.bleedingClass.includes('writing-vertical-rl') ? { writingMode: 'vertical-rl' } : {}}
+                    >
+                      {theme.bleedingText}
+                    </span>
+                  )}
+
+                  <div className="relative z-10 p-3 border-t-2 border-[#ccff00]/50 bg-black/80 backdrop-blur-md flex justify-between items-end">
+                    <div>
+                      <h3 className="text-white text-lg font-bold leading-none tracking-tight uppercase font-display">
+                        {topic.name}
+                      </h3>
+                    </div>
+                    {/* Replaced 'Level' with Icon */}
+                    <topic.icon className="w-5 h-5 text-[#ccff00]" />
+                  </div>
+
+                  {loading === topic.id && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+                      <div className="w-8 h-8 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Special */}
+            <div
+              onClick={() => setIsCustomOpen(true)}
+              className="group relative w-full bg-[#ccff00] border-4 border-[#ccff00] flex flex-col justify-center items-center p-4 overflow-hidden transition-transform active:scale-95 cursor-pointer aspect-square shadow-[0_0_20px_rgba(204,255,0,0.4)]"
+            >
+              <Sparkles className="text-black w-10 h-10 mb-2 animate-pulse" />
+              <h3 className="text-black text-lg font-black leading-none tracking-tight uppercase text-center font-display">
+                CUSTOM<br />LOOT
+              </h3>
             </div>
           </div>
-        </section>
-      </main>
-      
-      {/* Footer minimal */}
-      <footer className="py-8 text-center text-slate-400 text-sm bg-white/50 backdrop-blur-sm">
-        <p>© {new Date().getFullYear()} QuizWhiz. Ready for fun?</p>
-      </footer>
+        </div>
+
+        {/* Replaced Mobile Navigation Bar */}
+        <MobileNav />
+
+        <Dialog open={isCustomOpen} onOpenChange={setIsCustomOpen}>
+          <DialogContent className="sm:max-w-md bg-[#111] border-2 border-[#ccff00] text-white">
+            <DialogHeader>
+              <DialogTitle className="text-[#ccff00] font-display uppercase tracking-wide">Custom Cartridge</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Insert a topic to generate a unique level.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="topic" className="text-white font-mono uppercase text-xs tracking-wider">Topic Name</Label>
+                <Input
+                  id="topic"
+                  placeholder="E.G. SYNTHWAVE"
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCustomGenerate()}
+                  autoFocus
+                  className="bg-black border-[#333] focus:border-[#ccff00] text-white placeholder:text-gray-700 font-display font-bold uppercase tracking-wide h-12 rounded-none border-x-0 border-t-0 border-b-2 focus:ring-0"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsCustomOpen(false)} className="text-gray-500 hover:text-white hover:bg-transparent uppercase font-mono text-xs">Cancel</Button>
+              <Button
+                onClick={handleCustomGenerate}
+                disabled={!customTopic.trim() || loading === 'custom'}
+                className="bg-[#ccff00] text-black hover:bg-[#bbee00] font-black uppercase tracking-widest rounded-none h-12"
+              >
+                {loading === 'custom' ? 'LOADING...' : 'START GAME'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+      </div>
     </div>
   );
 }
