@@ -42,7 +42,7 @@ export function Podium({ participants, isHost, onRestart }: PodiumProps) {
 
                 <div className="w-full h-[20px] mb-8"></div> {/* Spacer similar to progress bar in HUD */}
 
-                <main className="flex-1 flex flex-col justify-end px-6 pb-6 overflow-y-auto scrollbar-hide">
+                <main className={`flex-1 flex flex-col justify-end px-6 overflow-y-auto scrollbar-hide ${isHost ? 'pb-32' : 'pb-6'}`}>
 
                     {/* Performance Metrics (Visual Equalizer) */}
                     <div className="mt-4 mb-8 opacity-60 hover:opacity-100 transition-opacity">
