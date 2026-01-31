@@ -2,6 +2,7 @@
   "name": "quizwhiz",
   "version": "0.1.0",
   "description": "Real-time serverless quiz platform for live events using Next.js and Firebase",
+  "author": "Lakshya",
   "homepage": "https://quiz-whiz-indol.vercel.app",
   "keywords": [
     "nextjs",
@@ -12,14 +13,40 @@
     "serverless"
   ],
   "private": true,
+  "main": "electron-main.js",
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "NODE_ENV=production next build",
-    "start": "next start",
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start-web": "next dev --turbopack -p 9002",
+    "build-app": "NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder"
+  },
+  "build": {
+    "appId": "com.quizwhiz.app",
+    "productName": "QuizWhiz",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "electron-main.js",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   },
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
@@ -82,6 +109,8 @@
     "@types/react": "npm:types-react@^19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@^19.0.0-rc.1",
     "@types/uuid": "^9.0.8",
+    "electron": "^40.1.0",
+    "electron-builder": "^26.4.0",
     "genkit-cli": "^1.20.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
