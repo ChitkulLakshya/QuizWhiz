@@ -25,16 +25,6 @@ export default {
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
-        // Neo-Brutalist Tokens
-        "acid": "#ccff00",
-        "acid-dark": "#aadd00",
-        "retro-black": "#050505",
-        "retro-dark": "#121212",
-        "retro-gray": "#1a1a1a",
-        "electric-purple": "#b00b69",
-        "terminal-gray": "#1f230f",
-        "hud-green": "#ccff00",
-        "hud-dim": "#424b20",
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
@@ -83,6 +73,10 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        // Legacy/Brand Aliases (Functional)
+        "acid": "hsl(var(--primary))",
+        "acid-dark": "hsl(var(--primary))", // Simplified
+        "retro-black": "hsl(var(--background))",
       },
       borderRadius: {
         lg: 'var(--radius)',

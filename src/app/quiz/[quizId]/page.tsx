@@ -5,6 +5,7 @@ export async function generateStaticParams() {
   return [{ quizId: 'demo' }];
 }
 
-export default function Page(props: any) {
-  return <ClientComponent {...props} />;
+// @ts-ignore
+export default function Page({ params }: { params: any }) {
+  return <ClientComponent />;
 }

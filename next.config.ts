@@ -1,15 +1,12 @@
 import type { NextConfig } from 'next';
 
-const isElectronBuild = process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true';
-
 const nextConfig: NextConfig = {
-  /* config options here */
-  output: isElectronBuild ? 'export' : undefined,
+  output: 'export',
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: isElectronBuild,
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

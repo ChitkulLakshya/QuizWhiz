@@ -3,50 +3,28 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useInView } from 'react-intersection-observer';
-import { Zap, Users, Brain, Sparkles, ArrowRight, Trophy, Timer, Gamepad2 } from 'lucide-react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { Zap, Users, Brain, ArrowRight, Trophy, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MobileNav from '@/components/mobile-nav';
 
-// Scroll-triggered animation component
-function AnimatedSection({
-  children,
-  className = '',
-  delay = 0
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  const { ref, inView } = useInView({ threshold: 0.2, triggerOnce: true });
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${className}`}
-      style={{
-        transitionDelay: `${delay}ms`,
-        opacity: inView ? 1 : 0,
-        transform: inView ? 'translateY(0)' : 'translateY(40px)'
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const router = useRouter();
-  const [scrollY, setScrollY] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Parallax scroll tracking
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+  const y2 = useTransform(scrollY, [0, 500], [0, -150]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
+  // Smooth spring for parallax
+  const springY1 = useSpring(y1, { stiffness: 100, damping: 30 });
+  const springY2 = useSpring(y2, { stiffness: 100, damping: 30 });
+  const gridY = useTransform(scrollY, [0, 500], [0, 50]);
+
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    setMounted(true);
   }, []);
 
   const features = [
@@ -73,8 +51,33 @@ export default function LandingPage() {
     { num: '03', title: 'Play', desc: 'Answer fast to climb the leaderboard' }
   ];
 
+  const categories = ['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'];
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 100 }
+    }
+  };
+
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden selection:bg-[#ccff00] selection:text-black">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
 
       {/* Noise texture overlay */}
       <div
@@ -85,103 +88,131 @@ export default function LandingPage() {
       />
 
       {/* ══════════════════════════════════════════════════════════════════════════
-          HERO SECTION - Parallax
+          HERO SECTION
       ══════════════════════════════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
         className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
       >
         {/* Parallax background elements */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-        >
+        <div className="absolute inset-0 pointer-events-none">
           {/* Floating orbs */}
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-[#ccff00]/20 to-transparent blur-3xl" />
-          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 rounded-full bg-gradient-to-br from-purple-500/10 to-transparent blur-3xl" />
+          <motion.div
+            style={{ y: springY1 }}
+            className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[100px]"
+          />
+          <motion.div
+            style={{ y: springY2 }}
+            className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-purple-500/10 blur-[120px]"
+          />
         </div>
 
         {/* Grid lines */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-10"
+        <motion.div
+          className="absolute inset-0 pointer-events-none opacity-20"
           style={{
             backgroundImage: `
-              linear-gradient(to right, #ccff00 1px, transparent 1px),
-              linear-gradient(to bottom, #ccff00 1px, transparent 1px)
+              linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px),
+              linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)
             `,
             backgroundSize: '80px 80px',
-            transform: `translateY(${scrollY * 0.1}px)`
+            y: gridY,
+            maskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)'
           }}
         />
 
         {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
+        <motion.div
+          className="relative z-10 text-center max-w-5xl mx-auto"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#ccff00]/10 border border-[#ccff00]/30 px-4 py-2 mb-8">
-            <Zap className="w-4 h-4 text-[#ccff00]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#ccff00]">Real-Time Quiz Platform</span>
-          </div>
+          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 mb-8 rounded-full backdrop-blur-sm">
+            <Zap className="w-4 h-4 text-primary" />
+            <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">Real-Time Quiz Platform</span>
+          </motion.div>
 
           {/* Main headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
-            <span className="block text-white">Challenge</span>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-yellow-400">Your Brain</span>
-          </h1>
+          <motion.div variants={itemVariants} className="mb-8">
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.85]">
+              <span className="block text-foreground drop-shadow-2xl">Challenge</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-300 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">Your Brain</span>
+            </h1>
+          </motion.div>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light">
+          <motion.p variants={itemVariants} className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light leading-relaxed">
             Create AI-powered quizzes, compete in real-time, and prove you're the smartest in the room.
-          </p>
+          </motion.p>
 
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Button
               onClick={() => router.push('/play')}
-              className="h-14 px-8 bg-[#ccff00] hover:bg-[#bbee00] text-black font-black uppercase tracking-widest text-sm group"
+              size="lg"
+              className="h-16 px-10 text-base shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_40px_-5px_hsl(var(--primary)/0.6)] hover:scale-105 transition-all duration-300"
             >
               Play Now
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
               variant="outline"
+              size="lg"
               onClick={() => router.push('/host/create')}
-              className="h-14 px-8 border-2 border-white/20 hover:border-[#ccff00] hover:text-[#ccff00] font-bold uppercase tracking-widest text-sm bg-transparent"
+              className="h-16 px-10 text-base backdrop-blur-sm bg-background/50 hover:bg-background/80 hover:scale-105 transition-all duration-300"
             >
               Create Quiz
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500">Scroll</span>
-          <div className="w-px h-8 bg-gradient-to-b from-[#ccff00] to-transparent" />
-        </div>
+        <motion.div
+          style={{ opacity }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        >
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">Scroll</span>
+          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent" />
+        </motion.div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════
           FEATURES SECTION
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-6 relative">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection className="text-center mb-16">
-            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">Why QuizWhiz</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+      <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-24"
+          >
+            <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">Why QuizWhiz</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
               Next-Gen Trivia
             </h2>
-          </AnimatedSection>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, i) => (
-              <AnimatedSection key={feature.title} delay={i * 150}>
-                <div className="group p-8 bg-[#0a0a0a] border border-[#222] hover:border-[#ccff00]/50 transition-all duration-300">
-                  <div className="w-14 h-14 bg-[#ccff00]/10 flex items-center justify-center mb-6 group-hover:bg-[#ccff00]/20 transition-colors">
-                    <feature.icon className="w-7 h-7 text-[#ccff00]" />
-                  </div>
-                  <h3 className="text-xl font-bold uppercase tracking-wide mb-3">{feature.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{feature.description}</p>
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="group p-10 bg-card/40 backdrop-blur-md border border-border hover:border-primary/50 transition-all duration-500 rounded-2xl hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.5)]"
+              >
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-8 group-hover:bg-primary/20 transition-all duration-500 group-hover:scale-110">
+                  <feature.icon className="w-8 h-8 text-primary" />
                 </div>
-              </AnimatedSection>
+                <h3 className="text-2xl font-bold uppercase tracking-wide mb-4 text-foreground">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed text-lg">{feature.description}</p>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -190,30 +221,34 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative overflow-hidden">
-        {/* Parallax accent */}
-        <div
-          className="absolute -right-32 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#ccff00]/5 to-transparent blur-3xl pointer-events-none"
-          style={{ transform: `translateY(${(scrollY - 800) * 0.2}px)` }}
-        />
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          <AnimatedSection className="text-center mb-16">
-            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">How It Works</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+      <section className="py-32 px-6 bg-secondary/20 relative overflow-hidden backdrop-blur-sm inset-shadow-lg">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-24"
+          >
+            <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">How It Works</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
               Three Simple Steps
             </h2>
-          </AnimatedSection>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-12">
             {steps.map((step, i) => (
-              <AnimatedSection key={step.num} delay={i * 150}>
-                <div className="relative p-8 border-l-4 border-[#ccff00]">
-                  <span className="text-6xl font-black text-[#ccff00]/10 absolute -top-4 -left-2">{step.num}</span>
-                  <h3 className="text-2xl font-bold uppercase tracking-wide mb-3 relative z-10">{step.title}</h3>
-                  <p className="text-gray-500 relative z-10">{step.desc}</p>
-                </div>
-              </AnimatedSection>
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.2 }}
+                viewport={{ once: true }}
+                className="relative p-8 border-l-2 border-primary/20 hover:border-primary transition-colors duration-300 pl-10"
+              >
+                <span className="text-7xl font-black text-primary/5 absolute -top-4 left-4 select-none pointer-events-none">{step.num}</span>
+                <h3 className="text-3xl font-bold uppercase tracking-wide mb-4 relative z-10">{step.title}</h3>
+                <p className="text-muted-foreground relative z-10 text-lg">{step.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -222,65 +257,80 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════════════
           CATEGORIES PREVIEW
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-6 relative">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection className="text-center mb-12">
-            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">Categories</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+      <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">Categories</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
               Endless Topics
             </h2>
-          </AnimatedSection>
+          </motion.div>
 
-          <AnimatedSection delay={200}>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-              {['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'].map((cat) => (
-                <div
-                  key={cat}
-                  className="flex-shrink-0 px-6 py-4 bg-[#111] border border-[#333] hover:border-[#ccff00] transition-colors cursor-pointer"
-                >
-                  <span className="text-sm font-bold uppercase tracking-wider whitespace-nowrap">{cat}</span>
-                </div>
-              ))}
-            </div>
-          </AnimatedSection>
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide py-4"
+          >
+            {[...categories, ...categories].map((cat, i) => (
+              <motion.div
+                whileHover={{ scale: 1.05, borderColor: 'hsl(var(--primary))' }}
+                key={`${cat}-${i}`}
+                className="flex-shrink-0 px-8 py-5 bg-card border border-border transition-all cursor-pointer rounded-lg shadow-sm"
+              >
+                <span className="text-base font-bold uppercase tracking-wider whitespace-nowrap">{cat}</span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════
           FINAL CTA
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 relative overflow-hidden">
+      <section className="py-40 px-6 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-[#ccff00]/10 blur-[150px]" />
+          <div className="w-[800px] h-[800px] rounded-full bg-primary/5 blur-[200px]" />
         </div>
 
-        <AnimatedSection className="relative z-10 text-center max-w-3xl mx-auto">
-          <Gamepad2 className="w-16 h-16 text-[#ccff00] mx-auto mb-8" />
-          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative z-10 text-center max-w-4xl mx-auto"
+        >
+          <Gamepad2 className="w-20 h-20 text-primary mx-auto mb-8 animate-pulse" />
+          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-8">
             Ready to Play?
           </h2>
-          <p className="text-lg text-gray-400 mb-10">
+          <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
             Join thousands of players challenging their knowledge every day.
           </p>
           <Button
             onClick={() => router.push('/play')}
-            className="h-16 px-12 bg-[#ccff00] hover:bg-[#bbee00] text-black font-black uppercase tracking-widest text-base group shadow-[0_0_60px_rgba(204,255,0,0.3)]"
+            size="lg"
+            className="h-20 px-16 text-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_50px_rgba(var(--primary),0.3)] hover:shadow-[0_0_80px_rgba(var(--primary),0.5)] transition-all duration-300 scale-100 hover:scale-105"
           >
             Start Playing
-            <Zap className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
+            <Zap className="ml-3 w-6 h-6 fill-current" />
           </Button>
-        </AnimatedSection>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-[#222]">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="text-sm text-gray-600 font-mono">© 2025 QUIZWHIZ</span>
-          <div className="flex gap-6">
-            <Link href="/play" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Play</Link>
-            <Link href="/host/create" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Create</Link>
-            <Link href="/join" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Join</Link>
+      <footer className="py-12 px-6 border-t border-border/40 bg-background/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <span className="text-sm text-muted-foreground font-mono">© 2025 QUIZWHIZ</span>
+          <div className="flex gap-8">
+            <Link href="/play" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Play</Link>
+            <Link href="/host/create" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Create</Link>
+            <Link href="/join" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Join</Link>
           </div>
         </div>
       </footer>

@@ -1,10 +1,15 @@
+'use client';
+
 import { mockQuizzes, mockLeaderboard } from '@/lib/mock-data';
 import Header from '@/components/header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import LeaderboardClient from './leaderboard-client';
+import { useParams } from 'next/navigation';
 
-export default function LeaderboardPage({ quizId }: { quizId: string }) {
+export default function LeaderboardPage() {
+  const params = useParams();
+  const quizId = Array.isArray(params?.quizId) ? params.quizId[0] : params?.quizId;
   const quiz = mockQuizzes.find(q => q.id === quizId);
 
   if (!quiz) {

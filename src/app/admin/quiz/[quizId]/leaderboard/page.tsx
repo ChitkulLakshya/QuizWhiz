@@ -5,7 +5,7 @@ export async function generateStaticParams() {
   return [{ quizId: 'demo' }];
 }
 
-export default async function Page({ params }: { params: Promise<{ quizId: string }> }) {
-  const { quizId } = await params;
-  return <ClientComponent quizId={quizId} />;
+// @ts-ignore
+export default function Page({ params }: { params: any }) {
+  return <ClientComponent />;
 }

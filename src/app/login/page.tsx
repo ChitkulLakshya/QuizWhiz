@@ -198,9 +198,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="w-full text-center space-y-6 mb-12">
             <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-[#ccff00] flex items-center justify-center text-black font-black text-xl rounded-sm group-hover:rotate-6 transition-transform">
-                Q
-              </div>
+              <Icons.logo className="w-12 h-12 group-hover:rotate-6 transition-transform" />
             </Link>
 
             <div className="relative inline-block">

@@ -32,6 +32,7 @@ import { httpsCallable } from "firebase/functions";
 import { signInAnonymously } from "firebase/auth";
 import { fetchQuestionsFromAPI } from "./trivia-service";
 import { Quiz, Question, Participant, LeaderboardEntry, QuestionResult } from "@/types/quiz";
+import { Capacitor } from "@capacitor/core";
 
 // Type helpers for Firestore operations
 type QuizCollection = CollectionReference<Omit<Quiz, "id">>;
@@ -123,7 +124,13 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
 
     // 2. Fetch AI Questions from API
     console.log("🧠 calling /api/generate-quiz...");
-    const response = await fetch('/api/generate-quiz', {
+
+    let apiUrl = '/api/generate-quiz';
+    if (Capacitor.isNativePlatform()) {
+      apiUrl = 'https://quizwhiz-live.vercel.app/api/generate-quiz';
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic }),

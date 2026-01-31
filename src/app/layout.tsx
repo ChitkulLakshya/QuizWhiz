@@ -6,11 +6,19 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import InstallPWAButton from '@/components/InstallPWAButton';
 import ConsoleConfig from '@/components/ConsoleConfig';
 
+import MobileWrapper from '@/components/mobile/MobileWrapper';
+
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
   display: 'swap',
 });
+
+// ... (other font definitions remain same, skipping to keep context concise if possible, but replace tool needs context) 
+// Actually I need to be careful with replace tool. I'll include the import at the top and the wrapper in the body.
+
+// Let's do imports first
+
 
 const archivoBlack = Archivo_Black({
   weight: '400',
@@ -40,7 +48,9 @@ export default function RootLayout({
       <body className={`${spaceGrotesk.variable} ${archivoBlack.variable} ${robotoMono.variable} font-sans antialiased min-h-screen flex flex-col bg-[#050505]`} suppressHydrationWarning>
         <ConsoleConfig />
         <ServiceWorkerRegister />
-        {children}
+        <MobileWrapper>
+          {children}
+        </MobileWrapper>
         <InstallPWAButton />
         <Toaster />
       </body>

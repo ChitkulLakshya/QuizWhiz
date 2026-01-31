@@ -13,19 +13,25 @@
     "serverless"
   ],
   "private": true,
-  "main": "electron-main.js",
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
+    "dev:desktop": "npx tauri dev",
+    "tauri": "tauri",
+    "android": "export NDK_HOME=/home/premsaik/Android/Sdk/ndk/29.0.13846066 && tauri android build",
+    "build": "npm run build:web",
+    "build:web": "cross-env NODE_ENV=production next build",
+    "build:mobile": "npm run build:web && npx cap sync",
+    "build:desktop": "npm run build:web && npx tauri build",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "cross-env NODE_ENV=production next build",
     "start": "electron .",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
     "start-web": "next dev --turbopack -p 9002",
-    "build-app": "cross-env NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder"
+    "build-app": "cross-env NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder",
+    "sync": "npx cap sync",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "build": {
     "appId": "com.quizwhiz.app",
@@ -51,10 +57,11 @@
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "^8.0.0",
-    "@capacitor/android": "^8.0.2",
-    "@capacitor/cli": "^8.0.2",
+    "@capacitor/camera": "^8.0.0",
     "@capacitor/core": "^8.0.2",
     "@capacitor/haptics": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@genkit-ai/google-genai": "^1.20.0",
@@ -104,21 +111,22 @@
     "react-intersection-observer": "^10.0.2",
     "react-qr-code": "^2.0.15",
     "recharts": "^2.15.1",
-    "tailwind-merge": "^3.0.1",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "use-sound": "^5.0.0",
     "uuid": "^9.0.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@tauri-apps/cli": "^2.9.6",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.9",
     "@types/react": "npm:types-react@^19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@^19.0.0-rc.1",
     "@types/uuid": "^9.0.8",
     "cross-env": "^10.1.0",
-    "electron": "^40.1.0",
-    "electron-builder": "^26.4.0",
     "genkit-cli": "^1.20.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
@@ -129,6 +137,7 @@
     "react-dom": "$react-dom",
     "@genkit-ai/next": {
       "next": "$next"
-    }
+    },
+    "fast-xml-parser": "^5.3.4"
   }
 }

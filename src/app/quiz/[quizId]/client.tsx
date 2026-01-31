@@ -1,11 +1,18 @@
+'use client';
+
 import { mockQuizzes } from '@/lib/mock-data';
 import QuizClient from './quiz-client';
 import Header from '@/components/header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
-export default function TakeQuizPage({ params }: { params: { quizId: string } }) {
-  const quiz = mockQuizzes.find(q => q.id === params.quizId);
+export default function TakeQuizPage() {
+  const params = useParams();
+  // useParams returns string | string[], so we cast or check
+  const quizId = Array.isArray(params?.quizId) ? params.quizId[0] : params?.quizId;
+
+  const quiz = mockQuizzes.find(q => q.id === quizId);
 
   if (!quiz) {
     return (
