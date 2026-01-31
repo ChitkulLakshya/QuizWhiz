@@ -19,9 +19,13 @@ import Link from 'next/link';
 import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
-export default function QuizControl() {
+interface QuizControlProps {
+  quizId?: string;
+}
+
+export default function QuizControl({ quizId: propQuizId }: QuizControlProps = {}) {
   const params = useParams();
-  const quizId = params.quizId as string;
+  const quizId = propQuizId || (params?.quizId as string);
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);

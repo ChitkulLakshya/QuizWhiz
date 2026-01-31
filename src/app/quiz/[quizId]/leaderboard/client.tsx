@@ -4,8 +4,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import LeaderboardClient from './leaderboard-client';
 
-export default function LeaderboardPage({ params }: { params: { quizId: string } }) {
-  const quiz = mockQuizzes.find(q => q.id === params.quizId);
+export default function LeaderboardPage({ quizId }: { quizId: string }) {
+  const quiz = mockQuizzes.find(q => q.id === quizId);
 
   if (!quiz) {
     return (

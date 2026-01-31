@@ -1,10 +1,10 @@
-
-import ClientComponent from './client';
+﻿import ClientComponent from './client';
 
 export async function generateStaticParams() {
   return [{ quizId: 'demo' }];
 }
 
-export default function Page(props: any) {
-  return <ClientComponent {...props} />;
+export default async function HostControlPage({ params }: { params: Promise<{ quizId: string }> }) {
+  const { quizId } = await params;
+  return <ClientComponent quizId={quizId} />;
 }

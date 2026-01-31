@@ -10,9 +10,13 @@ import Link from 'next/link';
 import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
-export default function AdminLeaderboard() {
+interface AdminLeaderboardProps {
+  quizId?: string;
+}
+
+export default function AdminLeaderboard({ quizId: propQuizId }: AdminLeaderboardProps = {}) {
   const params = useParams();
-  const quizId = params.quizId as string;
+  const quizId = propQuizId || (params.quizId as string);
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);

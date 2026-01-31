@@ -1,16 +1,15 @@
-'use client';
+﻿'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -52,7 +51,9 @@ type QuizFormValues = z.infer<typeof quizFormSchema>;
 export function QuizForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
+  // const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
+  const [generateState, setGenerateState] = useState<{ status: string; message: string; data?: any[] }>({ status: 'idle', message: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // React state for form fields and loading
   const [title, setTitle] = useState('');
@@ -99,7 +100,7 @@ export function QuizForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('🟢 handleSubmit called');
+    console.log(' handleSubmit called');
 
     setLoading(true);
 
@@ -110,17 +111,17 @@ export function QuizForm() {
         throw new Error('Please fill in all required fields');
       }
 
-      console.log('📝 Form data validated:', { title: formData.title, questionCount: formData.questions.length });
+      console.log(' Form data validated:', { title: formData.title, questionCount: formData.questions.length });
 
       // 1. Create Quiz Document
-      console.log('🚀 Creating quiz document...');
+      console.log(' Creating quiz document...');
       // Note: We don't have user email here easily without auth context, using placeholder or passing it if available.
       // For now, we'll use a placeholder or empty string as the service expects a string.
       const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous', 'anonymous-user');
-      console.log('✅ Quiz created with ID:', quizId);
+      console.log(' Quiz created with ID:', quizId);
 
       // 2. Prepare Questions for Batch Write
-      console.log('🚀 Preparing questions for batch write...');
+      console.log(' Preparing questions for batch write...');
       const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = formData.questions.map((q, i) => {
         const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
         return {
@@ -135,7 +136,7 @@ export function QuizForm() {
 
       // 3. Batch Write Questions
       await addQuestions(quizId, questionsToAdd);
-      console.log('✅ All questions added successfully');
+      console.log(' All questions added successfully');
 
       // Reset form fields after successful submission
       form.reset();
@@ -152,8 +153,8 @@ export function QuizForm() {
     } catch (error) {
       // Clear console error messages
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('❌ Error creating quiz:', errorMessage);
-      console.error('🔍 Error details:', error);
+      console.error(' Error creating quiz:', errorMessage);
+      console.error(' Error details:', error);
 
       toast({
         title: 'Error',
@@ -163,9 +164,26 @@ export function QuizForm() {
     } finally {
       // Always reset loading state in finally block
       setLoading(false);
-      console.log('🔵 Loading state reset');
+      console.log(' Loading state reset');
     }
   };
+
+  const handleAiGenerate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    setGenerateState({ status: 'idle', message: '' });
+
+    const formData = new FormData(e.currentTarget);
+    try {
+        const result = await generateQuestionsAction({ status: 'idle', message: '' }, formData);
+        setGenerateState(result);
+    } catch (error) {
+        console.error("AI Generation failed", error);
+        setGenerateState({ status: 'error', message: 'Failed to generate questions' });
+    } finally {
+        setIsGenerating(false);
+    }
+  }
 
   const aiFormRef = React.useRef<HTMLFormElement>(null);
 
@@ -183,7 +201,7 @@ export function QuizForm() {
         <CardContent>
           <form
             ref={aiFormRef}
-            action={generateAction}
+            onSubmit={handleAiGenerate}
             className="grid sm:grid-cols-4 gap-4 items-end"
           >
             <div className="space-y-2 col-span-4 sm:col-span-1">
@@ -217,9 +235,9 @@ export function QuizForm() {
             <Button
               type="submit"
               className="w-full sm:w-auto"
-              disabled={form.formState.isSubmitting}
+              disabled={isGenerating || form.formState.isSubmitting}
             >
-              <Sparkles className="mr-2" />
+              {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2" />}
               Generate
             </Button>
           </form>
