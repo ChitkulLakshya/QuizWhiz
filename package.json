@@ -50,6 +50,12 @@
     }
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.0",
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@genkit-ai/google-genai": "^1.20.0",
     "@genkit-ai/next": "^1.20.0",
