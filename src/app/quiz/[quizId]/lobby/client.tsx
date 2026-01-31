@@ -11,9 +11,13 @@ import type { Quiz } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import clsx from 'clsx';
 
-export default function QuizLobby() {
+interface QuizLobbyProps {
+  quizId?: string;
+}
+
+export default function QuizLobby({ quizId: propQuizId }: QuizLobbyProps = {}) {
   const params = useParams();
-  const quizId = params.quizId as string;
+  const quizId = propQuizId || (params?.quizId as string);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [joinUrl, setJoinUrl] = useState('');
   const { toast } = useToast();

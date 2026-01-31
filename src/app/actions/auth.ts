@@ -1,25 +1,11 @@
-'use server';
-
-import { emailService } from '@/lib/email/service';
+// Client-Side Stub for Auth Actions
 
 export async function sendWelcomeEmailAction(email: string, name?: string) {
-  try {
-    console.log(`📧 Sending welcome email to ${email}`);
-    await emailService.sendWelcome(email, name);
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to send welcome email:', error);
-    return { success: false, error: 'Failed to send welcome email' };
-  }
+  console.log(' [Client Mock] Welcome email would be sent to:', email);
+  return { success: true };
 }
 
 export async function sendOtpEmailAction(email: string, code: string) {
-  try {
-    console.log(`📧 Sending OTP email to ${email}`);
-    await emailService.sendOtp(email, code);
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to send OTP email:', error);
-    return { success: false, error: 'Failed to send OTP email' };
-  }
+  console.log(' [Client Mock] OTP email would be sent to:', email, 'Code:', code);
+  return { success: true };
 }

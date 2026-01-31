@@ -42,11 +42,15 @@ function SubmitButton({ isSaving }: { isSaving: boolean }) {
   );
 }
 
-export default function EditQuiz() {
+interface EditQuizProps {
+  quizId?: string;
+}
+
+export default function EditQuiz({ quizId: propQuizId }: EditQuizProps = {}) {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const quizId = params.quizId as string;
+  const quizId = propQuizId || (params.quizId as string);
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);

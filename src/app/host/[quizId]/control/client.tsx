@@ -20,9 +20,13 @@ import { Users, Play, SkipForward, Trophy, Home } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import Link from 'next/link';
 
-export default function HostQuizControl() {
+interface HostQuizControlProps {
+    quizId?: string;
+}
+
+export default function HostQuizControl({ quizId: propQuizId }: HostQuizControlProps = {}) {
     const params = useParams();
-    const quizId = params.quizId as string;
+    const quizId = propQuizId || (params.quizId as string);
     const router = useRouter();
 
     const [quiz, setQuiz] = useState<Quiz | null>(null);

@@ -18,14 +18,14 @@
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "NODE_ENV=production next build",
+    "build": "cross-env NODE_ENV=production next build",
     "start": "electron .",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "start-web": "next dev --turbopack -p 9002",
-    "build-app": "NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder"
+    "build-app": "cross-env NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder"
   },
   "build": {
     "appId": "com.quizwhiz.app",
@@ -36,7 +36,8 @@
     "files": [
       "out/**/*",
       "electron-main.js",
-      "package.json"
+      "package.json",
+      "!node_modules/@dataconnect/generated"
     ],
     "mac": {
       "target": "dmg"
@@ -109,6 +110,7 @@
     "@types/react": "npm:types-react@^19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@^19.0.0-rc.1",
     "@types/uuid": "^9.0.8",
+    "cross-env": "^10.1.0",
     "electron": "^40.1.0",
     "electron-builder": "^26.4.0",
     "genkit-cli": "^1.20.0",
@@ -118,6 +120,9 @@
   },
   "overrides": {
     "react": "$react",
-    "react-dom": "$react-dom"
+    "react-dom": "$react-dom",
+    "@genkit-ai/next": {
+      "next": "$next"
+    }
   }
 }

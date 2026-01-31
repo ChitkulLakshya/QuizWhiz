@@ -38,9 +38,13 @@ import { LobbyView } from '@/components/game/state-views/lobby-view';
 import { QuestionView } from '@/components/game/state-views/question-view';
 import { ResultsView } from '@/components/game/state-views/results-view';
 
-export default function PlayPage() {
+interface PlayPageProps {
+  quizId?: string;
+}
+
+export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
   const params = useParams();
-  const quizId = params.quizId as string;
+  const quizId = propQuizId || (params.quizId as string);
   const router = useRouter();
   const { toast } = useToast();
 
