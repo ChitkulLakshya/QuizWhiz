@@ -86,32 +86,10 @@ export default function SettingsPage() {
 }
 
 function DownloadSection() {
-    const [os, setOs] = useState<'win' | 'mac' | 'linux' | 'mobile' | 'unknown'>('unknown');
-
-    useEffect(() => {
-        const ua = navigator.userAgent.toLowerCase();
-        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
-
-        if (isMobile) {
-            setOs('mobile');
-        } else if (ua.indexOf('win') > -1) {
-            setOs('win');
-        } else if (ua.indexOf('mac') > -1) {
-            setOs('mac');
-        } else if (ua.indexOf('linux') > -1) {
-            setOs('linux');
-        } else {
-            setOs('win'); // Default to windows
-        }
-    }, []);
-
-    if (os === 'unknown') return null;
-
     return (
         <div className="space-y-4">
-            <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-gray-500 mb-2">Get the App</h2>
+            <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-gray-500 mb-2">Get the Desktop App</h2>
             <div className="bg-[#0a0a0a] border border-[#222] p-6 text-center space-y-6">
-
                 <div className="flex justify-center mb-4">
                     <div className="w-16 h-16 bg-[#111] rounded-full flex items-center justify-center border border-[#333]">
                         <Monitor className="w-8 h-8 text-[#ccff00]" />
@@ -119,34 +97,24 @@ function DownloadSection() {
                 </div>
 
                 <div className="space-y-2">
-                    <h3 className="text-xl font-bold uppercase tracking-tight text-white" id="platform-title">
-                        {os === 'mobile' ? 'Desktop Only' : `Download for ${os === 'win' ? 'Windows' : os === 'mac' ? 'Mac' : 'Linux'}`}
+                    <h3 className="text-xl font-bold uppercase tracking-tight text-white">
+                        QuizWhiz for Windows
                     </h3>
-                    {os === 'mobile' && (
-                        <p className="text-sm text-gray-500 font-mono">
-                            Our physical desktop app is available for Laptop and Desktop computers only. <br />
-                            Please open this link on your computer to download.
-                        </p>
-                    )}
+                    <p className="text-sm text-gray-500 font-mono">
+                        Experience better performance and offline capabilities.
+                    </p>
                 </div>
 
-                {os === 'win' && (
+                <div className="grid gap-3">
                     <Button asChild className="w-full bg-[#0078D7] hover:bg-[#0063b1] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(0,120,215,0.3)]">
-                        <a href="YOUR_EXE_LINK_HERE">Download .EXE</a>
+                        <a href="/downloads/QuizWhiz-Setup.exe" download>
+                            Download for Windows (.EXE)
+                        </a>
                     </Button>
-                )}
-
-                {os === 'mac' && (
-                    <Button asChild className="w-full bg-[#333] hover:bg-[#444] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                        <a href="YOUR_DMG_LINK_HERE">Download .DMG</a>
-                    </Button>
-                )}
-
-                {os === 'linux' && (
-                    <Button asChild className="w-full bg-[#E95420] hover:bg-[#d04b1c] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(233,84,32,0.3)]">
-                        <a href="YOUR_DEB_LINK_HERE">Download .DEB</a>
-                    </Button>
-                )}
+                    <p className="text-[10px] text-gray-600 font-mono uppercase">
+                        Current Version: 1.0.0
+                    </p>
+                </div>
             </div>
         </div>
     );
