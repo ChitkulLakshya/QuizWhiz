@@ -111,6 +111,16 @@ function DownloadSection() {
                             Download for Windows (.EXE)
                         </a>
                     </Button>
+                    <Button asChild className="w-full bg-[#333] hover:bg-[#444] text-white font-bold h-12 uppercase tracking-widest border border-[#555]">
+                        <a href="/downloads/QuizWhiz-mac.dmg" download>
+                            Download for macOS (.DMG)
+                        </a>
+                    </Button>
+                    <Button asChild className="w-full bg-[#E95420] hover:bg-[#c74418] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(233,84,32,0.3)]">
+                        <a href="/downloads/QuizWhiz-linux.AppImage" download>
+                            Download for Linux (.AppImage)
+                        </a>
+                    </Button>
                     <p className="text-[10px] text-gray-600 font-mono uppercase">
                         Current Version: 1.0.0
                     </p>
