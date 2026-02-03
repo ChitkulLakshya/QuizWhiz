@@ -3,3 +3,4 @@ Commit 1: fix(auth): resolve race condition during token refresh logic (2026-02-
 Commit 2: feat(api): implement rate limiting middleware for public quiz endpoints (2026-02-03 07:19:04)
 Commit 3: refactor(db): normalize user data structure to reduce redundant reads (2026-02-03 14:02:16)
 Commit 4: perf(firestore): add composite index for efficient leaderboard queries (2026-02-03 20:45:28)
+Commit 5: security(rules): restrict write access to user profiles in firestore.rules (2026-02-04 03:28:40)
