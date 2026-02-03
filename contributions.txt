@@ -2,3 +2,4 @@ Commit 0: chore(deps): upgrade firebase-admin and firebase-functions to latest v
 Commit 1: fix(auth): resolve race condition during token refresh logic (2026-02-03 00:35:52)
 Commit 2: feat(api): implement rate limiting middleware for public quiz endpoints (2026-02-03 07:19:04)
 Commit 3: refactor(db): normalize user data structure to reduce redundant reads (2026-02-03 14:02:16)
+Commit 4: perf(firestore): add composite index for efficient leaderboard queries (2026-02-03 20:45:28)
