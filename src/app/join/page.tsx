@@ -110,7 +110,7 @@ function JoinQuizContent() {
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="flex-1 relative flex flex-col justify-center w-full max-w-md mx-auto px-6 z-10 pb-24">
+      <div className="flex-1 relative flex flex-col justify-center w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto px-6 z-10 pb-24">
 
         {/* Back Button */}
         <button
