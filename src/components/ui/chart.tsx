@@ -85,9 +85,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
                 .map(([key, itemConfig]) => {
-                  const color =
+                  const rawColor =
                     itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
                     itemConfig.color
+                  const color = rawColor && /^#([0-9A-F]{3}){1,2}$/i.test(rawColor) ? rawColor : null;
                   return color ? `  --color-${key}: ${color};` : null
                 })
                 .join("\n")}

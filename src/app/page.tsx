@@ -6,7 +6,34 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Zap, Users, Brain, ArrowRight, Trophy, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConstellationBackground } from '@/components/ui/constellation-background';
 import MobileNav from '@/components/mobile-nav';
+
+const features = [
+  {
+    icon: Brain,
+    title: 'AI-Powered',
+    description: 'Generate quizzes on any topic using advanced AI'
+  },
+  {
+    icon: Users,
+    title: 'Real-Time',
+    description: 'Compete with friends in live multiplayer sessions'
+  },
+  {
+    icon: Trophy,
+    title: 'Leaderboards',
+    description: 'Track scores and crown the ultimate champion'
+  }
+];
+
+const steps = [
+  { num: '01', title: 'Create', desc: 'Pick a topic or let AI generate one' },
+  { num: '02', title: 'Share', desc: 'Invite players with a simple code' },
+  { num: '03', title: 'Play', desc: 'Answer fast to climb the leaderboard' }
+];
+
+const categories = ['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'];
 
 export default function LandingPage() {
   const router = useRouter();
@@ -27,31 +54,7 @@ export default function LandingPage() {
     setMounted(true);
   }, []);
 
-  const features = [
-    {
-      icon: Brain,
-      title: 'AI-Powered',
-      description: 'Generate quizzes on any topic using advanced AI'
-    },
-    {
-      icon: Users,
-      title: 'Real-Time',
-      description: 'Compete with friends in live multiplayer sessions'
-    },
-    {
-      icon: Trophy,
-      title: 'Leaderboards',
-      description: 'Track scores and crown the ultimate champion'
-    }
-  ];
 
-  const steps = [
-    { num: '01', title: 'Create', desc: 'Pick a topic or let AI generate one' },
-    { num: '02', title: 'Share', desc: 'Invite players with a simple code' },
-    { num: '03', title: 'Play', desc: 'Answer fast to climb the leaderboard' }
-  ];
-
-  const categories = ['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'];
 
   // Animation variants
   const containerVariants = {
@@ -72,7 +75,7 @@ export default function LandingPage() {
       opacity: 1,
       transition: { type: 'spring', stiffness: 100 }
     }
-  };
+  } as any;
 
   if (!mounted) return null;
 
@@ -107,19 +110,7 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Grid lines */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none opacity-20"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px),
-              linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px',
-            y: gridY,
-            maskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)'
-          }}
-        />
+        <ConstellationBackground />
 
         {/* Hero content */}
         <motion.div
@@ -134,13 +125,13 @@ export default function LandingPage() {
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">Real-Time Quiz Platform</span>
           </motion.div>
 
-          {/* Main headline */}
-          <motion.div variants={itemVariants} className="mb-8">
+          {/* Main headline - Optimized for LCP (No entrance animation) */}
+          <div className="mb-8">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.85]">
               <span className="block text-foreground drop-shadow-2xl">Challenge</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-300 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">Your Brain</span>
             </h1>
-          </motion.div>
+          </div>
 
           {/* Subheadline */}
           <motion.p variants={itemVariants} className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light leading-relaxed">

@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${spaceGrotesk.variable} ${archivoBlack.variable} ${robotoMono.variable} font-sans antialiased min-h-screen flex flex-col bg-[#050505]`} suppressHydrationWarning>
         <ConsoleConfig />
         <ServiceWorkerRegister />
