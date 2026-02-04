@@ -5,3 +5,4 @@ Commit 3: refactor(db): normalize user data structure to reduce redundant reads 
 Commit 4: perf(firestore): add composite index for efficient leaderboard queries (2026-02-03 20:45:28)
 Commit 5: security(rules): restrict write access to user profiles in firestore.rules (2026-02-04 03:28:40)
 Commit 6: chore(ci): update github actions workflow to cache node_modules (2026-02-04 10:11:52)
+Commit 7: fix(websocket): handle connection dropouts gracefully in quiz lobby (2026-02-04 16:55:04)
