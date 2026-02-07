@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ConstellationBackground } from '@/components/ui/constellation-background';
 import { BentoFeatures } from '@/components/ui/bento-features';
 import { InfiniteMarquee } from '@/components/ui/infinite-marquee';
-import MobileNav from '@/components/mobile-nav';
+import Navbar from '@/components/Navbar';
 
 const features = [
   {
@@ -155,23 +155,13 @@ export default function LandingPage() {
               variant="outline"
               size="lg"
               onClick={() => router.push('/host/create')}
-              className="h-16 px-12 text-lg font-bold border-white/20 bg-white/5 backdrop-blur-md text-white hover:bg-white/10 hover:border-primary/50 hover:text-primary hover:scale-105 transition-all duration-300 shadow-lg"
+              className="h-16 px-10 text-base backdrop-blur-sm bg-background/50 hover:bg-white hover:text-black hover:scale-105 transition-all duration-300"
             >
               Create Quiz
             </Button>
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          style={{ opacity }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-        >
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent" />
-        </motion.div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════
@@ -287,8 +277,8 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Mobile Nav */}
-      <MobileNav />
+      {/* Navigation */}
+      <Navbar />
     </div>
   );
 }
