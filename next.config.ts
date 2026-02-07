@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
   typescript: {
     ignoreBuildErrors: true,
   },

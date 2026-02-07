@@ -94,7 +94,7 @@ export default function CreateQuiz() {
             </Link>
 
             <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">
-              Initialize <span className="text-[#ccff00]">Sequence</span>
+              Create <span className="text-[#ccff00]">Quiz</span>
             </h1>
             <div className="flex items-center gap-2 text-gray-500 font-mono text-xs">
               <span className="w-2 h-2 bg-[#ccff00] rounded-full animate-pulse"></span>
@@ -114,7 +114,7 @@ export default function CreateQuiz() {
                   <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
                   <div className="w-2 h-2 rounded-full bg-green-500/50"></div>
                 </div>
-                <span className="text-[10px] font-mono text-gray-600 uppercase">Input_Stream_v1.0</span>
+                <span className="text-[10px] font-mono text-gray-600 uppercase"></span>
               </div>
 
               <div className="p-6 md:p-8">
@@ -124,14 +124,14 @@ export default function CreateQuiz() {
                   <div className="space-y-2 group/input">
                     <label htmlFor="title" className="flex items-center gap-2 text-xs font-mono text-[#ccff00] uppercase tracking-widest">
                       <Terminal className="w-3 h-3" />
-                      Sequence Identifier (Title)
+                      Name  (Title)
                     </label>
                     <div className="relative">
                       <input
                         id="title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="ENTER_DESIGNATION..."
+                        placeholder="ENTER THE NAME"
                         className="w-full bg-[#050505] border border-[#333] p-4 text-white font-mono placeholder:text-gray-800 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.1)] transition-all uppercase"
                         required
                         disabled={loading}
@@ -145,13 +145,13 @@ export default function CreateQuiz() {
                   <div className="space-y-2 group/input">
                     <label htmlFor="description" className="flex items-center gap-2 text-xs font-mono text-gray-500 uppercase tracking-widest group-focus-within/input:text-[#ccff00] transition-colors">
                       <Cpu className="w-3 h-3" />
-                      Protocol Parameters (Description)
+                      Description
                     </label>
                     <textarea
                       id="description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="OPTIONAL_METADATA..."
+                      placeholder="OPTIONAL"
                       rows={4}
                       className="w-full bg-[#050505] border border-[#333] p-4 text-white font-mono placeholder:text-gray-800 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.1)] transition-all uppercase resize-none"
                       disabled={loading}
@@ -170,11 +170,11 @@ export default function CreateQuiz() {
                       {loading ? (
                         <>
                           <Zap className="w-4 h-4 animate-spin" />
-                          <span>Initializing...</span>
+                          <span>Creating...</span>
                         </>
                       ) : (
                         <>
-                          <span>Initiate & Configure</span>
+                          <span>Create</span>
                           <Terminal className="w-4 h-4" />
                         </>
                       )}
