@@ -35,7 +35,7 @@ interface GenerateQuestionsRequest {
 }
 
 // --- Submit Answer Secure ---
-export const submitAnswerSecure = onCall<SubmitAnswerRequest>(async (request) => {
+export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, async (request) => {
     const { quizId, participantId, questionIndex, selectedOptionIndex } = request.data;
     // ... (logic remains same, just ensuring correct context)
     // Validate inputs
@@ -68,7 +68,7 @@ export const submitAnswerSecure = onCall<SubmitAnswerRequest>(async (request) =>
 });
 
 // --- Send OTP ---
-export const sendOtp = onCall<SendOtpRequest>(async (request) => {
+export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) => {
     const { email, code } = request.data;
     if (!email || !code) throw new HttpsError('invalid-argument', 'Missing email or code');
 
@@ -105,7 +105,7 @@ export const sendOtp = onCall<SendOtpRequest>(async (request) => {
 });
 
 // --- Log New User ---
-export const logNewUser = onCall<LogNewUserRequest>(async (request) => {
+export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (request) => {
     const { name, email, phone } = request.data;
     const sheetId = process.env.GOOGLE_SHEET_ID;
     const base64creds = process.env.GOOGLE_CREDENTIALS_BASE64;
@@ -147,7 +147,7 @@ export const logNewUser = onCall<LogNewUserRequest>(async (request) => {
 });
 
 // --- Generate Questions (AI) ---
-export const generateQuestions = onCall<GenerateQuestionsRequest>(async (request) => {
+export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }, async (request) => {
     const { subject, skillLevel, numberOfQuestions = 10, image } = request.data;
     const apiKey = process.env.GOOGLE_GENAI_API_KEY;
 
@@ -202,7 +202,7 @@ interface SendWelcomeEmailRequest {
 }
 
 // --- Send Welcome Email ---
-export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>(async (request) => {
+export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>({ cors: true }, async (request) => {
     const { email, name } = request.data;
     if (!email) throw new HttpsError('invalid-argument', 'Missing email');
 
