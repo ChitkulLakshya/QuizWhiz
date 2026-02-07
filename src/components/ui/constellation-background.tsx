@@ -8,6 +8,7 @@ interface Particle {
     vx: number; // velocity x
     vy: number; // velocity y
     size: number;
+    opacity: number;
 }
 
 export const ConstellationBackground = () => {
@@ -23,14 +24,18 @@ export const ConstellationBackground = () => {
 
         let animationFrameId: number;
         let particles: Particle[] = [];
-        const particleCount = 80;
+        let particleCount = 80; // Base count, will be recalculated
         const connectionDistance = 150;
-        const interactionDistance = 200;
+        const interactionDistance = 250; // Increased for smoother feel
 
         // Resize handler
         const resize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Responsive density: ~1 particle per 15000px^2
+            particleCount = Math.floor((canvas.width * canvas.height) / 15000);
+            // Cap particles for performance
+            particleCount = Math.min(Math.max(particleCount, 40), 120);
             initParticles();
         };
 
@@ -41,9 +46,10 @@ export const ConstellationBackground = () => {
                 particles.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.5, // Slow random movement
-                    vy: (Math.random() - 0.5) * 0.5,
-                    size: Math.random() * 2 + 1, // Size between 1 and 3
+                    vx: (Math.random() - 0.5) * 0.3, // Slower, more drift-like
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: Math.random() * 2 + 0.5, // 0.5 to 2.5
+                    opacity: Math.random() * 0.5 + 0.1, // 0.1 to 0.6
                 });
             }
         };
@@ -58,7 +64,7 @@ export const ConstellationBackground = () => {
                 particle.x += particle.vx;
                 particle.y += particle.vy;
 
-                // Mouse interaction (Magnetic attraction)
+                // Mouse interaction (Magnetic attraction - Smoothed)
                 const dx = mouseRef.current.x - particle.x;
                 const dy = mouseRef.current.y - particle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
@@ -66,16 +72,17 @@ export const ConstellationBackground = () => {
                 if (distance < interactionDistance) {
                     const forceDirectionX = dx / distance;
                     const forceDirectionY = dy / distance;
-                    const force = (interactionDistance - distance) / interactionDistance;
-                    const attractionStrength = 0.05;
+                    // Easing func: (1 - dist/max)^2 for smoother falloff
+                    const force = Math.pow((interactionDistance - distance) / interactionDistance, 2);
+                    const attractionStrength = 0.08;
 
                     particle.vx += forceDirectionX * force * attractionStrength;
                     particle.vy += forceDirectionY * force * attractionStrength;
                 }
 
-                // Friction to prevent particles from speeding up infinitely from mouse interaction
-                particle.vx *= 0.99;
-                particle.vy *= 0.99;
+                // Friction
+                particle.vx *= 0.98; // Slightly more friction
+                particle.vy *= 0.98;
 
                 // Wall collision (bounce)
                 if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
@@ -84,7 +91,7 @@ export const ConstellationBackground = () => {
                 // Draw Particle
                 ctx.beginPath();
                 ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, 0.3)`; // White/Gray dots
+                ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`; // Depth via opacity
                 ctx.fill();
 
                 // Draw Connections
@@ -96,7 +103,9 @@ export const ConstellationBackground = () => {
 
                     if (dist2 < connectionDistance) {
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(204, 255, 0, ${1 - dist2 / connectionDistance})`; // Neon Lime #ccff00 fading
+                        // Lines are fainter and consider both particles' existing opacity
+                        const lineOpacity = (1 - dist2 / connectionDistance) * 0.4 * ((particle.opacity + p2.opacity) / 2);
+                        ctx.strokeStyle = `rgba(204, 255, 0, ${lineOpacity})`; // Neon Lime #ccff00
                         ctx.lineWidth = 0.5;
                         ctx.moveTo(particle.x, particle.y);
                         ctx.lineTo(p2.x, p2.y);
@@ -117,8 +126,16 @@ export const ConstellationBackground = () => {
             };
         };
 
+        // Handle mouse leave to prevent stuck particles
+        const handleMouseLeave = () => {
+            mouseRef.current = { x: -1000, y: -1000 };
+        };
+
         window.addEventListener('resize', resize);
         window.addEventListener('mousemove', handleMouseMove);
+        // Canvas-specific listener doesn't work well absolute positioned behind, 
+        // so window listener is fine, but maybe let's clear it on mouseout of window?
+        document.addEventListener('mouseleave', handleMouseLeave);
 
         // Initial setup
         resize();
@@ -127,6 +144,7 @@ export const ConstellationBackground = () => {
         return () => {
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseleave', handleMouseLeave);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
@@ -135,7 +153,7 @@ export const ConstellationBackground = () => {
         <canvas
             ref={canvasRef}
             className="absolute inset-0 z-0 pointer-events-none"
-            style={{ background: 'transparent' }} // Ensure canvas is transparent
+            style={{ background: 'transparent' }}
         />
     );
 };
