@@ -7,6 +7,8 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Zap, Users, Brain, ArrowRight, Trophy, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConstellationBackground } from '@/components/ui/constellation-background';
+import { BentoFeatures } from '@/components/ui/bento-features';
+import { InfiniteMarquee } from '@/components/ui/infinite-marquee';
 import MobileNav from '@/components/mobile-nav';
 
 const features = [
@@ -120,16 +122,17 @@ export default function LandingPage() {
           variants={containerVariants}
         >
           {/* Badge */}
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 mb-8 rounded-full backdrop-blur-sm">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">Real-Time Quiz Platform</span>
+          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-5 py-2.5 mb-10 rounded-full backdrop-blur-md shadow-[0_0_20px_rgba(var(--primary),0.15)] hover:shadow-[0_0_25px_rgba(var(--primary),0.25)] transition-all duration-300">
+            <Zap className="w-4 h-4 text-primary animate-pulse" />
+            <span className="text-xs font-mono uppercase tracking-[0.2em] text-primary font-bold">Real-Time Quiz Platform</span>
           </motion.div>
 
           {/* Main headline - Optimized for LCP (No entrance animation) */}
-          <div className="mb-8">
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.85]">
-              <span className="block text-foreground drop-shadow-2xl">Challenge</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-300 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">Your Brain</span>
+          <div className="mb-10 relative">
+            <div className="absolute inset-0 bg-primary/20 blur-[100px] pointer-events-none opacity-50" />
+            <h1 className="relative text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-[-0.08em] leading-[0.85] z-10">
+              <span className="block text-white drop-shadow-xl">Challenge</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-primary drop-shadow-[0_0_35px_rgba(var(--primary),0.5)] animate-text-shimmer bg-[length:200%_auto]">Your Brain</span>
             </h1>
           </div>
 
@@ -143,7 +146,7 @@ export default function LandingPage() {
             <Button
               onClick={() => router.push('/play')}
               size="lg"
-              className="h-16 px-10 text-base shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_40px_-5px_hsl(var(--primary)/0.6)] hover:scale-105 transition-all duration-300"
+              className="h-16 px-12 text-lg font-bold bg-primary text-black hover:bg-white hover:text-black shadow-[0_0_50px_-10px_rgba(var(--primary),0.6)] hover:shadow-[0_0_70px_-5px_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-300 border-0 ring-0 outline-none"
             >
               Play Now
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -152,7 +155,7 @@ export default function LandingPage() {
               variant="outline"
               size="lg"
               onClick={() => router.push('/host/create')}
-              className="h-16 px-10 text-base backdrop-blur-sm bg-background/50 hover:bg-background/80 hover:scale-105 transition-all duration-300"
+              className="h-16 px-12 text-lg font-bold border-white/20 bg-white/5 backdrop-blur-md text-white hover:bg-white/10 hover:border-primary/50 hover:text-primary hover:scale-105 transition-all duration-300 shadow-lg"
             >
               Create Quiz
             </Button>
@@ -174,45 +177,15 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════════════
           FEATURES SECTION
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-24"
-          >
-            <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">Why QuizWhiz</span>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
-              Next-Gen Trivia
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="group p-10 bg-card/40 backdrop-blur-md border border-border hover:border-primary/50 transition-all duration-500 rounded-2xl hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.5)]"
-              >
-                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-8 group-hover:bg-primary/20 transition-all duration-500 group-hover:scale-110">
-                  <feature.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold uppercase tracking-wide mb-4 text-foreground">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <BentoFeatures />
 
       {/* ══════════════════════════════════════════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 bg-secondary/20 relative overflow-hidden backdrop-blur-sm inset-shadow-lg">
+      {/* ══════════════════════════════════════════════════════════════════════════
+          HOW IT WORKS
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -222,23 +195,31 @@ export default function LandingPage() {
           >
             <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">How It Works</span>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
-              Three Simple Steps
+              The Flow
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="relative grid md:grid-cols-3 gap-12">
+            {/* Circuit Line - Desktop */}
+            <div className="hidden md:block absolute top-[60px] left-[16%] right-[16%] h-[2px] bg-white/5">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50 animate-shimmer-slide" />
+            </div>
+
             {steps.map((step, i) => (
               <motion.div
                 key={step.num}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.2 }}
                 viewport={{ once: true }}
-                className="relative p-8 border-l-2 border-primary/20 hover:border-primary transition-colors duration-300 pl-10"
+                className="relative flex flex-col items-center text-center group"
               >
-                <span className="text-7xl font-black text-primary/5 absolute -top-4 left-4 select-none pointer-events-none">{step.num}</span>
+                <div className="w-12 h-12 rounded-full border border-primary/30 bg-background flex items-center justify-center relative z-10 mb-8 group-hover:border-primary group-hover:shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all duration-300">
+                  <div className="w-3 h-3 rounded-full bg-primary" />
+                </div>
                 <h3 className="text-3xl font-bold uppercase tracking-wide mb-4 relative z-10">{step.title}</h3>
-                <p className="text-muted-foreground relative z-10 text-lg">{step.desc}</p>
+                <p className="text-muted-foreground relative z-10 text-lg max-w-xs">{step.desc}</p>
+                <span className="absolute -top-10 text-[120px] font-black text-white/[0.02] select-none pointer-events-none">{step.num}</span>
               </motion.div>
             ))}
           </div>
@@ -248,81 +229,61 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════════════
           CATEGORIES PREVIEW
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-sm font-mono uppercase tracking-[0.3em] text-primary mb-4 block font-bold">Categories</span>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter">
-              Endless Topics
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide py-4"
-          >
-            {[...categories, ...categories].map((cat, i) => (
-              <motion.div
-                whileHover={{ scale: 1.05, borderColor: 'hsl(var(--primary))' }}
-                key={`${cat}-${i}`}
-                className="flex-shrink-0 px-8 py-5 bg-card border border-border transition-all cursor-pointer rounded-lg shadow-sm"
-              >
-                <span className="text-base font-bold uppercase tracking-wider whitespace-nowrap">{cat}</span>
-              </motion.div>
-            ))}
-          </motion.div>
+      {/* ══════════════════════════════════════════════════════════════════════════
+          CATEGORIES PREVIEW
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 relative z-10 border-y border-white/5 bg-white/[0.02]">
+        <div className="mb-12 text-center">
+          <span className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">Limitless Possibilities</span>
+        </div>
+        <InfiniteMarquee items={categories} speed={40} />
+        <div className="mt-8">
+          <InfiniteMarquee items={[...categories].reverse()} direction="right" speed={50} />
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════
           FINAL CTA
       ══════════════════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════════════
+          FINAL CTA
+      ══════════════════════════════════════════════════════════════════════════ */}
       <section className="py-40 px-6 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[800px] h-[800px] rounded-full bg-primary/5 blur-[200px]" />
+          <div className="w-[800px] h-[800px] rounded-full bg-primary/5 blur-[150px]" />
+          <div className="w-[400px] h-[400px] rounded-full bg-primary/10 blur-[100px] animate-pulse" />
         </div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative z-10 text-center max-w-4xl mx-auto"
+          className="relative z-10 text-center max-w-5xl mx-auto"
         >
-          <Gamepad2 className="w-20 h-20 text-primary mx-auto mb-8 animate-pulse" />
-          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-8">
-            Ready to Play?
+          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter mb-12 leading-[0.8]">
+            Ready to<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Dominate?</span>
           </h2>
-          <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Join thousands of players challenging their knowledge every day.
-          </p>
+
           <Button
             onClick={() => router.push('/play')}
             size="lg"
-            className="h-20 px-16 text-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_50px_rgba(var(--primary),0.3)] hover:shadow-[0_0_80px_rgba(var(--primary),0.5)] transition-all duration-300 scale-100 hover:scale-105"
+            className="h-24 px-20 text-2xl font-black uppercase tracking-widest bg-primary text-black hover:bg-white hover:text-black shadow-[0_0_60px_-10px_rgba(var(--primary),0.5)] hover:shadow-[0_0_100px_-10px_rgba(255,255,255,0.5)] hover:scale-[1.02] transition-all duration-500 rounded-full"
           >
             Start Playing
-            <Zap className="ml-3 w-6 h-6 fill-current" />
           </Button>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border/40 bg-background/50 backdrop-blur-xl">
+      <footer className="py-12 px-6 border-t border-white/5 bg-black">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <span className="text-sm text-muted-foreground font-mono">© 2025 QUIZWHIZ</span>
-          <div className="flex gap-8">
-            <Link href="/play" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Play</Link>
-            <Link href="/host/create" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Create</Link>
-            <Link href="/join" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Join</Link>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs text-muted-foreground font-mono uppercase tracking-widest">Systems Online</span>
           </div>
+          <span className="text-[10px] text-white/20 font-mono uppercase tracking-[0.5em]">QuizWhiz © 2025</span>
         </div>
       </footer>
 
