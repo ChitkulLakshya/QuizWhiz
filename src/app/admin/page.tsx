@@ -99,7 +99,7 @@ export default function AdminDashboard() {
               className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-mono uppercase text-xs tracking-wider gap-2"
             >
               <Power className="w-4 h-4" />
-              <span className="hidden sm:inline">Terminate Session</span>
+              <span className="hidden sm:inline">End Session</span>
             </Button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
             <button className="w-full sm:w-auto group relative h-10 px-6 bg-[#ccff00] flex items-center justify-center gap-2 overflow-hidden">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
               <PlusCircle className="w-4 h-4 text-black relative z-10" />
-              <span className="text-black font-bold uppercase tracking-widest text-xs relative z-10">Initialize Sequence</span>
+              <span className="text-black font-bold uppercase tracking-widest text-xs relative z-10">CREATE QUIZ</span>
             </button>
           </Link>
         </div>
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
                       <Link href={`/admin/quiz/${quiz.id}/control`}>
                         <button className="h-8 px-3 bg-[#ccff00] text-black hover:bg-[#bbee00] text-xs font-bold uppercase overflow-hidden flex items-center gap-1">
                           <PlayCircle className="w-3 h-3" />
-                          Override
+                          Clear
                         </button>
                       </Link>
                       <button
