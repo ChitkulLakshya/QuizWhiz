@@ -1,0 +1,53 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Build the frontend first (Next.js)
+      # We use the existing script that sets the proper environment variable
+      # Note: 'npm run build:web' is called inside 'build-app' script in package.json, 
+      # but we can run it explicitly if we want to separate steps. 
+      # However, since 'build-app' runs 'electron-builder' immediately after, 
+      # we can use that script or a custom command.
+      
+      - name: Build & Package Electron App
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_ELECTRON_BUILD: 'true'
+        run: |
+          npm run build:web
+          npx electron-builder --publish never
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb

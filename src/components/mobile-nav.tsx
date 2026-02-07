@@ -9,7 +9,7 @@ export default function MobileNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 w-full z-50 bg-background/80 backdrop-blur-lg border-t border-border">
+        <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-background/80 backdrop-blur-lg border-t border-border">
             <div className="max-w-md mx-auto flex justify-between items-center px-6 py-4">
 
                 <Link href="/" className="flex flex-col items-center gap-1 group">

@@ -31,8 +31,10 @@
     "build-app": "cross-env NEXT_PUBLIC_ELECTRON_BUILD=true next build && electron-builder",
     "sync": "npx cap sync",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:9002 && electron .\""
   },
+  "main": "electron-main.js",
   "build": {
     "appId": "com.quizwhiz.app",
     "productName": "QuizWhiz",
@@ -52,7 +54,10 @@
       "target": "nsis"
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   },
   "dependencies": {
@@ -126,12 +131,14 @@
     "@types/react": "npm:types-react@^19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@^19.0.0-rc.1",
     "@types/uuid": "^9.0.8",
+    "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron-builder": "^26.7.0",
     "genkit-cli": "^1.20.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.3"
   },
   "overrides": {
     "react": "$react",
