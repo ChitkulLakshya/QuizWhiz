@@ -20,3 +20,4 @@ Commit 18: feat(logger): integrate structured logging for better cloud function 
 Commit 19: fix(export): resolve memory leak when generating large csv reports (2026-02-08 01:33:28)
 Commit 20: chore(config): centralize environment variable validation in startup script (2026-02-08 08:16:40)
 Commit 21: perf(network): enable gzip compression for all server-side api responses (2026-02-08 14:59:52)
+Commit 22: docs(architecture): document state management flow in ARCHITECTURE.md (2026-02-08 21:43:04)
