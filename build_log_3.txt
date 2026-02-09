@@ -1,0 +1,26 @@
+  • electron-builder  version=26.7.0 os=10.0.26200
+  • loaded configuration  file=package.json ("build" field)
+  • executing @electron/rebuild  electronVersion=40.2.1 arch=x64 buildFromSource=false workspaceRoot=C:\VS\QuizWhiz projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=40.2.1 appOutDir=dist\win-unpacked
+  ⨯ remove C:\VS\QuizWhiz\dist\win-unpacked\d3dcompiler_47.dll: Access is denied.
+github.com/develar/go-fs-util.EnsureEmptyDir
+	/Users/runner/go/pkg/mod/github.com/develar/go-fs-util@v0.0.0-20190620175131-69a2d4542206/fs.go:98
+github.com/develar/app-builder/pkg/electron.UnpackElectron.func1.1
+	/Users/runner/work/app-builder/app-builder/pkg/electron/electronUnpack.go:38
+github.com/develar/app-builder/pkg/util.MapAsyncConcurrency.func2
+	/Users/runner/work/app-builder/app-builder/pkg/util/async.go:68
+runtime.goexit
+	/Users/runner/hostedtoolcache/go/1.21.13/arm64/src/runtime/asm_amd64.s:1650  
+  ⨯ C:\VS\QuizWhiz\node_modules\app-builder-bin\win\x64\app-builder.exe process failed ERR_ELECTRON_BUILDER_CANNOT_EXECUTE
+Exit code:
+1  failedTask=build stackTrace=Error: C:\VS\QuizWhiz\node_modules\app-builder-bin\win\x64\app-builder.exe process failed ERR_ELECTRON_BUILDER_CANNOT_EXECUTE
+Exit code:
+1
+    at ChildProcess.<anonymous> (C:\VS\QuizWhiz\node_modules\builder-util\src\util.ts:272:14)
+    at Object.onceWrapper (node:events:623:26)
+    at ChildProcess.emit (node:events:508:28)
+    at ChildProcess.cp.emit (C:\VS\QuizWhiz\node_modules\cross-spawn\lib\enoent.js:34:29)
+    at maybeClose (node:internal/child_process:1101:16)
+    at Process.ChildProcess._handle.onexit (node:internal/child_process:305:5)
