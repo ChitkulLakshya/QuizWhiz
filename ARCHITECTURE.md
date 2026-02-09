@@ -38,6 +38,11 @@ The frontend is a **Next.js 16** application using the **App Router**.
 *   **UI Components**: Radix UI (via shadcn/ui)
 *   **State Management**: React Hooks (`useState`, `useEffect`) + Firebase Real-time Listeners
 
+### State Management Strategy
+The application uses a decentralized state management approach:
+*   **Local State**: `useState` for local inputs and ephemeral UI states.
+*   **Server State**: Firestore listeners (`onSnapshot`) serve as the single source of truth for game data, automatically syncing all clients.
+
 ### Key Modules
 *   **`src/app/admin`**: Protected route for quiz creation and game management.
 *   **`src/app/join`**: Public entry point for participants to enter a game code.
