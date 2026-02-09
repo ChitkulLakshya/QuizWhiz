@@ -20,6 +20,11 @@ const PermissionsSlide: React.FC<PermissionsSlideProps> = ({ onComplete }) => {
             const result = await PushNotifications.requestPermissions();
             if (result.receive === 'granted') {
                 setNotificationsGranted(true);
+                try {
+                    await PushNotifications.register();
+                } catch (e) {
+                    console.error('Push registration error:', e);
+                }
             }
         } catch (e) {
             console.error('Permission Error:', e);
