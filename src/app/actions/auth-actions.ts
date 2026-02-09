@@ -1,7 +1,17 @@
 // Use environment variable for the backend URL, default to local for dev
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Helper to detect Electron environment at runtime
+const isElectron = () => {
+    if (typeof window === 'undefined') return false;
+    return /Electron/i.test(window.navigator.userAgent);
+};
+
 export async function sendOtp(email: string, code: string) {
+    if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron()) {
+        console.log('[Electron] Skipping server-side OTP email');
+        return { success: true };
+    }
     try {
         const response = await fetch(`${API_BASE_URL}/send-otp`, {
             method: 'POST',
@@ -23,6 +33,10 @@ export async function sendOtp(email: string, code: string) {
 }
 
 export async function logNewUser(userData: { name: string; email: string; phone?: string }) {
+    if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron()) {
+        console.log('[Electron] Skipping server-side user logging');
+        return { success: true };
+    }
     try {
         const response = await fetch(`${API_BASE_URL}/log-user`, {
             method: 'POST',
@@ -45,6 +59,7 @@ export async function logNewUser(userData: { name: string; email: string; phone?
 }
 
 export async function sendWelcomeEmailAction(email: string, name: string) {
+    if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron()) return;
     try {
         await fetch(`${API_BASE_URL}/send-welcome`, {
             method: 'POST',

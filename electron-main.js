@@ -34,11 +34,11 @@ async function createWindow() {
             });
         });
 
-        // Listen on a random free port (or fixed if preferred, random is safer)
-        server.listen(0, () => {
-            const port = server.address().port;
-            console.log(`Server running at http://localhost:${port}`);
-            mainWindow.loadURL(`http://localhost:${port}`);
+        // Listen on a fixed port (3000) to allow authorized domain whitelisting in Firebase/Google Console
+        const PORT = 3000;
+        server.listen(PORT, () => {
+            console.log(`Server running at http://localhost:${PORT}`);
+            mainWindow.loadURL(`http://localhost:${PORT}`);
         });
 
         // Ensure server closes when app quits (though process exit handles it)

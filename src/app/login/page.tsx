@@ -9,6 +9,7 @@ import { auth } from '@/firebase';
 import { isAdminEmail, registerAdmin } from '@/lib/auth';
 import { sendWelcomeEmailAction, sendOtp, logNewUser } from '@/app/actions/auth-actions';
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Terminal, AlertTriangle, Fingerprint } from 'lucide-react';
+import { Icons } from '@/components/icons';
 import clsx from 'clsx';
 
 export default function LoginPage() {
@@ -75,7 +76,9 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error('❌ Google Login failed:', error);
-      setError('Login failed');
+      // Detailed error for debugging Electron
+      alert(`Google Login Failed:\nCode: ${error.code}\nMessage: ${error.message}\nOrigin: ${window.location.origin}`);
+      setError(`Login failed: ${error.message}`);
       setLoading(false);
     }
   };
@@ -92,6 +95,20 @@ export default function LoginPage() {
     try {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(code);
+
+      // ELECTRON APP SPECIFIC: Bypass headerless email sending
+      const isElectron = typeof window !== 'undefined' && /Electron/i.test(window.navigator.userAgent);
+
+      if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron) {
+        // Simulate network delay for realism
+        setTimeout(() => {
+          alert(`[QUIZWHIZ LOCAL]\nAuthentication Code: ${code}\n\n(This code is generated locally for the standalone app)`);
+          setOtpSent(true);
+          setLoading(false);
+        }, 1000);
+        return;
+      }
+
       const output = await sendOtp(email, code);
       if (output.success) {
         setOtpSent(true);
@@ -101,7 +118,10 @@ export default function LoginPage() {
     } catch (err) {
       setError('Something went wrong');
     } finally {
-      setLoading(false);
+      const isElectron = typeof window !== 'undefined' && /Electron/i.test(window.navigator.userAgent);
+      if (process.env.NEXT_PUBLIC_ELECTRON_BUILD !== 'true' && !isElectron) {
+        setLoading(false);
+      }
     }
   };
 
