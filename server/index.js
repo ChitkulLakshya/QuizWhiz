@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
@@ -14,36 +17,18 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// --- Helper: Gmail Transporter ---
-const createTransporter = () => {
-    const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
-    const user = process.env.GMAIL_USER_EMAIL;
-
-    if (!clientId || !clientSecret || !refreshToken || !user) {
-        console.warn('⚠️ Missing Gmail credentials. Emails will be mocked.');
+//Helper to read HTML template
+const readTemplate = (templateName) => {
+    try {
+        const templatePath = path.join(process.cwd(), '../emails', `${templateName}.html`);
+        return fs.readFileSync(templatePath, 'utf8');
+    } catch (error) {
+        console.error(`❌ Error reading template ${templateName}:`, error);
         return null;
     }
-
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            type: 'OAuth2',
-            user,
-            clientId,
-            clientSecret,
-            refreshToken,
-        },
-    });
 };
 
-// --- Routes ---
-
-// 1. Health Check
-app.get('/', (req, res) => {
-    res.send('QuizWhiz Backend is running! 🚀');
-});
+// ... (createTransporter)
 
 // 2. Send OTP
 app.post('/send-otp', async (req, res) => {
@@ -54,6 +39,14 @@ app.post('/send-otp', async (req, res) => {
     }
 
     const transporter = createTransporter();
+
+    // Read template
+    let htmlContent = readTemplate('otp');
+    if (htmlContent) {
+        htmlContent = htmlContent.replace('{{OTP_CODE}}', code);
+    } else {
+        htmlContent = `<p>Your verification code is: <strong>${code}</strong></p>`;
+    }
 
     if (!transporter) {
         console.log(`[MOCK EMAIL] To: ${email}, Code: ${code}`);
@@ -66,7 +59,7 @@ app.post('/send-otp', async (req, res) => {
             to: email,
             subject: 'Your Verification Code',
             text: `Your verification code is: ${code}`,
-            html: `<p>Your verification code is: <strong>${code}</strong></p>`,
+            html: htmlContent,
         });
         console.log(`✅ OTP sent to ${email}`);
         res.json({ success: true });
@@ -86,6 +79,14 @@ app.post('/send-welcome', async (req, res) => {
 
     const transporter = createTransporter();
 
+    // Read template
+    let htmlContent = readTemplate('welcome');
+    if (htmlContent) {
+        htmlContent = htmlContent.replace('{{USER_NAME}}', name || 'Agent');
+    } else {
+        htmlContent = `<h3>Welcome to QuizWhiz, ${name || 'Agent'}!</h3><p>Get ready for the ultimate cyberpunk quiz experience.</p>`;
+    }
+
     if (!transporter) {
         console.log(`[MOCK EMAIL] To: ${email}, Subject: Welcome!`);
         return res.json({ success: true, warning: 'Email mocked (missing credentials)' });
@@ -97,7 +98,7 @@ app.post('/send-welcome', async (req, res) => {
             to: email,
             subject: 'Welcome to QuizWhiz!',
             text: `Hi ${name || 'there'},\n\nWelcome to QuizWhiz! We are excited to have you on board.`,
-            html: `<h3>Welcome to QuizWhiz, ${name || 'Agent'}!</h3><p>Get ready for the ultimate cyberpunk quiz experience.</p>`,
+            html: htmlContent,
         });
         console.log(`✅ Welcome email sent to ${email}`);
         res.json({ success: true });
