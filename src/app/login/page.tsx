@@ -10,7 +10,6 @@ import { isAdminEmail, registerAdmin } from '@/lib/auth';
 import { sendWelcomeEmailAction, sendOtp, logNewUser } from '@/app/actions/auth-actions';
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Terminal, AlertTriangle, Fingerprint } from 'lucide-react';
 import clsx from 'clsx';
-import MobileNav from '@/components/mobile-nav';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -333,7 +332,6 @@ export default function LoginPage() {
 
         </div>
       </div>
-      <MobileNav />
     </div>
   );
 }

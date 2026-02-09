@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { ConstellationBackground } from '@/components/ui/constellation-background';
 import { BentoFeatures } from '@/components/ui/bento-features';
 import { InfiniteMarquee } from '@/components/ui/infinite-marquee';
-import Navbar from '@/components/Navbar';
 
 const features = [
   {
@@ -289,7 +288,6 @@ export default function LandingPage() {
       </footer>
 
       {/* Navigation */}
-      <Navbar />
     </div>
   );
 }

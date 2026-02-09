@@ -7,7 +7,6 @@ import { getQuiz, getLeaderboard } from '@/lib/firebase-service';
 import { Quiz, LeaderboardEntry } from '@/types/quiz';
 import { Trophy, Medal, Award, ArrowLeft, Terminal, Cpu, Share2 } from 'lucide-react';
 import Link from 'next/link';
-import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
 interface AdminLeaderboardProps {
@@ -176,7 +175,6 @@ export default function AdminLeaderboard({ quizId: propQuizId }: AdminLeaderboar
         </div>
 
       </main>
-      <MobileNav />
     </div>
   );
 }

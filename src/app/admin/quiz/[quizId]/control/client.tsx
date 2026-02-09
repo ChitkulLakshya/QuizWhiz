@@ -16,7 +16,6 @@ import { Quiz, Question, Participant, QuestionResult } from '@/types/quiz';
 import { Users, Play, SkipForward, Trophy, Wifi, Radio, Zap, BarChart3, ArrowLeft, Layers, UserPlus, StopCircle } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import Link from 'next/link';
-import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
 interface QuizControlProps {
@@ -408,7 +407,6 @@ export default function QuizControl({ quizId: propQuizId }: QuizControlProps = {
         </div>
 
       </main>
-      <MobileNav />
     </div>
   );
 }

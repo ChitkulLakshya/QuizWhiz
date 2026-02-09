@@ -7,7 +7,6 @@ import { getQuizByCode, joinQuiz } from '@/lib/firebase-service';
 import { Quiz } from '@/types/quiz';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/button';
-import MobileNav from '@/components/mobile-nav';
 
 function JoinQuizContent() {
   const router = useRouter();
@@ -219,8 +218,6 @@ function JoinQuizContent() {
 
         </div>
       </div>
-
-      <MobileNav />
     </div>
   );
 }

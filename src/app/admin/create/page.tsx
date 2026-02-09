@@ -7,7 +7,6 @@ import { ArrowLeft, Terminal, Cpu, Zap, AlertTriangle } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase';
 import { createQuiz } from '@/lib/firebase-service';
-import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
 export default function CreateQuiz() {
@@ -194,7 +193,6 @@ export default function CreateQuiz() {
 
         </div>
       </main>
-      <MobileNav />
     </div>
   );
 }

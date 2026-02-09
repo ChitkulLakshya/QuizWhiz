@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import InstallPWAButton from '@/components/InstallPWAButton';
 import ConsoleConfig from '@/components/ConsoleConfig';
+import Navbar from '@/components/Navbar';
 
 import MobileWrapper from '@/components/mobile/MobileWrapper';
 
@@ -49,6 +50,7 @@ export default function RootLayout({
         <ConsoleConfig />
         <ServiceWorkerRegister />
         <MobileWrapper>
+          <Navbar />
           {children}
         </MobileWrapper>
         <InstallPWAButton />

@@ -10,7 +10,6 @@ import { getQuizzes, deleteQuiz } from '@/lib/firebase-service';
 import { Quiz } from '@/types/quiz';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/firebase';
-import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
 export default function AdminDashboard() {
@@ -227,7 +226,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
-      <MobileNav />
     </div>
   );
 }

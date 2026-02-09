@@ -5,7 +5,6 @@ import { Settings, User, Shield, Monitor, Volume2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import MobileNav from '@/components/mobile-nav';
 
 export default function SettingsPage() {
     return (
@@ -89,7 +88,6 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
-            <MobileNav />
         </div >
     );
 }

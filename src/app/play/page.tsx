@@ -18,7 +18,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import clsx from 'clsx';
-import MobileNav from '@/components/mobile-nav';
 
 // Visual Assets Mapping with Curated Unsplash Images
 const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingClass: string; aspect: string }> = {
@@ -125,9 +124,6 @@ export default function HomePage() {
 
       <div className="relative z-10 flex flex-col min-h-[100dvh] pb-24 w-full max-w-md md:max-w-7xl mx-auto border-x border-white/5 bg-[#050505]">
 
-        {/* Mobile Navigation Bar */}
-        <MobileNav />
-
         {/* Header */}
         <header className="flex items-center justify-between p-6 pb-2 bg-gradient-to-b from-[#050505] to-transparent sticky top-0 z-50 backdrop-blur-sm">
           <div className="flex items-center gap-2">
@@ -213,7 +209,6 @@ export default function HomePage() {
         </div>
 
         {/* Replaced Mobile Navigation Bar */}
-        <MobileNav />
 
         <Dialog open={isCustomOpen} onOpenChange={setIsCustomOpen}>
           <DialogContent className="sm:max-w-md bg-[#111] border-2 border-[#ccff00] text-white">

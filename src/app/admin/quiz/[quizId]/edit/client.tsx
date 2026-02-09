@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import MobileNav from '@/components/mobile-nav';
 import clsx from 'clsx';
 
 // Allow AI generation to run for up to 60 seconds
@@ -525,7 +524,6 @@ export default function EditQuiz({ quizId: propQuizId }: EditQuizProps = {}) {
 
         </div>
       </main>
-      <MobileNav />
     </div>
   );
 }
