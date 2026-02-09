@@ -88,7 +88,7 @@ export default function HomePage() {
     setLoading(categoryId);
     try {
       const quizId = await createQuickGame(topicName, 'medium');
-      router.push(`/play/${quizId}`);
+      router.push(`/play/game?quizId=${quizId}`);
     } catch (error) {
       console.error('Error starting game:', error);
       alert('Failed to start game.');
@@ -103,7 +103,7 @@ export default function HomePage() {
     try {
       const quizId = await createAIQuickQuiz(customTopic);
       setIsCustomOpen(false);
-      router.push(`/play/${quizId}`);
+      router.push(`/play/game?quizId=${quizId}`);
     } catch (error) {
       console.error('Error generating quiz:', error);
       alert('Failed to generate quiz.');
