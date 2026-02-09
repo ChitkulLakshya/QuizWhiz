@@ -126,8 +126,8 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
     console.log("🧠 calling /api/generate-quiz...");
 
     let apiUrl = '/api/generate-quiz';
-    if (Capacitor.isNativePlatform()) {
-      apiUrl = 'https://quizwhiz-live.vercel.app/api/generate-quiz';
+    if (Capacitor.isNativePlatform() || process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true') {
+      apiUrl = 'https://quiz-whiz-indol.vercel.app/api/generate-quiz';
     }
 
     const response = await fetch(apiUrl, {
