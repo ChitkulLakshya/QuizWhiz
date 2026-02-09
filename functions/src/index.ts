@@ -2,8 +2,9 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
 import { google } from 'googleapis';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-import { z } from 'zod';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+import { Logger } from './utils/logger';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -37,18 +38,25 @@ interface GenerateQuestionsRequest {
 // --- Submit Answer Secure ---
 export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, async (request) => {
     const { quizId, participantId, questionIndex, selectedOptionIndex } = request.data;
-    // ... (logic remains same, just ensuring correct context)
+
     // Validate inputs
     if (!quizId || !participantId || questionIndex === undefined || selectedOptionIndex === undefined) {
+        Logger.warn('Submit Answer: Missing required fields', { data: request.data });
         throw new HttpsError('invalid-argument', 'Missing required fields');
     }
 
     try {
         const questionsSnap = await db.collection('quizzes').doc(quizId).collection('questions').orderBy('order').get();
-        if (questionsSnap.empty) throw new HttpsError('not-found', 'No questions found');
+        if (questionsSnap.empty) {
+            Logger.warn(`Submit Answer: No questions found for quiz ${quizId}`);
+            throw new HttpsError('not-found', 'No questions found');
+        }
 
         const questionDoc = questionsSnap.docs[questionIndex];
-        if (!questionDoc) throw new HttpsError('not-found', `Question ${questionIndex} not found`);
+        if (!questionDoc) {
+            Logger.warn(`Submit Answer: Question index ${questionIndex} out of bounds`, { quizId });
+            throw new HttpsError('not-found', `Question ${questionIndex} not found`);
+        }
 
         const question = questionDoc.data();
         const isCorrect = selectedOptionIndex === question.correctOptionIndex;
@@ -60,9 +68,10 @@ export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, as
             totalScore: admin.firestore.FieldValue.increment(points)
         });
 
+        Logger.info(`Submit Answer: Success`, { quizId, participantId, isCorrect, points });
         return { success: true, isCorrect, pointsEarned: points };
     } catch (error) {
-        console.error('Submit Error:', error);
+        Logger.error('Submit Answer: Internal Error', error, { quizId, participantId });
         throw new HttpsError('internal', 'Submission failed');
     }
 });
@@ -70,7 +79,10 @@ export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, as
 // --- Send OTP ---
 export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) => {
     const { email, code } = request.data;
-    if (!email || !code) throw new HttpsError('invalid-argument', 'Missing email or code');
+    if (!email || !code) {
+        Logger.warn('Send OTP: Missing email or code');
+        throw new HttpsError('invalid-argument', 'Missing email or code');
+    }
 
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
@@ -78,8 +90,8 @@ export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) =>
     const user = process.env.GMAIL_USER_EMAIL;
 
     if (!clientId || !clientSecret || !refreshToken || !user) {
-        console.warn('Missing Gmail credentials. Mocking email sending.');
-        console.log(`[MOCK EMAIL] To: ${email}, Code: ${code}`);
+        Logger.warn('Send OTP: Missing Gmail credentials. Mocking email sending.');
+        Logger.info(`[MOCK EMAIL] To: ${email}, Code: ${code}`);
         return { success: true, warning: 'Email mocked (missing credentials)' };
     }
 
@@ -99,9 +111,10 @@ export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) =>
             html: `<p>Your verification code is: <strong>${code}</strong></p>`
         });
 
+        Logger.info(`Send OTP: Email sent successfully`, { email });
         return { success: true };
     } catch (error) {
-        console.error('Email Error:', error);
+        Logger.error('Send OTP: Failed to send email', error, { email });
         throw new HttpsError('internal', 'Failed to send email');
     }
 });
@@ -113,9 +126,9 @@ export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (reque
     const base64creds = process.env.GOOGLE_CREDENTIALS_BASE64;
 
     if (!sheetId || !base64creds) {
-        console.warn("Missing Sheet Config");
+        Logger.warn("Log New User: Missing Sheet Config");
         // Just log locally and return
-        console.log(`[New User]: ${name}, ${email}`);
+        Logger.info(`[New User]: ${name}, ${email}`);
         return { success: true, warning: 'Logging config missing' };
     }
 
@@ -137,13 +150,10 @@ export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (reque
             }
         });
 
-        // Also send admin notification (reusing sendOtp transporter logic simplified)
-        // For brevity in this refactor, implying admin notification is secondary or handled by direct logging.
-
+        Logger.info(`Log New User: Successfully appended to sheet`, { name, email });
         return { success: true };
     } catch (error) {
-        console.error('Sheet Log Error:', error);
-        // Fail silently to client
+        Logger.error('Log New User: Sheet Log Error', error, { name, email });
         return { success: true, warning: 'Logging failed' };
     }
 });
@@ -153,9 +163,13 @@ export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }
     const { subject, skillLevel, numberOfQuestions = 10, image } = request.data;
     const apiKey = process.env.GOOGLE_GENAI_API_KEY;
 
-    if (!apiKey) throw new HttpsError('failed-precondition', 'Missing AI API Key');
+    if (!apiKey) {
+        Logger.error('Generate Questions: Missing AI API Key');
+        throw new HttpsError('failed-precondition', 'Missing AI API Key');
+    }
 
     try {
+        Logger.info(`Generate Questions: Starting generation`, { subject, skillLevel, numberOfQuestions });
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
@@ -190,10 +204,11 @@ export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }
             };
         });
 
+        Logger.info(`Generate Questions: Success`, { count: processedQuestions.length });
         return { success: true, data: processedQuestions };
 
     } catch (error) {
-        console.error('AI Error:', error);
+        Logger.error('Generate Questions: AI Error', error);
         throw new HttpsError('internal', 'AI generation failed');
     }
 });
@@ -206,7 +221,10 @@ interface SendWelcomeEmailRequest {
 // --- Send Welcome Email ---
 export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>({ cors: true }, async (request) => {
     const { email, name } = request.data;
-    if (!email) throw new HttpsError('invalid-argument', 'Missing email');
+    if (!email) {
+        Logger.warn('Send Welcome Email: Missing email');
+        throw new HttpsError('invalid-argument', 'Missing email');
+    }
 
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
@@ -214,8 +232,8 @@ export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>({ cors: true }, 
     const user = process.env.GMAIL_USER_EMAIL;
 
     if (!clientId || !clientSecret || !refreshToken || !user) {
-        console.warn('Missing Gmail credentials. Mocking email sending.');
-        console.log(`[MOCK EMAIL] To: ${email}, Subject: Welcome to QuizWhiz!`);
+        Logger.warn('Send Welcome Email: Missing Gmail credentials. Mocking email sending.');
+        Logger.info(`[MOCK EMAIL] To: ${email}, Subject: Welcome to QuizWhiz!`);
         return { success: true, warning: 'Email mocked (missing credentials)' };
     }
 
@@ -235,9 +253,10 @@ export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>({ cors: true }, 
             html: `<h3>Welcome to QuizWhiz, ${name || 'Agent'}!</h3><p>Get ready for the ultimate cyberpunk quiz experience.</p>`
         });
 
+        Logger.info(`Send Welcome Email: Success`, { email });
         return { success: true };
     } catch (error) {
-        console.error('Email Error:', error);
+        Logger.error('Send Welcome Email: Error', error, { email });
         throw new HttpsError('internal', 'Failed to send welcome email');
     }
 });
