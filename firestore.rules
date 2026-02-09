@@ -71,6 +71,12 @@ service cloud.firestore {
          get(/databases/$(database)/documents/quizzes/$(quizId)).data.ownerId == request.auth.uid;
     }
 
+    // Admins Collection (Used for checking admin status and auto-registration)
+    match /admins/{adminId} {
+      allow read: if request.auth.token.email != null && resource.data.email == request.auth.token.email;
+      allow create: if request.auth.token.email != null && request.resource.data.email == request.auth.token.email;
+    }
+
     // Keep Admin Roles locked down
     match /roles_admin/{userId} {
         allow read: if request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
