@@ -1,0 +1,21 @@
+{
+    "name": "quizwhiz-server",
+    "version": "1.0.0",
+    "description": "Standalone backend for QuizWhiz email and logging",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "node --watch index.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "googleapis": "^140.0.0",
+        "nodemailer": "^6.9.14"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

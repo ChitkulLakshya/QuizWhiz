@@ -12,7 +12,9 @@ import { getFunctions, Functions } from 'firebase/functions';
 // Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  authDomain: (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || window.location?.protocol === 'app:'))
+    ? undefined
+    : process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
@@ -25,7 +27,9 @@ const firebaseConfig = {
 // Validate required environment variables
 const isCI = process.env.CI === 'true' || !!process.env.GITHUB_ACTIONS;
 
-if ((!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.appId) && !isCI) {
+const isElectron = typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || window.location?.protocol === 'app:');
+
+if ((!firebaseConfig.apiKey || (!firebaseConfig.authDomain && !isElectron) || !firebaseConfig.projectId || !firebaseConfig.appId) && !isCI) {
   throw new Error(
     'Missing Firebase configuration. Please ensure all NEXT_PUBLIC_FIREBASE_* environment variables are set in .env.local'
   );
