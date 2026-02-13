@@ -13,6 +13,9 @@ export interface Quiz {
   currentQuestionIndex: number;
   questionStartTime?: number;
   code: string; // 6-digit join code
+  participantCount?: number; // Total participants
+  answeredCount?: number; // Participants who answered current question
+  skipVoteCount?: number; // Participants who voted to skip
 }
 
 export interface Question {
@@ -34,6 +37,7 @@ export interface Participant {
   totalScore: number;
   currentStreak: number;
   answers: Record<string, number>; // questionIndex -> selectedOptionIndex
+  votedToSkip?: boolean; // True if participant voted to skip to results
 }
 
 // ParticipantAnswer interface removed as we use a simple map now

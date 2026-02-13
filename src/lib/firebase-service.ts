@@ -16,6 +16,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   Timestamp,
@@ -623,9 +624,16 @@ export const joinQuiz = async (
       "participants"
     );
 
-    // Use UID as Document ID
+    // Use UID as Document ID and increment participant count
+    const batch = writeBatch(db);
     const userDocRef = doc(participantsRef, user.uid);
-    await setDoc(userDocRef, participantData);
+    const quizRef = doc(db, "quizzes", quizId);
+    
+    batch.set(userDocRef, participantData);
+    batch.update(quizRef, { participantCount: increment(1) });
+    
+    await batch.commit();
+    console.log("✅ Participant joined and count incremented");
 
     return user.uid;
   } catch (error) {
@@ -752,7 +760,9 @@ export const subscribeToParticipants = (
     "participants"
   ) as ParticipantCollection;
 
-  const q = query(participantsRef, orderBy("totalScore", "desc"));
+  // Limit to top 100 participants by score for better performance
+  // For leaderboards with 1000+ users, implement pagination or virtual scrolling
+  const q = query(participantsRef, orderBy("totalScore", "desc"), limit(100));
 
   return onSnapshot(q, (snap) => {
     const participants = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Participant);
@@ -777,17 +787,61 @@ export const startQuestion = async (
 
     const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
 
+    // Update quiz state with counter resets (no need to update all participant docs)
     await updateDoc(quizRef, {
       status: "active",
       currentQuestionIndex: questionIndex,
-      questionStartTime: Date.now(), // Using client timestamp for simplicity, ideally serverTimestamp
+      questionStartTime: Date.now(),
+      answeredCount: 0,
+      skipVoteCount: 0,
     });
 
-    console.log("✅ Question started");
+    console.log("✅ Question started with counters reset");
   } catch (error) {
     console.error("❌ Error starting question:", error);
     throw error;
   }
+};
+
+/**
+ * End the current question early (e.g. all users answered) for everyone
+ */
+export const endQuestionNow = async (quizId: string): Promise<void> => {
+    try {
+        const quizRef = doc(db, "quizzes", quizId);
+        // Set start time to 0 so (Date.now() - startTime) is huge, and (timeLimit - elapsed) is negative
+        await updateDoc(quizRef, {
+            questionStartTime: 0
+        });
+    } catch (error) {
+        console.error("Error ending question:", error);
+    }
+};
+
+/**
+ * Vote to skip to results (requires all participants to vote)
+ */
+export const voteToSkip = async (quizId: string, participantId: string): Promise<void> => {
+    try {
+        const participantRef = doc(db, "quizzes", quizId, "participants", participantId);
+        const quizRef = doc(db, "quizzes", quizId);
+        
+        // Check if already voted
+        const participantDoc = await getDoc(participantRef);
+        if (participantDoc.data()?.votedToSkip) {
+            return; // Already voted, don't increment
+        }
+
+        const batch = writeBatch(db);
+        batch.update(participantRef, { votedToSkip: true });
+        batch.update(quizRef, { skipVoteCount: increment(1) });
+        await batch.commit();
+        
+        console.log("✅ Participant voted to skip:", participantId);
+    } catch (error) {
+        console.error("Error voting to skip:", error);
+        throw error;
+    }
 };
 
 /**
