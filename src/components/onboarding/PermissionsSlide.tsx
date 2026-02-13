@@ -4,22 +4,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Camera, ShieldCheck, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// Mock Capacitor imports to avoid build errors if not installed/configured in web context
-const Plugins = {
-    PushNotifications: {
-        requestPermissions: async () => {
-            console.log('Mocking PushPermissions request...');
-            return { receive: 'granted' };
-        },
-    },
-    Camera: {
-        requestPermissions: async () => {
-            console.log('Mocking CameraPermissions request...');
-            return { camera: 'granted', photos: 'granted' };
-        }
-    }
-};
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Camera as CapacitorCamera } from '@capacitor/camera';
 
 interface PermissionsSlideProps {
     onComplete?: () => void;
@@ -31,9 +17,10 @@ const PermissionsSlide: React.FC<PermissionsSlideProps> = ({ onComplete }) => {
 
     const requestNotifications = async () => {
         try {
-            // In a real app, use: await PushNotifications.requestPermissions();
-            await Plugins.PushNotifications.requestPermissions();
-            setNotificationsGranted(true);
+            const result = await PushNotifications.requestPermissions();
+            if (result.receive === 'granted') {
+                setNotificationsGranted(true);
+            }
         } catch (e) {
             console.error('Permission Error:', e);
         }
@@ -41,9 +28,10 @@ const PermissionsSlide: React.FC<PermissionsSlideProps> = ({ onComplete }) => {
 
     const requestCamera = async () => {
         try {
-            // In a real app, use: await Camera.requestPermissions();
-            await Plugins.Camera.requestPermissions();
-            setCameraGranted(true);
+            const result = await CapacitorCamera.requestPermissions();
+            if (result.camera === 'granted' || result.photos === 'granted') {
+                setCameraGranted(true);
+            }
         } catch (e) {
             console.error('Permission Error:', e);
         }
