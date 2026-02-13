@@ -6,8 +6,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase';
 import Header from '@/components/header';
 import { QuizForm } from './quiz-form';
-
-// Allow AI generation to run for up to 60 seconds
 export const maxDuration = 60;
 
 export default function CreateQuizPage() {
@@ -17,11 +15,9 @@ export default function CreateQuizPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Not logged in -> Redirect to login
         console.log('⛔ Access Denied: User not authenticated.');
         router.push('/login');
       } else {
-        // Logged in -> Allow access
         setLoading(false);
       }
     });

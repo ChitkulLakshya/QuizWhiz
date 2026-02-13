@@ -18,8 +18,6 @@ function JoinQuizContent() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Handle Input for Code (6 digits max, numeric)
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, ''); // Remove non-numeric
     val = val.substring(0, 6); // Limit to 6
@@ -32,8 +30,6 @@ function JoinQuizContent() {
 
   const handleAction = async () => {
     setError('');
-
-    // Step 1: Find Quiz
     if (!quiz) {
       if (code.length !== 6) return;
       setLoading(true);
@@ -55,7 +51,6 @@ function JoinQuizContent() {
         setLoading(false);
       }
     }
-    // Step 2: Join Quiz
     else {
       if (!name.trim()) return;
       setLoading(true);
@@ -76,8 +71,6 @@ function JoinQuizContent() {
 
   useEffect(() => {
     if (codeFromUrl && codeFromUrl.length === 6 && !quiz && !loading) {
-      // Optional: Auto-find if code is in URL
-      // But user might want to see the cool UI first
     }
   }, [codeFromUrl, quiz, loading]);
 
@@ -133,7 +126,6 @@ function JoinQuizContent() {
           {/* Terminal Prompt Text */}
           <div className="text-left space-y-2">
             <p className="text-[#ccff00] text-sm font-mono tracking-widest uppercase mb-1">
-                        // {quiz ? 'ENTER NAME' : 'ENTER CODE'}
             </p>
             <h2 className="text-white text-3xl md:text-5xl font-bold leading-tight uppercase tracking-tight font-display">
               {quiz ? 'Enter Name' : 'Enter Code'}

@@ -26,9 +26,6 @@ export default function LeaderboardPage() {
       </div>
     );
   }
-
-  // In a real app, you would fetch leaderboard data for the specific quizId.
-  // For now, we use the same mock leaderboard for all quizzes.
   return <LeaderboardClient quiz={quiz} leaderboardData={mockLeaderboard} />;
 }
 

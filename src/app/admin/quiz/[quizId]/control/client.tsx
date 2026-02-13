@@ -47,8 +47,6 @@ export default function QuizControl({ quizId: propQuizId }: QuizControlProps = {
       unsubQuestions();
     };
   }, [quizId]);
-
-  // Timer countdown
   useEffect(() => {
     if (!quiz || quiz.status !== 'active' || !quiz.questionStartTime) return;
 
@@ -117,13 +115,9 @@ export default function QuizControl({ quizId: propQuizId }: QuizControlProps = {
   );
 
   const currentQuestion = quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
-
-  // Calculate how many participants have answered the current question
   const answeredCount = currentQuestion && participants.length > 0
     ? participants.filter(p => String(quiz.currentQuestionIndex) in p.answers).length
     : 0;
-
-  // Progress Calculation
   const progressPercent = questions.length > 0 ? ((quiz.currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
   return (

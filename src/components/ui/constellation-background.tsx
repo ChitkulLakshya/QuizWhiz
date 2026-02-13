@@ -27,19 +27,13 @@ export const ConstellationBackground = () => {
         let particleCount = 80; // Base count, will be recalculated
         const connectionDistance = 150;
         const interactionDistance = 250; // Increased for smoother feel
-
-        // Resize handler
         const resize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Responsive density: ~1 particle per 15000px^2
             particleCount = Math.floor((canvas.width * canvas.height) / 15000);
-            // Cap particles for performance
             particleCount = Math.min(Math.max(particleCount, 40), 120);
             initParticles();
         };
-
-        // Initialize particles
         const initParticles = () => {
             particles = [];
             for (let i = 0; i < particleCount; i++) {
@@ -53,18 +47,11 @@ export const ConstellationBackground = () => {
                 });
             }
         };
-
-        // Animation Loop
         const animate = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw particles
             particles.forEach((particle, i) => {
-                // Movement
                 particle.x += particle.vx;
                 particle.y += particle.vy;
-
-                // Mouse interaction (Magnetic attraction - Smoothed)
                 const dx = mouseRef.current.x - particle.x;
                 const dy = mouseRef.current.y - particle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
@@ -72,29 +59,20 @@ export const ConstellationBackground = () => {
                 if (distance < interactionDistance) {
                     const forceDirectionX = dx / distance;
                     const forceDirectionY = dy / distance;
-                    // Easing func: (1 - dist/max)^2 for smoother falloff
                     const force = Math.pow((interactionDistance - distance) / interactionDistance, 2);
                     const attractionStrength = 0.08;
 
                     particle.vx += forceDirectionX * force * attractionStrength;
                     particle.vy += forceDirectionY * force * attractionStrength;
                 }
-
-                // Friction
                 particle.vx *= 0.98; // Slightly more friction
                 particle.vy *= 0.98;
-
-                // Wall collision (bounce)
                 if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
                 if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-
-                // Draw Particle
                 ctx.beginPath();
                 ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`; // Depth via opacity
                 ctx.fill();
-
-                // Draw Connections
                 for (let j = i + 1; j < particles.length; j++) {
                     const p2 = particles[j];
                     const dx2 = particle.x - p2.x;
@@ -103,7 +81,6 @@ export const ConstellationBackground = () => {
 
                     if (dist2 < connectionDistance) {
                         ctx.beginPath();
-                        // Lines are fainter and consider both particles' existing opacity
                         const lineOpacity = (1 - dist2 / connectionDistance) * 0.4 * ((particle.opacity + p2.opacity) / 2);
                         ctx.strokeStyle = `rgba(204, 255, 0, ${lineOpacity})`; // Neon Lime #ccff00
                         ctx.lineWidth = 0.5;
@@ -116,8 +93,6 @@ export const ConstellationBackground = () => {
 
             animationFrameId = requestAnimationFrame(animate);
         };
-
-        // Event Listeners
         const handleMouseMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             mouseRef.current = {
@@ -125,19 +100,13 @@ export const ConstellationBackground = () => {
                 y: e.clientY - rect.top
             };
         };
-
-        // Handle mouse leave to prevent stuck particles
         const handleMouseLeave = () => {
             mouseRef.current = { x: -1000, y: -1000 };
         };
 
         window.addEventListener('resize', resize);
         window.addEventListener('mousemove', handleMouseMove);
-        // Canvas-specific listener doesn't work well absolute positioned behind, 
-        // so window listener is fine, but maybe let's clear it on mouseout of window?
         document.addEventListener('mouseleave', handleMouseLeave);
-
-        // Initial setup
         resize();
         animate();
 

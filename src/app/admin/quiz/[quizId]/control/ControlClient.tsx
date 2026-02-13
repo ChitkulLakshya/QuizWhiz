@@ -46,8 +46,6 @@ export default function ControlClient() {
       unsubQuestions();
     };
   }, [quizId]);
-
-  // Timer countdown
   useEffect(() => {
     if (!quiz || quiz.status !== 'active' || !quiz.questionStartTime) return;
 
@@ -109,8 +107,6 @@ export default function ControlClient() {
   if (!quiz) return <div className="p-8">Loading...</div>;
 
   const currentQuestion = quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
-
-  // Calculate how many participants have answered the current question
   const answeredCount = currentQuestion && participants.length > 0
     ? participants.filter(p => p.answers.some(a => a.questionId === currentQuestion.id)).length
     : 0;

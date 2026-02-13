@@ -1,8 +1,6 @@
 
 import { generateQuizQuestions } from '@/ai/flows/generate-quiz-questions';
 import { NextResponse } from 'next/server';
-
-// Helper to add CORS headers
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

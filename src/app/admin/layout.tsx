@@ -21,15 +21,11 @@ export default function AdminLayout({
         router.push('/login');
         return;
       }
-
-      // Verify admin status
       if (user.email) {
         try {
-          // Check admin status
           let isAdmin = await isAdminEmail(user.email);
 
           if (!isAdmin) {
-            // Retry once after a brief delay to handle eventual consistency if user was just created
             await new Promise(resolve => setTimeout(resolve, 1000));
             isAdmin = await isAdminEmail(user.email);
           }
@@ -42,14 +38,11 @@ export default function AdminLayout({
           }
         } catch (error) {
           console.error('Error verifying admin status:', error);
-          // If error (e.g. network), we might not want to kick them out immediately, 
-          // but for security we usually should. Let's redirect to login with error.
           await auth.signOut();
           router.push('/login');
           return;
         }
       } else {
-        // No email, can't verify
         await auth.signOut();
         router.push('/login');
         return;

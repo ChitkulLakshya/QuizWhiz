@@ -73,7 +73,6 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
-        // Legacy/Brand Aliases (Functional)
         "acid": "hsl(var(--primary))",
         "acid-dark": "hsl(var(--primary))", // Simplified
         "retro-black": "hsl(var(--background))",

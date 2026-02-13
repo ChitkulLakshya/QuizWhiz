@@ -22,8 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-// Allow AI generation to run for up to 60 seconds
 export const maxDuration = 60;
 
 function SubmitButton({ isSaving }: { isSaving: boolean }) {
@@ -51,13 +49,9 @@ export default function EditClient() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // AI Generation
   const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<Omit<Question, 'id' | 'quizId'>[]>([]);
-
-  // New question form
   const [questionText, setQuestionText] = useState('');
   const [options, setOptions] = useState(['', '', '', '']);
   const [correctIndex, setCorrectIndex] = useState(0);
@@ -164,15 +158,11 @@ export default function EditClient() {
         points,
         order: questions.length
       });
-
-      // Reset form
       setQuestionText('');
       setOptions(['', '', '', '']);
       setCorrectIndex(0);
       setTimeLimit(30);
       setPoints(100);
-
-      // Reload questions
       loadData();
     } catch (error) {
       console.error('Error adding question:', error);

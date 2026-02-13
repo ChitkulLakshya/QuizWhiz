@@ -10,7 +10,6 @@ interface ResultsChartProps {
 }
 
 export function ResultsChart({ participants, question, questionIndex }: ResultsChartProps) {
-    // 1. Aggregation: Count votes for each option
     const optionCounts = new Array(question.options.length).fill(0);
 
     participants.forEach(p => {
@@ -19,11 +18,7 @@ export function ResultsChart({ participants, question, questionIndex }: ResultsC
             optionCounts[selectedIdx]++;
         }
     });
-
-    // 2. Calculate total votes
     const totalVotes = optionCounts.reduce((sum, count) => sum + count, 0);
-
-    // 3. Option labels
     const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
     return (

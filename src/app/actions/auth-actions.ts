@@ -1,7 +1,4 @@
-// Use environment variable for the backend URL, default to local for dev
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-// Helper to detect Electron environment at runtime
 const isElectron = () => {
     if (typeof window === 'undefined') return false;
     return /Electron/i.test(window.navigator.userAgent);
@@ -53,7 +50,6 @@ export async function logNewUser(userData: { name: string; email: string; phone?
         return { success: true };
     } catch (error) {
         console.error('Failed in logNewUser:', error);
-        // We return success true to not block the user flow even if logging fails
         return { success: true };
     }
 }

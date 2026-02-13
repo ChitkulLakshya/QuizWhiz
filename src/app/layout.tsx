@@ -15,11 +15,6 @@ const spaceGrotesk = Space_Grotesk({
   display: 'swap',
 });
 
-// ... (other font definitions remain same, skipping to keep context concise if possible, but replace tool needs context) 
-// Actually I need to be careful with replace tool. I'll include the import at the top and the wrapper in the body.
-
-// Let's do imports first
-
 
 const archivoBlack = Archivo_Black({
   weight: '400',

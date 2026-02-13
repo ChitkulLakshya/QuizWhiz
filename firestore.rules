@@ -9,14 +9,8 @@ service cloud.firestore {
      * - Read: Public (Allow anyone to view/join).
      */
     match /quizzes/{quizId} {
-      // 1. Public Read Access (for listing/joining)
       allow read: if true;
-
-      // 2. Creation: Any signed-in user (Anonymous or Real)
-      // Only enforce that they claim ownership of the doc they create.
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-
-      // 3. Update/Delete: Only the Owner
       allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
@@ -28,18 +22,11 @@ service cloud.firestore {
      *   we allow public write access here implicitly for "joining" and "submitting answers".
      */
     match /quizzes/{quizId}/participants/{participantId} {
-      // 1. Public Read (Leaderboards)
       allow read: if true;
-
-      // 2. Write (Self or Host)
-      // - Self: The document ID is the User's UID.
-      // - Host: The owner of the parent Quiz.
       allow write: if request.auth != null && (
         request.auth.uid == participantId ||
         request.auth.uid == get(/databases/$(database)/documents/quizzes/$(quizId)).data.ownerId
       );
-      
-      // Sub-collection: Scores (Legacy support, though scores are now on participant doc)
       match /scores/{scoreId} {
         allow read, create, update: if true;
       }
@@ -56,30 +43,16 @@ service cloud.firestore {
      */
     match /quizzes/{quizId}/questions/{questionId} {
        allow read: if true;
-       // Allow write if the user is the owner of the parent Quiz
-       // Note: checking parent ownership can be tricky in standard requests if we don't fetch parent.
-       // But typically we can just check if auth.uid matches quiz owner if we could.
-       // Simpler: Allow write if authenticated? Or maybe rely on the fact that `createQuickGame` 
-       // writes them. 
-       
-       // Actually, looking at the previous rules:
-       // "allow update, delete: if isAdmin();"
-       // We need to change this! The Anon Host creates the quiz AND questions.
-       // So we MUST allow the Host to create questions.
        
        allow create, update, delete: if request.auth != null && 
          get(/databases/$(database)/documents/quizzes/$(quizId)).data.ownerId == request.auth.uid;
     }
-
-    // Admins Collection (Used for checking admin status and auto-registration)
     match /admins/{adminId} {
       allow read: if request.auth.token.email != null && resource.data.email == request.auth.token.email;
       allow create: if request.auth.token.email != null
         && request.resource.data.email == request.auth.token.email
         && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
-
-    // Keep Admin Roles locked down
     match /roles_admin/{userId} {
         allow read: if request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
         allow write: if false; 

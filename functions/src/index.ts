@@ -8,8 +8,6 @@ import { Logger } from './utils/logger';
 
 admin.initializeApp();
 const db = admin.firestore();
-
-// --- Types ---
 interface SubmitAnswerRequest {
     quizId: string;
     participantId: string;
@@ -34,12 +32,8 @@ interface GenerateQuestionsRequest {
     numberOfQuestions?: number;
     image?: string;
 }
-
-// --- Submit Answer Secure ---
 export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, async (request) => {
     const { quizId, participantId, questionIndex, selectedOptionIndex } = request.data;
-
-    // Validate inputs
     if (!quizId || !participantId || questionIndex === undefined || selectedOptionIndex === undefined) {
         Logger.warn('Submit Answer: Missing required fields', { data: request.data });
         throw new HttpsError('invalid-argument', 'Missing required fields');
@@ -75,8 +69,6 @@ export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, as
         throw new HttpsError('internal', 'Submission failed');
     }
 });
-
-// --- Send OTP ---
 export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) => {
     const { email, code } = request.data;
     if (!email || !code) {
@@ -118,8 +110,6 @@ export const sendOtp = onCall<SendOtpRequest>({ cors: true }, async (request) =>
         throw new HttpsError('internal', 'Failed to send email');
     }
 });
-
-// --- Log New User ---
 export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (request) => {
     const { name, email, phone } = request.data;
     const sheetId = process.env.GOOGLE_SHEET_ID;
@@ -127,7 +117,6 @@ export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (reque
 
     if (!sheetId || !base64creds) {
         Logger.warn("Log New User: Missing Sheet Config");
-        // Just log locally and return
         Logger.info(`[New User]: ${name}, ${email}`);
         return { success: true, warning: 'Logging config missing' };
     }
@@ -157,8 +146,6 @@ export const logNewUser = onCall<LogNewUserRequest>({ cors: true }, async (reque
         return { success: true, warning: 'Logging failed' };
     }
 });
-
-// --- Generate Questions (AI) ---
 export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }, async (request) => {
     const { subject, skillLevel, numberOfQuestions = 10, image } = request.data;
     const apiKey = process.env.GOOGLE_GENAI_API_KEY;
@@ -193,8 +180,6 @@ export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }
         const response = result.response;
         const text = response.text();
         const data = JSON.parse(text);
-
-        // Convert correctAnswer to index
         const processedQuestions = data.questions.map((q: any) => {
             const index = q.options.indexOf(q.correctAnswer);
             return {
@@ -217,8 +202,6 @@ interface SendWelcomeEmailRequest {
     email: string;
     name?: string;
 }
-
-// --- Send Welcome Email ---
 export const sendWelcomeEmail = onCall<SendWelcomeEmailRequest>({ cors: true }, async (request) => {
     const { email, name } = request.data;
     if (!email) {

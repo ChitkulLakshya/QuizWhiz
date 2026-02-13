@@ -101,8 +101,6 @@ const PermissionsSlide: React.FC<PermissionsSlideProps> = ({ onComplete }) => {
         </div>
     );
 };
-
-// Helper Component for Individual Permission Item
 const PermissionItem = ({ title, description, icon: Icon, isGranted, onGrant }: any) => {
     return (
         <div className="flex items-center justify-between p-4 bg-[#111] rounded-xl border border-gray-800">

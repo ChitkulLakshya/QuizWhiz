@@ -9,7 +9,6 @@ import { useParams } from 'next/navigation';
 
 export default function TakeQuizPage() {
   const params = useParams();
-  // useParams returns string | string[], so we cast or check
   const quizId = Array.isArray(params?.quizId) ? params.quizId[0] : params?.quizId;
 
   const quiz = mockQuizzes.find(q => q.id === quizId);

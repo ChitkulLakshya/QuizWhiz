@@ -34,8 +34,6 @@ import {
 } from 'lucide-react';
 import { ShareModal } from '@/components/game/share-modal';
 import { useGameSounds } from '@/hooks/use-game-sounds';
-
-// View Components
 import { LobbyView } from '@/components/game/state-views/lobby-view';
 import { QuestionView } from '@/components/game/state-views/question-view';
 import { ResultsView } from '@/components/game/state-views/results-view';
@@ -49,14 +47,10 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
   const quizId = propQuizId || (params.quizId as string);
   const router = useRouter();
   const { toast } = useToast();
-
-  // Data State
   const [user, setUser] = useState<User | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
-
-  // Local Game State
   const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
@@ -65,17 +59,11 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
   const [hostResults, setHostResults] = useState<QuestionResult | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Derived State
   const isHost = quiz && user ? quiz.ownerId === user.uid : false;
   const skipVoteCount = quiz?.skipVoteCount ?? 0;
   const totalParticipantCount = quiz?.participantCount ?? participants.length;
   const currentQuestion = quiz && quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
-
-  // Sound Hooks
   const { playCorrect, playWrong, playCountdown, playResults, isMuted, toggleMute } = useGameSounds();
-
-  // 1. Auth & Data Subscription
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -98,8 +86,6 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       unsubQuestions();
     };
   }, [quizId]);
-
-  // 1b. Host Auto-Join
   useEffect(() => {
     if (isHost && user && quiz && quiz.status === 'lobby') {
       const amIJoined = participants.some(p => p.id === user.uid);
@@ -108,8 +94,6 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       }
     }
   }, [isHost, user, quiz, participants]);
-
-  // 2. Timer Logic
   useEffect(() => {
     if (!quiz || !currentQuestion || quiz.status !== 'active' || !quiz.questionStartTime) {
       return;
@@ -139,8 +123,6 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
 
     return () => clearInterval(interval);
   }, [quiz, currentQuestion, playCountdown]);
-
-  // 3. Status Synchro
   useEffect(() => {
     if (!quiz) return;
     if (quiz.status === 'lobby' || quiz.status === 'draft') {
@@ -153,24 +135,17 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       }
     }
   }, [quiz?.status]);
-
-  // 3b. Reset Local State on New Question
   useEffect(() => {
     if (currentQuestion) {
       setIsAnswerSubmitted(false);
       setSelectedAnswer(null);
     }
   }, [currentQuestion?.id]);
-
-  // 3c. Prevent answer submission after time expires
   useEffect(() => {
     if (timeRemaining <= 0 && viewState === 'question') {
       setIsAnswerSubmitted(true);
     }
   }, [timeRemaining, viewState]);
-
-
-  // 4. Host: Calculate Results
   useEffect(() => {
     if (isHost && viewState === 'results' && currentQuestion) {
       calculateQuestionResults(quizId, currentQuestion.id).then(setHostResults);
@@ -178,15 +153,11 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       setHostResults(null);
     }
   }, [isHost, viewState, currentQuestion, quizId]);
-
-  // 5. Sound Triggers
   useEffect(() => {
     if (viewState === 'question') {
       playCountdown();
     } else if (viewState === 'results' || viewState === 'completed') {
       playResults();
-
-      // Play success/failure sound when results are revealed (not when clicked)
       if (viewState === 'results' && currentQuestion) {
         const correctOption = currentQuestion.options[currentQuestion.correctOptionIndex];
         if (selectedAnswer === correctOption) {
@@ -197,13 +168,8 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       }
     }
   }, [viewState, playCountdown, playResults, currentQuestion, selectedAnswer, playCorrect, playWrong]);
-
-
-  // 6. Host Check: All Participants Answered?
   useEffect(() => {
     if (!isHost || viewState !== 'question' || !currentQuestion || !quiz) return;
-
-    // Use counter instead of iterating all participants
     const answeredCount = quiz.answeredCount ?? 0;
     const participantCount = quiz.participantCount ?? 0;
 
@@ -212,12 +178,8 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       endQuestionNow(quizId);
     }
   }, [isHost, viewState, currentQuestion, quiz?.answeredCount, quiz?.participantCount, quizId]);
-
-  // 7. Check if all participants voted to skip
   useEffect(() => {
     if (!currentQuestion || !quiz || viewState !== 'question') return;
-
-    // Use counter instead of iterating all participants
     const skipVoteCount = quiz.skipVoteCount ?? 0;
     const participantCount = quiz.participantCount ?? 0;
 
@@ -227,8 +189,6 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
       toast({ title: "Everyone voted to skip!", description: "Revealing results..." });
     }
   }, [quiz?.skipVoteCount, quiz?.participantCount, currentQuestion, viewState, quizId, toast]);
-
-  // Handlers
   const handleJoinGame = async (name: string) => {
     if (!name) return;
     try {
@@ -250,19 +210,14 @@ export default function PlayPage({ quizId: propQuizId }: PlayPageProps = {}) {
     setIsAnswerSubmitted(true);
 
     try {
-      // Server-side scoring - Cloud Function calculates correctness
       const result = await submitAnswer(
         quizId,
         currentParticipant.id,
         quiz?.currentQuestionIndex ?? 0,
         index
       );
-
-      // Removed immediate sound
     } catch (error) {
       console.error(error);
-      // Fallback: play wrong sound on error
-      // playWrong();
     }
   };
 

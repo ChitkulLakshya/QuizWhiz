@@ -11,8 +11,6 @@ import MobileNav from './mobile-nav';
 export default function Navbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
-
-    // Handle scroll effect for desktop navbar transparency
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 20);

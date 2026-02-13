@@ -18,8 +18,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import clsx from 'clsx';
-
-// Visual Assets Mapping with Curated Unsplash Images
 const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingClass: string; aspect: string }> = {
   [TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE]: {
     bgImage: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1000&auto=format&fit=crop", // Abstract Neon/Brain vibe
@@ -64,8 +62,6 @@ const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingCl
     aspect: "aspect-[3/4]"
   }
 };
-
-// Data Source - Cleaned up to match user request and removed levels
 const TOPICS = [
   { id: TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE, name: 'General Knowledge', icon: Brain },
   { id: TRIVIA_CATEGORIES.MOVIES, name: 'Movies', icon: Film },

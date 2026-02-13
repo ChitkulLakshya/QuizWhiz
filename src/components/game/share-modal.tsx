@@ -22,8 +22,6 @@ interface ShareModalProps {
 
 export function ShareModal({ quizId, quizCode, isOpen, onClose }: ShareModalProps) {
     const [copied, setCopied] = useState(false);
-
-    // Use window.location.origin to support any environment
     const shareUrl = typeof window !== 'undefined'
         ? `${window.location.origin}/play/${quizId}`
         : '';

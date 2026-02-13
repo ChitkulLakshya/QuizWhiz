@@ -29,7 +29,6 @@ export default function PlayClient() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    // Get participant info from localStorage
     const storedId = localStorage.getItem('participantId');
     const storedName = localStorage.getItem('participantName');
     const storedQuizId = localStorage.getItem('quizId');
@@ -50,14 +49,10 @@ export default function PlayClient() {
       unsubQuestions();
     };
   }, [quizId, router]);
-
-  // Reset answer state when question changes
   useEffect(() => {
     setSelectedOption(null);
     setHasAnswered(false);
   }, [quiz?.currentQuestionIndex]);
-
-  // Load leaderboard when quiz completes
   useEffect(() => {
     if (quiz?.status === 'completed') {
       loadLeaderboard();
@@ -68,8 +63,6 @@ export default function PlayClient() {
     const data = await getLeaderboard(quizId);
     setLeaderboard(data);
   };
-
-  // Timer countdown
   useEffect(() => {
     if (!quiz || quiz.status !== 'active' || !quiz.questionStartTime || hasAnswered) return;
 
@@ -82,7 +75,6 @@ export default function PlayClient() {
       setTimeRemaining(Math.ceil(remaining / 1000));
 
       if (remaining <= 0 && !hasAnswered) {
-        // Time's up - auto submit no answer
         handleTimeout();
       }
     }, 100);
@@ -123,8 +115,6 @@ export default function PlayClient() {
 
     const isCorrect = selectedOption === currentQuestion.correctOptionIndex;
     const timeToAnswer = Date.now() - quiz.questionStartTime!;
-    
-    // Calculate points based on speed (faster = more points)
     let pointsEarned = 0;
     if (isCorrect) {
       const timeRatio = 1 - (timeToAnswer / (currentQuestion.timeLimit * 1000));

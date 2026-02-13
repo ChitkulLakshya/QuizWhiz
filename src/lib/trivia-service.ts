@@ -20,8 +20,6 @@ export const TRIVIA_CATEGORIES = {
     ANIME: 31,
     CARTOONS: 32,
 };
-
-// Map user-friendly strings to IDs (Case-insensitive matching will be applied)
 const CATEGORY_MAP: Record<string, number> = {
     'general': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
     'gk': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
@@ -93,8 +91,6 @@ export const fetchQuestionsFromAPI = async (
     difficulty: 'easy' | 'medium' | 'hard' = 'medium'
 ): Promise<Question[]> => {
     try {
-        // 1. Resolve Category ID
-        // 1. Resolve Category ID
         let categoryId: number;
         if (typeof category === 'string') {
             const normalizedCategory = category.toLowerCase().trim();
@@ -107,12 +103,8 @@ export const fetchQuestionsFromAPI = async (
         } else {
             categoryId = category;
         }
-
-        // 2. Build URL
         const url = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&type=multiple&difficulty=${difficulty}`;
         console.log(`🌐 Fetching trivia from: ${url}`);
-
-        // 3. Fetch Data
         const response = await fetch(url);
         const data: OpenTDBResponse = await response.json();
 
@@ -122,23 +114,15 @@ export const fetchQuestionsFromAPI = async (
             }
             throw new Error(`Failed to fetch questions from the trivia database.`);
         }
-
-        // 4. Transform to Question Interface
         return data.results.map((q, index) => {
-            // Decode raw strings
             const correctAnswer = decodeText(q.correct_answer);
             const incorrectAnswers = q.incorrect_answers.map(decodeText);
-
-            // Combine and Shuffle
-            // We attach a random sort key to shuffle, but keep track of the correct answer
             const allOptions = [...incorrectAnswers, correctAnswer];
 
             const shuffledOptions = allOptions
                 .map(value => ({ value, sort: Math.random() }))
                 .sort((a, b) => a.sort - b.sort)
                 .map(({ value }) => value);
-
-            // Find the new index of the correct answer
             const correctOptionIndex = shuffledOptions.findIndex(opt => opt === correctAnswer);
 
             return {
@@ -154,10 +138,7 @@ export const fetchQuestionsFromAPI = async (
         });
     } catch (error) {
         console.error('❌ Error fetching trivia questions:', error);
-        // Fallback? Or just rethrow
         throw error;
     }
 };
-
-// Aliasing for backward compatibility if needed, using the new function
 export const fetchTriviaQuestions = fetchQuestionsFromAPI;

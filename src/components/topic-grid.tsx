@@ -39,12 +39,7 @@ export default function TopicGrid() {
         setLoading(categoryId);
         try {
             console.log(`🎮 Starting Quick Game: ${topicName}`);
-
-            // Call the consolidated Quick Play function
-            // This handles auth, question fetching, and quiz creation
             const quizId = await createQuickGame(topicName, 'medium');
-
-            // Redirect to the new Unified Game Room
             router.push(`/play/${quizId}`);
 
         } catch (error) {

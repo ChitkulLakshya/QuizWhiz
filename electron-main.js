@@ -14,34 +14,34 @@ async function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            // preload: path.join(__dirname, 'preload.js'), // Removed as it is not used
         },
     });
 
     if (isDev) {
-        // In development, load from the Next.js dev server
         mainWindow.loadURL('http://localhost:9002');
         mainWindow.webContents.openDevTools();
     } else {
-        // In production, start a local server to serve the 'out' directory
-        // This solves navigation and file:// protocol issues
         const server = http.createServer((request, response) => {
             return handler(request, response, {
                 public: path.join(__dirname, 'out'),
                 rewrites: [
-                    { source: '**', destination: '/index.html' } // SPA fallback for direct navigation if needed, though trailingSlash handles folders
+                    { source: '/admin/quiz/:quizId/edit/**', destination: '/admin/quiz/demo/edit/index.html' },
+                    { source: '/admin/quiz/:quizId/control/**', destination: '/admin/quiz/demo/control/index.html' },
+                    { source: '/admin/quiz/:quizId/leaderboard/**', destination: '/admin/quiz/demo/leaderboard/index.html' },
+                    { source: '/host/:quizId/control/**', destination: '/host/demo/control/index.html' },
+                    { source: '/play/:quizId/**', destination: '/play/demo/index.html' },
+                    { source: '/quiz/:quizId/lobby/**', destination: '/quiz/demo/lobby/index.html' },
+                    { source: '/quiz/:quizId/leaderboard/**', destination: '/quiz/demo/leaderboard/index.html' },
+                    { source: '/quiz/:quizId/**', destination: '/quiz/demo/index.html' },
+                    { source: '**', destination: '/index.html' }
                 ]
             });
         });
-
-        // Listen on a fixed port (3000) to allow authorized domain whitelisting in Firebase/Google Console
         const PORT = 3000;
         server.listen(PORT, () => {
             console.log(`Server running at http://localhost:${PORT}`);
             mainWindow.loadURL(`http://localhost:${PORT}`);
         });
-
-        // Ensure server closes when app quits (though process exit handles it)
         app.on('will-quit', () => {
             server.close();
         });

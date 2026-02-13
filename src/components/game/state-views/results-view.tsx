@@ -28,8 +28,6 @@ export function ResultsView({
     onRestart,
     isFinalResult
 }: ResultsViewProps) {
-
-    // If match is over/completed, show Podium
     if (isFinalResult || quiz.status === 'completed') {
         return <Podium participants={participants} isHost={isHost} onRestart={onRestart} />;
     }

@@ -5,8 +5,6 @@ import { useEffect } from 'react';
 export default function ConsoleConfig() {
     useEffect(() => {
         if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
-            // Save the original console methods immediately in case we need to restore them (optional, not implemented here)
-            // Override console methods to be no-ops
             const noOp = () => { };
 
             console.log = noOp;

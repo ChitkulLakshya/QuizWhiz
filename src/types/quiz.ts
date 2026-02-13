@@ -1,4 +1,3 @@
-// Shared TypeScript types for Quiz Application
 
 export interface Quiz {
   id: string;
@@ -39,8 +38,6 @@ export interface Participant {
   answers: Record<string, number>; // questionIndex -> selectedOptionIndex
   votedToSkip?: boolean; // True if participant voted to skip to results
 }
-
-// ParticipantAnswer interface removed as we use a simple map now
 
 export interface QuestionResult {
   questionId: string;

@@ -27,7 +27,6 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
       })
     )
   })
-  // Execution continues immediately
 }
 
 

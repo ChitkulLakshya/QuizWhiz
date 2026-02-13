@@ -10,16 +10,10 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
-
-// Initialize Firebase app (singleton)
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
-// Singleton Firestore & Auth instances
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 export const initializeFirebase = () => app;
 export const getFirestoreInstance = () => db;
-
-// Optional: debug log
 console.log("🔥 Firebase initialized (client-side)");

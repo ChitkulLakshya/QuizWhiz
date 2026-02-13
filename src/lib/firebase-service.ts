@@ -34,18 +34,12 @@ import { signInAnonymously } from "firebase/auth";
 import { fetchQuestionsFromAPI } from "./trivia-service";
 import { Quiz, Question, Participant, LeaderboardEntry, QuestionResult } from "@/types/quiz";
 import { Capacitor } from "@capacitor/core";
-
-// Type helpers for Firestore operations
 type QuizCollection = CollectionReference<Omit<Quiz, "id">>;
 type QuizDocument = DocumentReference<Quiz>;
 type QuestionCollection = CollectionReference<Omit<Question, "id">>;
 type ParticipantCollection = CollectionReference<Omit<Participant, "id">>;
-
-// Generate random 6-digit quiz code
 export const generateQuizCode = (): string =>
   Math.floor(100000 + Math.random() * 900000).toString();
-
-// ---------------------- QUIZZES ----------------------
 
 /**
  * Create a "Quick Play" quiz with auto-fetched questions
@@ -60,7 +54,6 @@ export const createQuickGame = async (
   console.log("🚀 createQuickGame called:", { topic, difficulty });
 
   try {
-    // 1. Ensure Auth (Anonymous)
     let user = auth.currentUser;
     if (!user) {
       console.log('👤 Signing in anonymously...');
@@ -68,16 +61,12 @@ export const createQuickGame = async (
       user = userCred.user;
     }
     console.log('✅ User ID:', user.uid);
-
-    // 2. Prepare Quiz ID & Fetch Questions
     const quizzesRef = collection(db, "quizzes");
     const quizDocRef = doc(quizzesRef); // Generate ID
     const quizId = quizDocRef.id;
 
     console.log("🌍 Fetching questions for quiz:", quizId);
     const questions = await fetchQuestionsFromAPI(quizId, topic, 10, difficulty);
-
-    // 3. Create Quiz Document
     const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
       title: `${topic} Trivia`,
       description: `A ${difficulty} ${topic} quiz generated for you.`,
@@ -93,8 +82,6 @@ export const createQuickGame = async (
 
     console.log("💾 Saving quiz document...");
     await setDoc(quizDocRef, quizData);
-
-    // 4. Populate Subcollection (for compatibility)
     await addQuestions(quizId, questions);
 
     console.log("✅ Quick Game created:", quizId);
@@ -114,7 +101,6 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
   console.log("🤖 createAIQuickQuiz called:", topic);
 
   try {
-    // 1. Ensure Auth (Anonymous)
     let user = auth.currentUser;
     if (!user) {
       console.log('👤 Signing in anonymously...');
@@ -122,8 +108,6 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
       user = userCred.user;
     }
     console.log('✅ User ID:', user.uid);
-
-    // 2. Fetch AI Questions from API
     console.log("🧠 calling /api/generate-quiz...");
 
     let apiUrl = '/api/generate-quiz';
@@ -144,26 +128,9 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
     const data = await response.json();
     const aiQuestions = data.questions; // Array of { question, options, correctAnswer }
 
-    // 3. Transform to our Question format
-    // We reuse uuidv4 from existing imports? Need to check imports
-    // Actually, uuidv4 is not imported in this file. 
-    // We can use a simpler ID generator or import one.
-    // Let's rely on Firestore auto-ids for subcollections, but for the local object we need IDs.
-    // We can just use Math.random for now or import uuid.
-
-    // Actually, looking at `createQuickGame`, it imports `fetchQuestionsFromAPI` which handles transformation.
-    // Here we need to transform manually.
-
     const formattedQuestions: Question[] = aiQuestions.map((q: any, index: number) => {
-      // Shuffle options and find correct index
       const allOptions = q.options;
       const correctAnswer = q.correctAnswer;
-
-      // Note: AI usually returns options including correct one. 
-      // We trust the AI output structure valid per schema.
-
-      // We still shuffle to be safe, although AI might randomize.
-      // Let's shuffle.
       const shuffled = [...allOptions]
         .map(value => ({ value, sort: Math.random() }))
         .sort((a, b) => a.sort - b.sort)
@@ -182,14 +149,9 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
         order: index
       } as Question;
     });
-
-
-    // 4. Create Quiz Document
     const quizzesRef = collection(db, "quizzes");
     const quizDocRef = doc(quizzesRef);
     const quizId = quizDocRef.id;
-
-    // Update IDs
     formattedQuestions.forEach(q => q.quizId = quizId);
 
     const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
@@ -207,11 +169,6 @@ export const createAIQuickQuiz = async (topic: string): Promise<string> => {
 
     console.log("💾 Saving AI quiz document...");
     await setDoc(quizDocRef, quizData);
-
-    // 5. Populate Subcollection
-    // We can reuse addQuestions helper
-    // We need to strip IDs because addQuestions might expect Omit<Question, 'id'> or handle it
-    // addQuestions takes Omit<Question, "id" | "quizId">[]
 
     const questionsPayload = formattedQuestions.map(({ id, quizId, ...rest }) => rest);
     await addQuestions(quizId, questionsPayload);
@@ -243,13 +200,9 @@ export const createQuiz = async (
   console.log("🔍 db instance:", db ? "exists" : "missing");
 
   try {
-    // Type-safe quiz data with serverTimestamp
-    // createdAt will be a FieldValue when writing, becomes Timestamp when reading
     const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
       title,
       description,
-      // Storing email instead of UID allows us to display "Created by: user@example.com"
-      // without needing a separate user lookup or profile system.
       createdBy: userEmail,
       ownerId: userId,
       createdAt: serverTimestamp(),
@@ -260,8 +213,6 @@ export const createQuiz = async (
 
     console.log("🚀 Writing to Firestore…");
     console.log("📦 Quiz payload:", { ...quizData, createdAt: "[serverTimestamp]" });
-
-    // Type-safe collection reference
     const quizzesRef: QuizCollection = collection(
       db,
       "quizzes"
@@ -325,8 +276,6 @@ export const getQuizzes = async (userId?: string): Promise<Quiz[]> => {
   }
 };
 
-// ---------------------- GET QUIZ ----------------------
-
 /**
  * Get a quiz by its document ID
  * @param quizId - The quiz document ID
@@ -335,8 +284,6 @@ export const getQuizzes = async (userId?: string): Promise<Quiz[]> => {
 export const getQuiz = async (quizId: string): Promise<Quiz | null> => {
   try {
     console.log("🔍 Fetching quiz:", quizId);
-
-    // Type-safe document reference
     const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
     const snap = await getDoc(quizRef);
 
@@ -425,14 +372,9 @@ export const updateQuizStatus = async (
 export const deleteQuiz = async (quizId: string): Promise<void> => {
   try {
     console.log("🗑️ Deleting quiz:", quizId);
-
-    // 1. Delete all questions in the subcollection
-    // We need to fetch them first because we can't delete a collection directly
     const questions = await getQuestions(quizId);
     const deletePromises = questions.map(q => deleteQuestion(quizId, q.id));
     await Promise.all(deletePromises);
-
-    // 2. Delete the quiz document
     const quizRef = doc(db, "quizzes", quizId);
     await deleteDoc(quizRef);
 
@@ -442,8 +384,6 @@ export const deleteQuiz = async (quizId: string): Promise<void> => {
     throw error;
   }
 };
-
-// ---------------------- QUESTIONS ----------------------
 
 /**
  * Add a question to a quiz
@@ -457,14 +397,10 @@ export const addQuestion = async (
 ): Promise<string> => {
   try {
     console.log("➕ Adding question to quiz:", quizId);
-
-    // Type-safe question data
     const questionData: Omit<Question, "id"> = {
       ...data,
       quizId,
     };
-
-    // Type-safe subcollection reference
     const questionsRef: QuestionCollection = collection(
       db,
       "quizzes",
@@ -556,8 +492,6 @@ export const deleteQuestion = async (
 ): Promise<void> => {
   try {
     console.log("🗑️ Deleting question:", { quizId, questionId });
-
-    // Type-safe document reference for subcollection
     const questionRef: DocumentReference<Question> = doc(
       db,
       "quizzes",
@@ -575,8 +509,6 @@ export const deleteQuestion = async (
   }
 };
 
-// ---------------------- PARTICIPANTS ----------------------
-
 /**
  * Join a quiz as a participant
  * @param quizId - The quiz document ID
@@ -587,25 +519,18 @@ export const deleteQuestion = async (
 export const joinQuiz = async (
   quizId: string,
   name: string
-  // userId removed as we force auth
 ): Promise<string> => {
   try {
     console.log("👤 Joining quiz:", { quizId, name });
-
-    // 0. Enforce Auth
     let user = auth.currentUser;
     if (!user) {
       console.log("🕵️ Signing in anonymously...");
       const cred = await signInAnonymously(auth);
       user = cred.user;
     }
-
-    // 1. Check if quiz exists and is in lobby status
     const quiz = await getQuiz(quizId);
     if (!quiz) throw new Error("Quiz not found");
     if (quiz.status !== "lobby") throw new Error("Quiz is not open for joining");
-
-    // Type-safe participant data with serverTimestamp
     const participantData: Omit<Participant, "id" | "joinedAt"> & {
       joinedAt: FieldValue;
     } = {
@@ -623,8 +548,6 @@ export const joinQuiz = async (
       quizId,
       "participants"
     );
-
-    // Use UID as Document ID and increment participant count
     const batch = writeBatch(db);
     const userDocRef = doc(participantsRef, user.uid);
     const quizRef = doc(db, "quizzes", quizId);
@@ -675,8 +598,6 @@ export const getParticipants = async (
   }
 };
 
-// ---------------------- REALTIME SUBSCRIPTIONS ----------------------
-
 /**
  * Subscribe to real-time quiz updates
  * @param quizId - The quiz document ID
@@ -688,10 +609,6 @@ export const subscribeToQuiz = (
   callback: (quiz: Quiz) => void
 ): (() => void) => {
   console.log("👂 Subscribing to quiz updates:", quizId);
-
-  // Using onSnapshot allows the client to react instantly to state changes
-  // (e.g., Admin clicks "Next Question" -> Client UI updates immediately).
-  // This is the core of the real-time experience.
   const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
 
   return onSnapshot(quizRef, (snap) => {
@@ -759,9 +676,6 @@ export const subscribeToParticipants = (
     quizId,
     "participants"
   ) as ParticipantCollection;
-
-  // Limit to top 100 participants by score for better performance
-  // For leaderboards with 1000+ users, implement pagination or virtual scrolling
   const q = query(participantsRef, orderBy("totalScore", "desc"), limit(100));
 
   return onSnapshot(q, (snap) => {
@@ -770,8 +684,6 @@ export const subscribeToParticipants = (
     callback(participants);
   });
 };
-
-// ---------------------- GAME CONTROL ----------------------
 
 /**
  * Start a specific question (moves quiz to active state for that question)
@@ -786,8 +698,6 @@ export const startQuestion = async (
     console.log("▶️ Starting question:", { quizId, questionIndex });
 
     const quizRef: QuizDocument = doc(db, "quizzes", quizId) as QuizDocument;
-
-    // Update quiz state with counter resets (no need to update all participant docs)
     await updateDoc(quizRef, {
       status: "active",
       currentQuestionIndex: questionIndex,
@@ -809,7 +719,6 @@ export const startQuestion = async (
 export const endQuestionNow = async (quizId: string): Promise<void> => {
     try {
         const quizRef = doc(db, "quizzes", quizId);
-        // Set start time to 0 so (Date.now() - startTime) is huge, and (timeLimit - elapsed) is negative
         await updateDoc(quizRef, {
             questionStartTime: 0
         });
@@ -825,8 +734,6 @@ export const voteToSkip = async (quizId: string, participantId: string): Promise
     try {
         const participantRef = doc(db, "quizzes", quizId, "participants", participantId);
         const quizRef = doc(db, "quizzes", quizId);
-        
-        // Check if already voted
         const participantDoc = await getDoc(participantRef);
         if (participantDoc.data()?.votedToSkip) {
             return; // Already voted, don't increment
@@ -872,11 +779,7 @@ export const endQuiz = async (quizId: string): Promise<void> => {
 export const restartGame = async (quizId: string): Promise<void> => {
   try {
     console.log("🔄 Restarting quiz:", quizId);
-
-    // 1. Auth Check (Client-side check, security rules should also enforce)
     if (!auth.currentUser) throw new Error("Must be logged in to restart");
-
-    // We fetch the quiz to check owner (and to get ref)
     const quizRef = doc(db, "quizzes", quizId);
     const quizSnap = await getDoc(quizRef);
 
@@ -886,18 +789,12 @@ export const restartGame = async (quizId: string): Promise<void> => {
     if (quizData.ownerId !== auth.currentUser.uid) {
       throw new Error("Only the owner can restart the game");
     }
-
-    // 2. Prepare Batch
     const batch = writeBatch(db);
-
-    // 3. Reset Quiz Status
     batch.update(quizRef, {
       status: 'lobby',
       currentQuestionIndex: 0,
       stateUpdatedAt: serverTimestamp()
     });
-
-    // 4. Reset Participants (Scores 0, Answers [], Streak 0)
     const participantsRef = collection(db, "quizzes", quizId, "participants");
     const participantsSnap = await getDocs(participantsRef);
 
@@ -908,8 +805,6 @@ export const restartGame = async (quizId: string): Promise<void> => {
         answers: {}
       });
     });
-
-    // 5. Commit
     await batch.commit();
     console.log("✅ Quiz restarted successfully (Lobby, Scores Reset)");
 
@@ -970,7 +865,6 @@ export const calculateQuestionResults = async (
   quizId: string,
   questionId: string
 ): Promise<QuestionResult> => { // Modified to tolerate missing questionId search if needed, but we used ID search.
-  // Actually, we store answers by INDEX now. So we need the index of this questionId.
   try {
     const questions = await getQuestions(quizId);
     const questionIndex = questions.findIndex(q => q.id === questionId);
@@ -979,13 +873,10 @@ export const calculateQuestionResults = async (
     if (!question) throw new Error("Question not found");
 
     const participants = await getParticipants(quizId);
-
-    // Aggregating results
     const optionCounts = new Array(question.options.length).fill(0);
     let totalResponses = 0;
 
     participants.forEach(p => {
-      // Look up by Index
       const selectedIdx = p.answers[String(questionIndex)];
 
       if (typeof selectedIdx === 'number') {
@@ -1019,16 +910,10 @@ export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]
     console.log("🏆 Fetching leaderboard:", quizId);
 
     const participants = await getParticipants(quizId);
-    // Needed to calculate correct answers count? 
-    // For MVP, we can skip correctAnswers count if it's expensive, OR fetch questions.
-    // Let's just return 0 for correctAnswers for now to save a read, or fix it properly.
-    // The previous implementation filtered `isCorrect`. We don't have that valid anymore.
-    // Let's ESTIMATE or Fetch. Fetching is safer.
     const questions = await getQuestions(quizId);
 
     const leaderboard: LeaderboardEntry[] = participants.map(p => {
       let correctCount = 0;
-      // Iterate over answer keys
       Object.entries(p.answers).forEach(([qIdxStr, aIdx]) => {
         const qIdx = parseInt(qIdxStr);
         if (questions[qIdx] && questions[qIdx].correctOptionIndex === aIdx) {
@@ -1044,11 +929,7 @@ export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]
         rank: 0
       };
     });
-
-    // Sort by score desc
     leaderboard.sort((a, b) => b.totalScore - a.totalScore);
-
-    // Assign ranks
     leaderboard.forEach((entry, index) => {
       entry.rank = index + 1;
     });

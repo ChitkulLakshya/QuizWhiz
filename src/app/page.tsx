@@ -45,8 +45,6 @@ export default function LandingPage() {
   const y1 = useTransform(scrollY, [0, 500], [0, 200]);
   const y2 = useTransform(scrollY, [0, 500], [0, -150]);
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
-  // Smooth spring for parallax
   const springY1 = useSpring(y1, { stiffness: 100, damping: 30 });
   const springY2 = useSpring(y2, { stiffness: 100, damping: 30 });
   const gridY = useTransform(scrollY, [0, 500], [0, 50]);
@@ -54,10 +52,6 @@ export default function LandingPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-
-
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

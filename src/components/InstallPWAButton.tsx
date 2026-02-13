@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-// import { Button } from "@/components/ui/button" // Assuming shadcn or similar, but used vanilla/tailwind as requested for "sleek" custom look or standard button
 
 interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[];
@@ -18,11 +17,8 @@ export default function InstallPWAButton() {
 
     useEffect(() => {
         const handler = (e: Event) => {
-            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             setDeferredPrompt(e as BeforeInstallPromptEvent);
-            // Update UI notify the user they can install the PWA
             setIsVisible(true);
         };
 
@@ -35,11 +31,7 @@ export default function InstallPWAButton() {
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
-
-        // Show the install prompt
         deferredPrompt.prompt();
-
-        // Wait for the user to respond to the prompt
         const choiceResult = await deferredPrompt.userChoice;
 
         if (choiceResult.outcome === 'accepted') {
@@ -47,8 +39,6 @@ export default function InstallPWAButton() {
         } else {
             console.log('User dismissed the install prompt');
         }
-
-        // We've used the prompt, and can't use it again, throw it away
         setDeferredPrompt(null);
         setIsVisible(false);
     };

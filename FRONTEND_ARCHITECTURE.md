@@ -81,7 +81,6 @@
 ## 4. Type Definitions
 
 ```typescript
-// src/types/quiz.ts
 
 export interface Quiz {
   id: string;

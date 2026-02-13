@@ -12,7 +12,6 @@ interface PodiumProps {
 }
 
 export function Podium({ participants, isHost, onRestart }: PodiumProps) {
-    // Sort logic
     const sorted = [...participants].sort((a, b) => b.totalScore - a.totalScore);
     const [winner, second, third] = sorted;
 

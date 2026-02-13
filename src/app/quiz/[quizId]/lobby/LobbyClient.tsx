@@ -32,8 +32,6 @@ export default function LobbyClient() {
       title: "Quiz Started!",
       description: "Participants can now begin answering questions."
     });
-    // In a real app, this would trigger a state change in your database (e.g., Firebase)
-    // to notify all participants that the quiz has started.
   };
 
   if (!quiz) {

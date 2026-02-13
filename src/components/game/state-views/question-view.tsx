@@ -108,7 +108,6 @@ export function QuestionView({
                 <div className="flex flex-col gap-4 w-full">
                     {question.options.map((option, idx) => {
                         const isSelected = selectedAnswer === option;
-                        // const isOffset = idx % 2 !== 0; // Removed offset for stricter cleaner look matching Results
 
                         return (
                             <button

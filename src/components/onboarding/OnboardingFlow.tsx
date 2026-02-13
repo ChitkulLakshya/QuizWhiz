@@ -17,10 +17,7 @@ const OnboardingFlow = () => {
     };
 
     const steps = [
-        // Step 0: Welcome
         <WelcomeSlide key="welcome" onGetStarted={nextStep} />,
-
-        // Step 1: Feature 1
         <FeatureSlide
             key="feature-1"
             title="Real-time Quizzes"
@@ -28,8 +25,6 @@ const OnboardingFlow = () => {
             icon={Zap}
             onNext={nextStep}
         />,
-
-        // Step 2: Feature 2
         <FeatureSlide
             key="feature-2"
             title="AI Generation"
@@ -37,15 +32,9 @@ const OnboardingFlow = () => {
             icon={Bot}
             onNext={nextStep}
         />,
-
-        // Step 3: Permissions
         <PermissionsSlide key="permissions" onComplete={nextStep} />,
-
-        // Step 4: Auth Choice
         <AuthChoiceSlide key="auth" />
     ];
-
-    // Animation Variants for Slide Transition
     const slideVariants = {
         enter: {
             x: 1000,

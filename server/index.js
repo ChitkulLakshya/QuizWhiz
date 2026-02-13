@@ -12,12 +12,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-
-//Helper to read HTML template
 const readTemplate = (templateName) => {
     try {
         const templatePath = path.join(process.cwd(), '../emails', `${templateName}.html`);
@@ -27,8 +23,6 @@ const readTemplate = (templateName) => {
         return null;
     }
 };
-
-// Helper to Create Transporter
 const createTransporter = () => {
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
@@ -51,8 +45,6 @@ const createTransporter = () => {
         },
     });
 };
-
-// 2. Send OTP
 app.post('/send-otp', async (req, res) => {
     const { email, code } = req.body;
 
@@ -61,8 +53,6 @@ app.post('/send-otp', async (req, res) => {
     }
 
     const transporter = createTransporter();
-
-    // Read template
     let htmlContent = readTemplate('otp');
     if (htmlContent) {
         htmlContent = htmlContent.replace('{{OTP_CODE}}', code);
@@ -90,8 +80,6 @@ app.post('/send-otp', async (req, res) => {
         res.status(500).json({ error: 'Failed to send email' });
     }
 });
-
-// 3. Send Welcome Email
 app.post('/send-welcome', async (req, res) => {
     const { email, name } = req.body;
 
@@ -100,8 +88,6 @@ app.post('/send-welcome', async (req, res) => {
     }
 
     const transporter = createTransporter();
-
-    // Read template
     let htmlContent = readTemplate('welcome');
     if (htmlContent) {
         htmlContent = htmlContent.replace('{{USER_NAME}}', name || 'Agent');
@@ -129,8 +115,6 @@ app.post('/send-welcome', async (req, res) => {
         res.status(500).json({ error: 'Failed to send email' });
     }
 });
-
-// 4. Log New User (Google Sheets)
 app.post('/log-user', async (req, res) => {
     const { name, email, phone } = req.body;
     const sheetId = process.env.GOOGLE_SHEET_ID;
@@ -163,12 +147,9 @@ app.post('/log-user', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('❌ Failed to log user to Sheet:', error);
-        // Don't block the user flow
         res.json({ success: true, warning: 'Logging failed silently' });
     }
 });
-
-// Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

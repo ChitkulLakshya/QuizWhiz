@@ -16,8 +16,6 @@ export default function CreateQuiz() {
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-
-  // Auth Check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user || !user.email) {
@@ -31,8 +29,6 @@ export default function CreateQuiz() {
     });
     return () => unsubscribe();
   }, [router]);
-
-  // Handle Creation
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

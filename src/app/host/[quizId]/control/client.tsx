@@ -50,8 +50,6 @@ export default function HostQuizControl({ quizId: propQuizId }: HostQuizControlP
             unsubQuestions();
         };
     }, [quizId]);
-
-    // Timer countdown
     useEffect(() => {
         if (!quiz || quiz.status !== 'active' || !quiz.questionStartTime) return;
 
@@ -117,8 +115,6 @@ export default function HostQuizControl({ quizId: propQuizId }: HostQuizControlP
     );
 
     const currentQuestion = quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
-
-    // Calculate how many participants have answered the current question
     const answeredCount = currentQuestion && participants.length > 0
         ? participants.filter(p => String(quiz.currentQuestionIndex) in p.answers).length
         : 0;

@@ -51,11 +51,8 @@ type QuizFormValues = z.infer<typeof quizFormSchema>;
 export function QuizForm() {
   const router = useRouter();
   const { toast } = useToast();
-  // const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
   const [generateState, setGenerateState] = useState<{ status: string; message: string; data?: any[] }>({ status: 'idle', message: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // React state for form fields and loading
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,7 +82,6 @@ export function QuizForm() {
         options: q.options.slice(0, 4) as [string, string, string, string], // Ensure only 4 options
         timeLimit: 30,
       }));
-      // @ts-ignore
       append(newQuestions);
     } else if (generateState.status === 'error') {
       toast({
@@ -105,22 +101,15 @@ export function QuizForm() {
     setLoading(true);
 
     try {
-      // Validate form data
       const formData = form.getValues();
       if (!formData.title || formData.questions.length === 0) {
         throw new Error('Please fill in all required fields');
       }
 
       console.log(' Form data validated:', { title: formData.title, questionCount: formData.questions.length });
-
-      // 1. Create Quiz Document
       console.log(' Creating quiz document...');
-      // Note: We don't have user email here easily without auth context, using placeholder or passing it if available.
-      // For now, we'll use a placeholder or empty string as the service expects a string.
       const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous', 'anonymous-user');
       console.log(' Quiz created with ID:', quizId);
-
-      // 2. Prepare Questions for Batch Write
       console.log(' Preparing questions for batch write...');
       const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = formData.questions.map((q, i) => {
         const correctAnswerIndex = q.options.indexOf(q.correctAnswer);
@@ -133,12 +122,8 @@ export function QuizForm() {
           order: i
         };
       });
-
-      // 3. Batch Write Questions
       await addQuestions(quizId, questionsToAdd);
       console.log(' All questions added successfully');
-
-      // Reset form fields after successful submission
       form.reset();
       setTitle('');
       setDescription('');
@@ -147,11 +132,8 @@ export function QuizForm() {
         title: 'Success!',
         description: 'Quiz created successfully.',
       });
-
-      // Navigate to the quiz lobby ONLY after successful Firestore write
       router.push(`/quiz/${quizId}/lobby`);
     } catch (error) {
-      // Clear console error messages
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error(' Error creating quiz:', errorMessage);
       console.error(' Error details:', error);
@@ -162,7 +144,6 @@ export function QuizForm() {
         variant: 'destructive',
       });
     } finally {
-      // Always reset loading state in finally block
       setLoading(false);
       console.log(' Loading state reset');
     }

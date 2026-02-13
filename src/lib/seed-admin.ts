@@ -9,8 +9,6 @@ export async function seedFirstAdmin(email: string) {
   try {
     const normalizedEmail = email.toLowerCase();
     const adminsRef = collection(db, 'admins');
-    
-    // Check if already exists
     const q = query(adminsRef, where('email', '==', normalizedEmail));
     const snapshot = await getDocs(q);
     

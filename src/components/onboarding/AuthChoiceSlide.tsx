@@ -15,20 +15,13 @@ const AuthChoiceSlide: React.FC<AuthChoiceSlideProps> = ({ onLogin, onSignup }) 
     const router = useRouter();
 
     const handleSkip = () => {
-        // Save completion flag
         if (typeof window !== 'undefined') {
             localStorage.setItem('hasCompletedOnboarding', 'true');
-            // For Capacitor, you would also use Preferences.set({ key: 'hasCompletedOnboarding', value: 'true' });
         }
-
-        // Redirect to dashboard
         router.push('/dashboard');
     };
 
     const handleLogin = () => {
-        // In a real app, you might want to mark onboarding as done here too,
-        // or wait until successful login. 
-        // For this flow, we'll assume navigating to login page completes this onboarding step.
         if (typeof window !== 'undefined') {
             localStorage.setItem('hasCompletedOnboarding', 'true');
         }

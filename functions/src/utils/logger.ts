@@ -63,7 +63,6 @@ export class Logger {
      * @param context Optional additional data.
      */
     static debug(message: string, context?: Record<string, any>): void {
-        // In a real environment, you might check process.env.LOG_LEVEL here
         console.debug(this.formatLog('DEBUG', message, context));
     }
 }

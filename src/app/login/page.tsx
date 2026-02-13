@@ -20,13 +20,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // OTP State
   const [otpSent, setOtpSent] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
-
-  // Redirect if already logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -36,8 +32,6 @@ export default function LoginPage() {
     });
     return () => unsubscribe();
   }, [router]);
-
-  // Reset state when switching between login/signup
   useEffect(() => {
     setOtpSent(false);
     setEnteredOtp('');
@@ -76,7 +70,6 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error('❌ Google Login failed:', error);
-      // Detailed error for debugging Electron
       alert(`Google Login Failed:\nCode: ${error.code}\nMessage: ${error.message}\nOrigin: ${window.location.origin}`);
       setError(`Login failed: ${error.message}`);
       setLoading(false);
@@ -95,12 +88,9 @@ export default function LoginPage() {
     try {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(code);
-
-      // ELECTRON APP SPECIFIC: Bypass headerless email sending
       const isElectron = typeof window !== 'undefined' && /Electron/i.test(window.navigator.userAgent);
 
       if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron) {
-        // Simulate network delay for realism
         setTimeout(() => {
           alert(`[QUIZWHIZ LOCAL]\nAuthentication Code: ${code}\n\n(This code is generated locally for the standalone app)`);
           setOtpSent(true);
@@ -138,7 +128,6 @@ export default function LoginPage() {
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // ... registration logic same as before ...
       if (userCredential.user.email) {
         const emailToCheck = userCredential.user.email.toLowerCase();
         await registerAdmin(emailToCheck);

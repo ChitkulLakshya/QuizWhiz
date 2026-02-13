@@ -14,7 +14,6 @@ export default function ServiceWorkerRegister() {
                     console.error('Service Worker registration failed:', error);
                 });
         }
-        // Also allow localhost for testing
         if ('serviceWorker' in navigator && window.location.hostname === 'localhost') {
             navigator.serviceWorker
                 .register('/service-worker.js')

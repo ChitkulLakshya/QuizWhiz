@@ -38,8 +38,6 @@ export const logUserToSheet = async (userData: any) => {
         }
 
         const sheets = google.sheets({ version: 'v4', auth });
-
-        // Prepare the row data
         const request = {
             spreadsheetId: process.env.GOOGLE_SHEET_ID,
             range: 'Sheet1!A:D', // Adjust "Sheet1" if your tab is named differently
@@ -62,6 +60,5 @@ export const logUserToSheet = async (userData: any) => {
 
     } catch (error) {
         console.error('❌ ERROR: Sheet Logging Failed:', error);
-        // Don't throw error here, so the user login doesn't crash if sheets fail
     }
 };

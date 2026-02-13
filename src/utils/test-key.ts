@@ -46,8 +46,6 @@ const checkCredentials = async () => {
             keyFile: keyFilePath,
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
-
-        // Just getting the client to ensure it loads the key correctly
         await auth.getClient();
         console.log('✅ GoogleAuth initialized successfully.');
     } catch (e: any) {
