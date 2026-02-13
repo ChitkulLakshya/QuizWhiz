@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Settings, Trophy, Shield, Layers } from 'lucide-react';
+import Image from 'next/image';
+import { Home, Settings, Trophy, Shield } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
@@ -45,9 +46,13 @@ export default function Navbar() {
                 >
                     {/* Logo Area */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="bg-primary/10 p-2 rounded-lg group-hover:bg-primary/20 transition-colors">
-                            <Layers className="w-6 h-6 text-primary" />
-                        </div>
+                        <Image
+                            src="/logo.png"
+                            alt="QuizWhiz Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-lg group-hover:scale-110 transition-transform duration-200"
+                        />
                         <span className="text-xl font-bold tracking-tight font-space-grotesk text-foreground">
                             Quiz<span className="text-primary">Whiz</span>
                         </span>
