@@ -28,16 +28,10 @@ export default function Navbar() {
         { name: 'Join', href: '/join', icon: Trophy, match: (p: string) => p.startsWith('/join') },
     ];
 
-    const isPlayPage = pathname.startsWith('/play');
-    const isAdminPage = pathname.startsWith('/admin');
-
-    // Completely hide Navbar on Admin pages
-    if (isAdminPage) return null;
-
     return (
         <>
-            {/* DESKTOP NAV (Visible on md+, hidden on Play pages) */}
-            {!isPlayPage && (
+            {/* DESKTOP NAV (Visible on md+ on all pages) */}
+            {(
                 <header
                     className={clsx(
                         "hidden md:flex fixed top-0 left-0 right-0 z-50 transition-all duration-300 items-center justify-between px-8 py-4",
@@ -85,8 +79,8 @@ export default function Navbar() {
                 </header>
             )}
 
-            {/* MOBILE NAV (Always visible on Play pages, or md:hidden otherwise) */}
-            <div className={clsx(isPlayPage && "md:block [&_nav]:md:flex")}>
+            {/* MOBILE NAV (bottom bar for small screens) */}
+            <div>
                 <MobileNav />
             </div>
         </>

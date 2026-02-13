@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from 'next/navigation';
+import clsx from 'clsx';
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import MobileOnboarding from "./MobileOnboarding";
@@ -8,6 +10,7 @@ import MobileOnboarding from "./MobileOnboarding";
 import { StatusBar, Style } from '@capacitor/status-bar';
 
 export default function MobileWrapper({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
     const [isMobile, setIsMobile] = useState(false);
     const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,5 +59,10 @@ export default function MobileWrapper({ children }: { children: React.ReactNode 
 
     // Otherwise check if children contains login/home structure
     // This wrapper just ensures onboarding is handled first.
-    return <>{children}</>;
+    // We add padding-top to prevent the fixed navbar from overlapping content on non-home pages
+    return (
+        <div className={clsx("min-h-screen", pathname !== '/' && "pt-24")}>
+            {children}
+        </div>
+    );
 }
