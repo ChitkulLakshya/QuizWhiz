@@ -114,17 +114,17 @@ function DownloadSection() {
 
                 <div className="grid gap-3">
                     <Button asChild className="w-full bg-[#0078D7] hover:bg-[#0063b1] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(0,120,215,0.3)]">
-                        <a href="/downloads/QuizWhiz-Setup.exe" download>
+                        <a href="/downloads/coming-soon">
                             Download for Windows (.EXE)
                         </a>
                     </Button>
                     <Button asChild className="w-full bg-[#333] hover:bg-[#444] text-white font-bold h-12 uppercase tracking-widest border border-[#555]">
-                        <a href="/downloads/QuizWhiz-mac.dmg" download>
+                        <a href="/downloads/coming-soon">
                             Download for macOS (.DMG)
                         </a>
                     </Button>
                     <Button asChild className="w-full bg-[#E95420] hover:bg-[#c74418] text-white font-bold h-12 uppercase tracking-widest shadow-[0_0_20px_rgba(233,84,32,0.3)]">
-                        <a href="/downloads/QuizWhiz-linux.AppImage" download>
+                        <a href="/downloads/coming-soon">
                             Download for Linux (.AppImage)
                         </a>
                     </Button>
