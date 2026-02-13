@@ -1,53 +1,47 @@
 import { google } from 'googleapis';
-import path from 'path';
-import fs from 'fs';
 
+/**
+ * Logs user data to a Google Sheet using OAuth2 refresh token.
+ * Uses the same OAuth2 credentials as Gmail (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN).
+ * No service account key file or GOOGLE_CREDENTIALS_BASE64 needed.
+ */
 export const logUserToSheet = async (userData: any) => {
     console.log(`📢 TRIGGERED: logUserToSheet called for ${userData.email}`);
 
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+
+    if (!clientId || !clientSecret || !refreshToken) {
+        console.warn('⚠️ Missing OAuth2 credentials. Skipping sheet logging.');
+        return;
+    }
+
+    if (!sheetId) {
+        console.warn('⚠️ Missing GOOGLE_SHEET_ID. Skipping sheet logging.');
+        return;
+    }
+
     try {
-        let auth;
-        const base64creds = process.env.GOOGLE_CREDENTIALS_BASE64;
-        const keyFilePath = path.join(process.cwd(), 'google-credentials.json');
+        const oAuth2Client = new google.auth.OAuth2(
+            clientId,
+            clientSecret,
+            'https://developers.google.com/oauthplayground'
+        );
+        oAuth2Client.setCredentials({ refresh_token: refreshToken });
 
-        if (base64creds) {
-            console.log("🔐 Detected GOOGLE_CREDENTIALS_BASE64 env var. Decoding...");
-            const decoded = Buffer.from(base64creds, 'base64').toString('utf-8');
-            const credentials = JSON.parse(decoded);
-
-            auth = new google.auth.GoogleAuth({
-                credentials,
-                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-            });
-            console.log("✅ Credentials parsed from Environment Variable.");
-        }
-        else if (fs.existsSync(keyFilePath)) {
-            console.log(`📂 Found local key file at: ${keyFilePath}`);
-            auth = new google.auth.GoogleAuth({
-                keyFile: keyFilePath,
-                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-            });
-            console.log("✅ Using local credential file.");
-        }
-        else {
-            throw new Error(`
-                ❌ Authentication Failed: No credentials found.
-                1. Check if GOOGLE_CREDENTIALS_BASE64 is set in environment.
-                2. Check if google-credentials.json exists at ${keyFilePath}
-            `);
-        }
-
-        const sheets = google.sheets({ version: 'v4', auth });
+        const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
         const request = {
-            spreadsheetId: process.env.GOOGLE_SHEET_ID,
-            range: 'Sheet1!A:D', // Adjust "Sheet1" if your tab is named differently
+            spreadsheetId: sheetId,
+            range: 'Sheet1!A:D',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [
                     [
                         userData.name,
                         userData.email,
-                        userData.phone || 'N/A', // Handle missing phone
+                        userData.phone || 'N/A',
                         new Date().toLocaleString()
                     ]
                 ],
