@@ -13,6 +13,8 @@ interface QuestionViewProps {
     selectedAnswer: string | null;
     isAnswerSubmitted: boolean;
     onAnswerSubmit: (option: string, index: number) => void;
+    onSkipToResults?: () => void;
+    skipVoteCount?: number;
     streak?: number;
     totalParticipants?: number;
 }
@@ -26,6 +28,8 @@ export function QuestionView({
     selectedAnswer,
     isAnswerSubmitted,
     onAnswerSubmit,
+    onSkipToResults,
+    skipVoteCount = 0,
     streak = 0,
     totalParticipants = 0
 }: QuestionViewProps) {
@@ -117,25 +121,25 @@ export function QuestionView({
                                 <div className={clsx(
                                     "relative flex items-center w-full min-h-[56px] px-4 py-3 border transition-all duration-200 group-hover:translate-x-1",
                                     isSelected
-                                        ? "bg-[#ccff00] border-[#ccff00] text-black shadow-[0_0_20px_rgba(204,255,0,0.4)]"
-                                        : "bg-[#0a0a0a] border-[#333] text-white hover:border-[#ccff00] hover:bg-[#111]"
+                                        ? "bg-black/50 border-[#ccff00] text-white shadow-[0_0_15px_rgba(204,255,0,0.2)] scale-[1.02]"
+                                        : "bg-[#0a0a0a] border-[#333] text-white hover:border-[#ccff00]/50 hover:bg-[#111] opacity-80 hover:opacity-100"
                                 )}>
                                     {/* Index Box */}
                                     <div className={clsx(
-                                        "w-8 h-8 flex items-center justify-center font-mono text-sm font-bold border mr-4 flex-shrink-0",
-                                        isSelected ? "border-black text-black" : "border-[#333] text-gray-500 group-hover:border-[#ccff00] group-hover:text-[#ccff00]"
+                                        "w-8 h-8 flex items-center justify-center font-mono text-sm font-bold border mr-4 flex-shrink-0 transition-colors duration-200",
+                                        isSelected ? "border-[#ccff00] text-[#ccff00] bg-[#ccff00]/10" : "border-[#333] text-gray-500 group-hover:border-[#ccff00]/50 group-hover:text-[#ccff00]"
                                     )}>
                                         {String.fromCharCode(65 + idx)}
                                     </div>
 
                                     <span className={clsx(
-                                        "text-lg font-bold tracking-tight break-words w-full pr-2 leading-tight font-archivo uppercase",
-                                        isSelected ? "text-black" : "text-gray-200 group-hover:text-white"
+                                        "text-lg font-bold tracking-tight break-words w-full pr-2 leading-tight font-archivo uppercase transition-colors duration-200",
+                                        isSelected ? "text-[#ccff00]" : "text-gray-200 group-hover:text-white"
                                     )}>
                                         {option}
                                     </span>
 
-                                    {isSelected && <CheckCircle className="w-5 h-5 ml-auto flex-shrink-0 animate-pulse text-black" />}
+                                    {isSelected && <CheckCircle className="w-5 h-5 ml-auto flex-shrink-0 animate-pulse text-[#ccff00]" />}
                                 </div>
                             </button>
                         );

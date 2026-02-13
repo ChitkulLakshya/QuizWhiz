@@ -16,7 +16,9 @@ import {
     joinQuiz,
     submitAnswer,
     calculateQuestionResults,
-    restartGame
+    restartGame,
+    endQuestionNow,
+    voteToSkip
 } from '@/lib/firebase-service';
 import { auth } from '@/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -62,6 +64,8 @@ export default function GameClient() {
 
     // Derived State
     const isHost = quiz && user ? quiz.ownerId === user.uid : false;
+    const skipVoteCount = quiz?.skipVoteCount ?? 0;
+    const totalParticipantCount = quiz?.participantCount ?? participants.length;
     const currentQuestion = quiz && quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
 
     // Sound Hooks
@@ -156,6 +160,13 @@ export default function GameClient() {
         }
     }, [currentQuestion?.id]);
 
+    // 3c. Prevent answer submission after time expires
+    useEffect(() => {
+        if (timeRemaining <= 0 && viewState === 'question') {
+            setIsAnswerSubmitted(true);
+        }
+    }, [timeRemaining, viewState]);
+
 
     // 4. Host: Calculate Results
     useEffect(() => {
@@ -172,8 +183,49 @@ export default function GameClient() {
             playCountdown();
         } else if (viewState === 'results' || viewState === 'completed') {
             playResults();
+            
+            // Play success/failure sound when results are revealed (not when clicked)
+            if (viewState === 'results' && currentQuestion) {
+                const correctOption = currentQuestion.options[currentQuestion.correctOptionIndex];
+                if (selectedAnswer === correctOption) {
+                    setTimeout(() => playCorrect(), 300); 
+                } else {
+                    setTimeout(() => playWrong(), 300);
+                }
+            }
         }
-    }, [viewState, playCountdown, playResults]);
+    }, [viewState, playCountdown, playResults, currentQuestion, selectedAnswer, playCorrect, playWrong]);
+
+    // 6. Host Check: All Participants Answered?
+    useEffect(() => {
+        if (!isHost || viewState !== 'question' || !currentQuestion || !quiz) return;
+
+        // Use counter instead of iterating all participants
+        const answeredCount = quiz.answeredCount ?? 0;
+        const participantCount = quiz.participantCount ?? 0;
+
+        if (answeredCount >= participantCount && participantCount > 0) {
+            console.log("All participants answered. Ending question early.");
+            if (quizId) endQuestionNow(quizId);
+        }
+    }, [isHost, viewState, currentQuestion, quiz?.answeredCount, quiz?.participantCount, quizId]);
+
+    // 7. Check if all participants voted to skip
+    useEffect(() => {
+        if (!currentQuestion || !quiz || viewState !== 'question') return;
+
+        // Use counter instead of iterating all participants
+        const skipVoteCount = quiz.skipVoteCount ?? 0;
+        const participantCount = quiz.participantCount ?? 0;
+
+        if (skipVoteCount >= participantCount && participantCount > 0) {
+            console.log("All participants voted to skip. Ending question early.");
+            if (quizId) {
+                endQuestionNow(quizId);
+                toast({ title: "Everyone voted to skip!", description: "Revealing results..." });
+            }
+        }
+    }, [quiz?.skipVoteCount, quiz?.participantCount, currentQuestion, viewState, quizId, toast]);
 
 
     // Handlers
@@ -192,6 +244,7 @@ export default function GameClient() {
 
     const handleAnswerSubmit = async (option: string, index: number) => {
         if (!currentParticipant || !currentQuestion || isAnswerSubmitted || !quizId) return;
+        if (timeRemaining <= 0) return; // Don't allow answer after time expires
 
         setSelectedAnswer(option);
         setIsAnswerSubmitted(true);
@@ -205,13 +258,22 @@ export default function GameClient() {
                 index
             );
 
-            // Play sound based on server response
-            if (result.isCorrect) playCorrect();
-            else playWrong();
+            // Removed immediate sound
         } catch (error) {
             console.error(error);
             // Fallback: play wrong sound on error
-            playWrong();
+            // playWrong();
+        }
+    };
+
+    const handleSkipToResults = async () => {
+        if (!currentParticipant || !quizId || currentParticipant.votedToSkip) return;
+        try {
+            await voteToSkip(quizId, currentParticipant.id);
+            const newCount = skipVoteCount + 1;
+            toast({ title: `Voted to skip (${newCount}/${totalParticipantCount})` });
+        } catch (error) {
+            console.error("Vote failed:", error);
         }
     };
 
@@ -292,8 +354,10 @@ export default function GameClient() {
                         selectedAnswer={selectedAnswer}
                         isAnswerSubmitted={isAnswerSubmitted}
                         onAnswerSubmit={handleAnswerSubmit}
+                        onSkipToResults={!isHost ? handleSkipToResults : undefined}
+                        skipVoteCount={skipVoteCount}
                         streak={currentParticipant?.currentStreak}
-                        totalParticipants={participants.length}
+                        totalParticipants={totalParticipantCount}
                     />
                 )}
 
