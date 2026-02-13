@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import express from 'express';
 import cors from 'cors';
@@ -7,6 +8,9 @@ import nodemailer from 'nodemailer';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import process from 'process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -104,7 +108,7 @@ const getSheetsClient = () => {
 // ─── Template Reader ─────────────────────────────────────────────────
 const readTemplate = (templateName) => {
     try {
-        const templatePath = path.join(process.cwd(), '../emails', `${templateName}.html`);
+        const templatePath = path.join(__dirname, '..', 'emails', `${templateName}.html`);
         return fs.readFileSync(templatePath, 'utf8');
     } catch (error) {
         console.error(`❌ Error reading template ${templateName}:`, error);
@@ -113,6 +117,10 @@ const readTemplate = (templateName) => {
 };
 
 // ─── Routes ──────────────────────────────────────────────────────────
+
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'QuizWhiz backend is running' });
+});
 
 app.post('/send-otp', async (req, res) => {
     const { email, code } = req.body;
