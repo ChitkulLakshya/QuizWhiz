@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '@/firebase';
 import { isAdminEmail, registerAdmin } from '@/lib/auth';
 import { sendWelcomeEmailAction, sendOtp, logNewUser } from '@/app/actions/auth-actions';
@@ -86,6 +86,13 @@ export default function LoginPage() {
       return;
     }
     try {
+      const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+      if (signInMethods.length > 0) {
+        setError('User already registered. Please log in.');
+        setLoading(false);
+        return;
+      }
+
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(code);
       const isElectron = typeof window !== 'undefined' && /Electron/i.test(window.navigator.userAgent);

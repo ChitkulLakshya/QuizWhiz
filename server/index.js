@@ -16,30 +16,27 @@ app.use(cors());
 app.use(express.json());
 
 // ─── Shared OAuth2 Config ────────────────────────────────────────────
-const GOOGLE_CLIENT_ID = process.env.GMAIL_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
-const GOOGLE_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
+const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID;
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
 const GMAIL_USER = process.env.GMAIL_USER_EMAIL;
-const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-const hasOAuthCreds = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN);
+// ─── Sheets Config ──────────────────────────────────────────────────
+const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+const GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+const hasOAuthCreds = !!(GMAIL_CLIENT_ID && GMAIL_CLIENT_SECRET && GMAIL_REFRESH_TOKEN);
+const hasServiceAccountCreds = !!(GOOGLE_SERVICE_ACCOUNT_EMAIL && GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
 
 if (!hasOAuthCreds) {
-    console.warn('⚠️  Missing OAuth2 credentials (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN).');
-    console.warn('   Email sending and Google Sheets logging will be mocked.');
+    console.warn('⚠️  Missing OAuth2 credentials (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN). Email sending will be mocked.');
 }
 
-// ─── Shared OAuth2 Client (used for both Gmail & Sheets) ────────────
-const getOAuth2Client = () => {
-    if (!hasOAuthCreds) return null;
-    const oAuth2Client = new google.auth.OAuth2(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
-        'https://developers.google.com/oauthplayground'
-    );
-    oAuth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
-    return oAuth2Client;
-};
+if (!hasServiceAccountCreds) {
+    console.warn('⚠️  Missing Service Account credentials (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY). Sheet logging will be mocked.');
+}
+
 
 // ─── Email Transporter (OAuth2 refresh token) ───────────────────────
 const createTransporter = async () => {
@@ -48,27 +45,61 @@ const createTransporter = async () => {
         return null;
     }
 
-    const oAuth2Client = getOAuth2Client();
-    const accessTokenResponse = await oAuth2Client.getAccessToken();
-    const accessToken = accessTokenResponse?.token;
+    try {
+        const oAuth2Client = new google.auth.OAuth2(
+            GMAIL_CLIENT_ID,
+            GMAIL_CLIENT_SECRET,
+            'https://developers.google.com/oauthplayground'
+        );
+        oAuth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
 
-    if (!accessToken) {
-        console.error('❌ Failed to obtain access token from refresh token.');
+        const accessTokenResponse = await oAuth2Client.getAccessToken();
+        const accessToken = accessTokenResponse?.token;
+
+        if (!accessToken) {
+            console.error('❌ Failed to obtain access token from refresh token.');
+            return null;
+        }
+
+        return nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: 'OAuth2',
+                user: GMAIL_USER,
+                clientId: GMAIL_CLIENT_ID,
+                clientSecret: GMAIL_CLIENT_SECRET,
+                refreshToken: GMAIL_REFRESH_TOKEN,
+                accessToken,
+            },
+        });
+    } catch (error) {
+         console.error('❌ Failed to create transporter:', error);
+         return null;
+    }
+};
+
+// ─── Sheets Client (Service Account) ────────────────────────────────
+const getSheetsClient = () => {
+    if (!hasServiceAccountCreds) return null;
+
+    try {
+        const privateKey = GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n');
+        
+        const auth = new google.auth.GoogleAuth({
+            credentials: {
+                client_email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
+                private_key: privateKey,
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+
+        return google.sheets({ version: 'v4', auth });
+    } catch (error) {
+        console.error('❌ Failed to create Google Sheets client:', error);
         return null;
     }
-
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            type: 'OAuth2',
-            user: GMAIL_USER,
-            clientId: GOOGLE_CLIENT_ID,
-            clientSecret: GOOGLE_CLIENT_SECRET,
-            refreshToken: GOOGLE_REFRESH_TOKEN,
-            accessToken,
-        },
-    });
 };
+
 
 // ─── Template Reader ─────────────────────────────────────────────────
 const readTemplate = (templateName) => {
@@ -164,15 +195,14 @@ app.post('/log-user', async (req, res) => {
         return res.json({ success: true, warning: 'Sheet ID not configured' });
     }
 
-    const oAuth2Client = getOAuth2Client();
-    if (!oAuth2Client) {
-        console.warn('⚠️ Missing OAuth2 credentials for Sheets. Logging locally.');
+    const sheets = getSheetsClient();
+    if (!sheets) {
+        console.warn('⚠️ Missing Service Account credentials for Sheets. Logging locally.');
         console.log(`[NEW USER] Name: ${name}, Email: ${email}`);
-        return res.json({ success: true, warning: 'OAuth2 credentials missing' });
+        return res.json({ success: true, warning: 'Service Account credentials missing' });
     }
 
     try {
-        const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
         await sheets.spreadsheets.values.append({
             spreadsheetId: GOOGLE_SHEET_ID,
             range: 'Sheet1!A:D',
@@ -192,6 +222,7 @@ app.post('/log-user', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`OAuth2 credentials: ${hasOAuthCreds ? '✅ loaded' : '❌ missing'}`);
+    console.log(`Service Account credentials: ${hasServiceAccountCreds ? '✅ loaded' : '❌ missing'}`);
     console.log(`Gmail user: ${GMAIL_USER || '❌ not set'}`);
     console.log(`Google Sheet ID: ${GOOGLE_SHEET_ID || '❌ not set'}`);
 });

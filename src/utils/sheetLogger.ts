@@ -1,20 +1,18 @@
 import { google } from 'googleapis';
 
 /**
- * Logs user data to a Google Sheet using OAuth2 refresh token.
- * Uses the same OAuth2 credentials as Gmail (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN).
- * No service account key file or GOOGLE_CREDENTIALS_BASE64 needed.
+ * Logs user data to a Google Sheet using Service Account.
+ * Requires GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.
  */
 export const logUserToSheet = async (userData: any) => {
     console.log(`📢 TRIGGERED: logUserToSheet called for ${userData.email}`);
 
-    const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
     const sheetId = process.env.GOOGLE_SHEET_ID;
 
-    if (!clientId || !clientSecret || !refreshToken) {
-        console.warn('⚠️ Missing OAuth2 credentials. Skipping sheet logging.');
+    if (!clientEmail || !privateKeyRaw) {
+        console.warn('⚠️ Missing Service Account credentials. Skipping sheet logging.');
         return;
     }
 
@@ -24,14 +22,17 @@ export const logUserToSheet = async (userData: any) => {
     }
 
     try {
-        const oAuth2Client = new google.auth.OAuth2(
-            clientId,
-            clientSecret,
-            'https://developers.google.com/oauthplayground'
-        );
-        oAuth2Client.setCredentials({ refresh_token: refreshToken });
+        const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
 
-        const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
+        const auth = new google.auth.GoogleAuth({
+            credentials: {
+                client_email: clientEmail,
+                private_key: privateKey,
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+
+        const sheets = google.sheets({ version: 'v4', auth });
         const request = {
             spreadsheetId: sheetId,
             range: 'Sheet1!A:D',
