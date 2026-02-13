@@ -28,7 +28,29 @@ const readTemplate = (templateName) => {
     }
 };
 
-// ... (createTransporter)
+// Helper to Create Transporter
+const createTransporter = () => {
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const user = process.env.GMAIL_USER_EMAIL;
+
+    if (!clientId || !clientSecret || !refreshToken || !user) {
+        console.warn('⚠️ Missing Gmail credentials in env.');
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            type: 'OAuth2',
+            user,
+            clientId,
+            clientSecret,
+            refreshToken,
+        },
+    });
+};
 
 // 2. Send OTP
 app.post('/send-otp', async (req, res) => {
