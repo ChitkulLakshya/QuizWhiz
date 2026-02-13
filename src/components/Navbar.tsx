@@ -24,7 +24,7 @@ export default function Navbar() {
     const navItems = [
         { name: 'Home', href: '/', icon: Home, match: (p: string) => p === '/' },
         { name: 'Admin', href: '/admin', icon: Shield, match: (p: string) => p.startsWith('/admin') },
-        { name: 'Config', href: '/settings', icon: Settings, match: (p: string) => p.startsWith('/settings') },
+        { name: 'Settings', href: '/settings', icon: Settings, match: (p: string) => p.startsWith('/settings') },
         { name: 'Join', href: '/join', icon: Trophy, match: (p: string) => p.startsWith('/join') },
     ];
 
