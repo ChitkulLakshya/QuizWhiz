@@ -225,6 +225,34 @@ app.post('/log-user', async (req, res) => {
         return res.json({ success: true, warning: 'Service Account credentials missing' });
     }
 
+    // --- Send Admin Notification ---
+    const adminEmail = process.env.ADMIN_EMAIL || 'consolemaster.app@gmail.com'; // Fallback or env
+
+    let adminHtml = readTemplate('newUser');
+    if (adminHtml) {
+        adminHtml = adminHtml
+            .replace('{{USER_NAME}}', name)
+            .replace('{{USER_EMAIL}}', email)
+            .replace('{{SIGNUP_TIMESTAMP}}', new Date().toLocaleString())
+            .replace('{{USER_ID}}', Math.random().toString(36).substr(2, 9).toUpperCase()); // Mock ID or passed from client
+    } else {
+        adminHtml = `<p>New User: ${name} (${email})</p>`;
+    }
+
+    // Send asynchronously (don't block response)
+    sendGmail({
+        to: adminEmail,
+        subject: '👤 New User Signed Up',
+        html: adminHtml,
+        text: `New User Signed Up: ${name} (${email})`
+    }).then(res => {
+        if (res?.success) console.log(`✅ Admin notification sent to ${adminEmail}`);
+        else console.error(`❌ Failed to send admin notification:`, res?.error);
+    });
+
+
+
+
     try {
         await sheets.spreadsheets.values.append({
             spreadsheetId: GOOGLE_SHEET_ID,
