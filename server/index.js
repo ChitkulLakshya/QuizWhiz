@@ -97,8 +97,13 @@ const getSheetsClient = () => {
     if (!hasServiceAccountCreds) return null;
 
     try {
-        const privateKey = GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n');
-        
+        // Sanitize key: remove wrapping quotes if present, handle escaped newlines
+        let privateKey = GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+            privateKey = privateKey.slice(1, -1);
+        }
+        privateKey = privateKey.replace(/\\n/g, '\n');
+
         const auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
