@@ -10,7 +10,6 @@ import {
     subscribeToQuiz,
     subscribeToParticipants,
     subscribeToQuestions,
-    updateQuizStatus,
     startQuestion,
     endQuiz,
     joinQuiz,
@@ -159,7 +158,7 @@ export default function GameClient() {
             if (viewState === 'results' && currentQuestion) {
                 const correctOption = currentQuestion.options[currentQuestion.correctOptionIndex];
                 if (selectedAnswer === correctOption) {
-                    setTimeout(() => playCorrect(), 300); 
+                    setTimeout(() => playCorrect(), 300);
                 } else {
                     setTimeout(() => playWrong(), 300);
                 }
@@ -241,7 +240,6 @@ export default function GameClient() {
         if (isProcessing || !quizId) return;
         setIsProcessing(true);
         try {
-            await updateQuizStatus(quizId, 'lobby');
             await startQuestion(quizId, 0);
         } finally {
             setIsProcessing(false);

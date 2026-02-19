@@ -110,7 +110,7 @@ export function ResultsView({
                             <div className="flex items-baseline gap-1 z-10">
                                 <span className="text-2xl font-black text-white font-archivo">#</span>
                                 <span className="text-4xl font-black text-white font-archivo">
-                                    {participants.sort((a, b) => b.totalScore - a.totalScore).findIndex(p => p.id === currentParticipant.id) + 1}
+                                    {[...participants].sort((a, b) => b.totalScore - a.totalScore).findIndex(p => p.id === currentParticipant.id) + 1}
                                 </span>
                             </div>
                         </div>

@@ -2,7 +2,7 @@
 
 import { Question, Participant } from '@/types/quiz';
 import clsx from 'clsx';
-import { CheckCircle, AlertOctagon, Activity, Users, HelpCircle } from 'lucide-react';
+import { CheckCircle, AlertOctagon, Activity, Users, HelpCircle, SkipForward } from 'lucide-react';
 
 interface QuestionViewProps {
     question: Question;
@@ -145,11 +145,31 @@ export function QuestionView({
                     })}
                 </div>
 
+                {/* Skip Vote Button (visible after submitting an answer) */}
+                {isAnswerSubmitted && onSkipToResults && (
+                    <div className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <button
+                            onClick={onSkipToResults}
+                            className="group relative flex items-center gap-3 px-6 py-3 bg-[#111] border border-[#333] hover:border-[#ccff00]/50 transition-all duration-200 hover:bg-[#1a1a1a]"
+                        >
+                            <SkipForward className="w-4 h-4 text-[#ccff00] group-hover:animate-pulse" />
+                            <span className="text-xs font-mono uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
+                                Skip to Results
+                            </span>
+                            {totalParticipants > 0 && (
+                                <span className="text-[10px] font-mono text-[#ccff00]/60 border-l border-[#333] pl-3 ml-1">
+                                    {skipVoteCount}/{totalParticipants}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                )}
+
                 {/* Bottom HUD Decor */}
                 <div className="flex justify-between items-end opacity-30 px-4">
                     <div className="h-8 w-8 border-l border-b border-white"></div>
                     <div className="text-[10px] font-mono tracking-[0.5em] text-white/50 animate-pulse">
-                        Waiting for answer...
+                        {isAnswerSubmitted ? 'Answer submitted' : 'Waiting for answer...'}
                     </div>
                     <div className="h-8 w-8 border-r border-b border-white"></div>
                 </div>
