@@ -155,7 +155,7 @@ export default function LandingPage() {
           </motion.div>
         </motion.div>
 
-       
+
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════

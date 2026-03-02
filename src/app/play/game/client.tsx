@@ -202,7 +202,7 @@ export default function GameClient() {
     };
 
     const handleAnswerSubmit = async (option: string, index: number) => {
-        if (!currentParticipant || !currentQuestion || isAnswerSubmitted || !quizId) return;
+        if (!currentParticipant || !currentQuestion || !quizId) return;
         if (timeRemaining <= 0) return; // Don't allow answer after time expires
 
         setSelectedAnswer(option);

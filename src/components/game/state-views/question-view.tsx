@@ -113,7 +113,7 @@ export function QuestionView({
                             <button
                                 key={idx}
                                 onClick={() => onAnswerSubmit(option, idx)}
-                                disabled={isAnswerSubmitted || !currentParticipant}
+                                disabled={timeRemaining <= 0 || !currentParticipant}
                                 className="group relative w-full text-left transition-all duration-150 focus:outline-none"
                             >
                                 {/* Button Body */}
