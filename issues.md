@@ -3,8 +3,8 @@
 This document summarizes the current status of the 8 pre-deployment bugs identified during the testing phase.
 
 ## Status Summary
-- ✅ **Fixed (3)**
-- 🕵️ **Confirmed & Pending Fix (4)**
+- ✅ **Fixed (6)**
+- 🕵️ **Confirmed & Pending Fix (1)**
 - ⚠️ **External Dependency / Won't Fix Directly (1)**
 
 ---
@@ -21,21 +21,21 @@ This document summarizes the current status of the 8 pre-deployment bugs identif
 * **Impact**: Medium
 
 ### 3. Play Page – Unable to Change Answer Within Timer
-* **Status**: 🕵️ **CONFIRMED**
+* **Status**: ✅ **FIXED** (Resolved)
 * **Description**: Users cannot change their answer before the timer expires.
-* **Root Cause Found**: In `src/components/game/state-views/question-view.tsx`, the answer buttons are instantly disabled the moment an answer is selected using `disabled={isAnswerSubmitted}`.
+* **Fix Applied**: Removed the `disabled={isAnswerSubmitted}` constraint from the option buttons in `question-view.tsx` and removed early return blocks in `client.tsx`, allowing users to overwrite their answers in Firestore before the timer ends.
 * **Impact**: High
 
 ### 4. Host/Create Page – Quiz Generation Failure
-* **Status**: 🕵️ **CONFIRMED**
+* **Status**: ✅ **FIXED** (Resolved)
 * **Description**: System fails to generate a quiz after inputs are provided.
-* **Root Cause Found**: In `src/app/host/create/quiz-form.tsx`, the `createQuiz` function is passing hardcoded fallback string values (`'anonymous'`, `'anonymous-user'`) instead of the actual `auth.currentUser.uid`. This likely causes Firestore security rules to reject the write or causes failures in associating the quiz with the actual host.
+* **Fix Applied**: Imported Firebase `auth` into `src/app/host/create/quiz-form.tsx` and updated the `handleSubmit` logic to fetch `auth.currentUser`. The `email` and `uid` are now successfully passed to `createQuiz`, correctly linking the quiz to the host and passing security checks.
 * **Impact**: Critical
 
 ### 5. Manual Question Addition – Signal/Error Issue
-* **Status**: 🕵️ **CONFIRMED** (needs deeper debugging during fix phase)
+* **Status**: ✅ **FIXED** (Resolved)
 * **Description**: System throws a "signal-related error" when manually adding questions.
-* **Root Cause Found**: The exact form setup in `quiz-form.tsx` uses `react-hook-form` `useFieldArray`. The UI includes multiple buttons with mixed types, which may be triggering unexpected form `onSubmit` events prematurely, leading to `AbortSignal` timeouts or disrupted API calls.
+* **Fix Applied**: Added `type="button"` to the "remove question" (Trash) button in `quiz-form.tsx`. Previously, it was implicitly acting as a submit button (default browser behavior inside a form), triggering destructive `onSubmit` calls and `AbortSignals` when clicked.
 * **Impact**: High
 
 ### 6. Settings Page – Edit Button Not Working
@@ -59,4 +59,4 @@ This document summarizes the current status of the 8 pre-deployment bugs identif
 ---
 
 ## Recommended Next Steps
-Prioritize fixing **Issue 4 (Host/Create generation)** and **Issue 3 (Play Page answer switching)** as they directly impact the core application loop.
+Investigate the **Signal/Error Issue on Manual Question Addition (Issue 5)** and implement missing UI interactions for the **Footer Links (Issue 2)** and **Settings Edit Button (Issue 6)**.

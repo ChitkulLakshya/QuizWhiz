@@ -276,7 +276,7 @@ export function QuizForm() {
             <Card key={field.id}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-headline text-xl">Question {index + 1}</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => remove(index)}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardHeader>
