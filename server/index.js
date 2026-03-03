@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { google } from 'googleapis';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import process from 'process';
 
@@ -275,6 +276,74 @@ app.post('/contact-support', async (req, res) => {
     } catch (error) {
         console.error('Failed to send support email:', error.message);
         res.status(500).json({ error: 'Failed to send support email' });
+    }
+});
+
+// ─── AI Quiz Generation ──────────────────────────────────────────────
+app.post('/generate-quiz', async (req, res) => {
+    const { subject, skillLevel, numberOfQuestions } = req.body;
+
+    if (!subject || !skillLevel || !numberOfQuestions) {
+        return res.status(400).json({ error: 'Missing required fields (subject, skillLevel, numberOfQuestions)' });
+    }
+
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+    if (!apiKey) {
+        console.error('❌ Server missing GOOGLE_GENAI_API_KEY inside environment var');
+        return res.status(500).json({ error: 'Server misconfiguration: AI API key is missing.' });
+    }
+
+    try {
+        console.log(`🧠 Invoking Gemini AI for ${numberOfQuestions} questions about ${subject}`);
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const prompt = `Generate ${numberOfQuestions} multiple-choice questions about "${subject}" at "${skillLevel}" difficulty.
+        Output MUST be a JSON object with this schema:
+        {
+          "questions": [
+            {
+              "question": "string",
+              "options": ["opt1", "opt2", "opt3", "opt4"],
+              "correctAnswer": "exact string match from options"
+            }
+          ]
+        }
+        Do not allow markdown. Return RAW JSON.`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const data = JSON.parse(text);
+
+        if (!data.questions || !data.questions.length) {
+            throw new Error('AI returned an empty list of questions.');
+        }
+
+        const processedQuestions = data.questions.map((q) => {
+            const index = q.options.indexOf(q.correctAnswer);
+            return {
+                question: q.question,
+                options: q.options,
+                correctAnswer: String(index >= 0 ? index : 0)
+            };
+        });
+
+        console.log('✅ AI generation successful Server-Side');
+        res.json({ success: true, data: processedQuestions });
+    } catch (error) {
+        console.error('AI Generation Error Server-Side:', error.message);
+
+        let errorMessage = 'Failed to generate questions. Please try again.';
+        if (error.message?.includes('429') || error.message?.includes('Resource has been exhausted')) {
+            errorMessage = 'AI service is busy. Please wait.';
+        } else if (error.message?.includes('empty list')) {
+            errorMessage = 'The AI could not generate questions for this topic.';
+        }
+
+        res.status(500).json({ error: errorMessage });
     }
 });
 

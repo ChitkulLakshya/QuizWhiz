@@ -13,7 +13,7 @@ import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQues
 import { Quiz, Question } from '@/types/quiz';
 import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X } from 'lucide-react';
 import Link from 'next/link';
-import { generateQuestionsAction } from '@/app/host/create/actions';
+import { generateQuestionsServerAction as generateQuestionsAction } from '@/app/actions/generate-quiz';
 import {
   Select,
   SelectContent,
@@ -27,10 +27,10 @@ export const maxDuration = 60;
 function SubmitButton({ isSaving }: { isSaving: boolean }) {
   const { pending } = useFormStatus();
   const isLoading = pending || isSaving;
-  
+
   return (
-    <Button 
-      type="submit" 
+    <Button
+      type="submit"
       className="w-full sm:w-auto"
       disabled={isLoading}
     >
@@ -49,7 +49,7 @@ export default function EditClient() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '' });
+  const [generateState, generateAction] = useActionState(generateQuestionsAction, { status: 'idle', message: '', data: undefined });
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<Omit<Question, 'id' | 'quizId'>[]>([]);
   const [questionText, setQuestionText] = useState('');
@@ -66,23 +66,23 @@ export default function EditClient() {
 
   useEffect(() => {
     if (generateState.status === 'success' && generateState.data) {
-      const newPending = generateState.data.map(q => {
-         const correctIdx = parseInt(q.correctAnswer);
-         return {
-           questionText: q.question,
-           options: q.options,
-           correctOptionIndex: !isNaN(correctIdx) ? correctIdx : 0,
-           timeLimit: 30,
-           points: 100,
-           order: 0 // Will be set when saving
-         };
+      const newPending = generateState.data.map((q: any) => {
+        const correctIdx = parseInt(q.correctAnswer);
+        return {
+          questionText: q.question,
+          options: q.options,
+          correctOptionIndex: !isNaN(correctIdx) ? correctIdx : 0,
+          timeLimit: 30,
+          points: 100,
+          order: 0 // Will be set when saving
+        };
       });
       setPendingQuestions(prev => [...prev, ...newPending]);
       toast({ title: 'Generated', description: 'Review questions before adding.' });
       setIsGenerating(false);
     } else if (generateState.status === 'error') {
-        toast({ title: 'Error', description: generateState.message, variant: 'destructive' });
-        setIsGenerating(false);
+      toast({ title: 'Error', description: generateState.message, variant: 'destructive' });
+      setIsGenerating(false);
     }
   }, [generateState]);
 
@@ -94,36 +94,36 @@ export default function EditClient() {
     if (pendingQuestions.length === 0) return;
     setIsGenerating(true);
     try {
-        const startOrder = questions.length;
-        const questionsToSave = pendingQuestions.map((q, i) => ({
-            ...q,
-            order: startOrder + i
-        }));
-        
-        await addQuestions(quizId, questionsToSave);
-        setPendingQuestions([]);
-        loadData();
-        toast({ title: 'Success', description: 'Questions added to quiz.' });
+      const startOrder = questions.length;
+      const questionsToSave = pendingQuestions.map((q, i) => ({
+        ...q,
+        order: startOrder + i
+      }));
+
+      await addQuestions(quizId, questionsToSave);
+      setPendingQuestions([]);
+      loadData();
+      toast({ title: 'Success', description: 'Questions added to quiz.' });
     } catch (error) {
-        console.error(error);
-        toast({ title: 'Error', description: 'Failed to save questions.', variant: 'destructive' });
+      console.error(error);
+      toast({ title: 'Error', description: 'Failed to save questions.', variant: 'destructive' });
     } finally {
-        setIsGenerating(false);
+      setIsGenerating(false);
     }
   };
 
   const handleGenerateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);
     const subject = formData.get('subject') as string;
-    
+
     if (!subject || subject.trim().length === 0) {
-        e.preventDefault();
-        toast({ 
-            title: "Validation Error", 
-            description: "Please enter a subject for the quiz.",
-            variant: "destructive" 
-        });
-        return;
+      e.preventDefault();
+      toast({
+        title: "Validation Error",
+        description: "Please enter a subject for the quiz.",
+        variant: "destructive"
+      });
+      return;
     }
   };
 
@@ -249,11 +249,10 @@ export default function EditClient() {
                       {q.options.map((option: string, optIndex: number) => (
                         <div
                           key={optIndex}
-                          className={`p-2 rounded ${
-                            optIndex === q.correctOptionIndex
-                              ? 'bg-green-100 dark:bg-green-900'
-                              : 'bg-muted'
-                          }`}
+                          className={`p-2 rounded ${optIndex === q.correctOptionIndex
+                            ? 'bg-green-100 dark:bg-green-900'
+                            : 'bg-muted'
+                            }`}
                         >
                           {String.fromCharCode(65 + optIndex)}. {option}
                           {optIndex === q.correctOptionIndex && ' ✓'}
@@ -277,8 +276,8 @@ export default function EditClient() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form 
-                action={generateAction} 
+              <form
+                action={generateAction}
                 onSubmit={handleGenerateSubmit}
                 className="grid sm:grid-cols-4 gap-4 items-end"
               >
@@ -301,16 +300,16 @@ export default function EditClient() {
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="numberOfQuestions">Count</Label>
-                   <Select name="numberOfQuestions" defaultValue="5">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1,2,3,4,5,10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                  <Select name="numberOfQuestions" defaultValue="5">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-                 <SubmitButton isSaving={isGenerating} />
+                <SubmitButton isSaving={isGenerating} />
               </form>
             </CardContent>
           </Card>
@@ -321,13 +320,13 @@ export default function EditClient() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Pending Review ({pendingQuestions.length})</h2>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setPendingQuestions([])}>
-                        Discard All
-                    </Button>
-                    <Button onClick={handleSavePendingQuestions} disabled={isGenerating}>
-                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                        Add All to Quiz
-                    </Button>
+                  <Button variant="outline" onClick={() => setPendingQuestions([])}>
+                    Discard All
+                  </Button>
+                  <Button onClick={handleSavePendingQuestions} disabled={isGenerating}>
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    Add All to Quiz
+                  </Button>
                 </div>
               </div>
               <div className="space-y-4">
@@ -357,11 +356,10 @@ export default function EditClient() {
                         {q.options.map((option: string, optIndex: number) => (
                           <div
                             key={optIndex}
-                            className={`p-2 rounded ${
-                              optIndex === q.correctOptionIndex
-                                ? 'bg-green-100 dark:bg-green-900'
-                                : 'bg-muted'
-                            }`}
+                            className={`p-2 rounded ${optIndex === q.correctOptionIndex
+                              ? 'bg-green-100 dark:bg-green-900'
+                              : 'bg-muted'
+                              }`}
                           >
                             {String.fromCharCode(65 + optIndex)}. {option}
                             {optIndex === q.correctOptionIndex && ' ✓'}

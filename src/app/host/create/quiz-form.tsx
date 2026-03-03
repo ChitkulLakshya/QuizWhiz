@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { generateQuestionsAction } from './actions';
+import { generateQuestionsServerAction as generateQuestionsAction } from '@/app/actions/generate-quiz';
 import { PlusCircle, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createQuiz, addQuestions } from '@/lib/firebase-service';

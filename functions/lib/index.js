@@ -152,7 +152,7 @@ exports.generateQuestions = (0, https_1.onCall)({ cors: true }, async (request) 
         logger_1.Logger.info(`Generate Questions: Starting generation`, { subject, skillLevel, numberOfQuestions });
         const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
         const prompt = `Generate ${numberOfQuestions} multiple-choice questions about "${subject}" at "${skillLevel}" difficulty.
