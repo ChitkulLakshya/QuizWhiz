@@ -16,7 +16,7 @@ export default function CreateQuizPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         console.log('⛔ Access Denied: User not authenticated.');
-        router.push('/login');
+        router.push('/login?redirect=/host/create');
       } else {
         setLoading(false);
       }

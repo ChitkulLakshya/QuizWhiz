@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '@/firebase';
 import { isAdminEmail, registerAdmin } from '@/lib/auth';
 import { sendWelcomeEmailAction, sendOtp, logNewUser } from '@/app/actions/auth-actions';
@@ -14,6 +14,8 @@ import clsx from 'clsx';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/admin';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,12 +28,12 @@ export default function LoginPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log('✅ User already logged in, redirecting to admin dashboard...');
-        router.push('/admin');
+        console.log('✅ User already logged in, redirecting...');
+        router.push(redirectTo);
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, redirectTo]);
   useEffect(() => {
     setOtpSent(false);
     setEnteredOtp('');
@@ -66,7 +68,7 @@ export default function LoginPage() {
           const nameGuess = result.user.displayName || emailToCheck.split('@')[0];
           await logNewUser({ name: nameGuess, email: emailToCheck });
         }
-        router.push('/admin');
+        router.push(redirectTo);
       }
     } catch (error: any) {
       console.error('❌ Google Login failed:', error);
@@ -86,6 +88,13 @@ export default function LoginPage() {
       return;
     }
     try {
+      const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+      if (signInMethods.length > 0) {
+        setError('User already registered. Please log in.');
+        setLoading(false);
+        return;
+      }
+
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(code);
       const isElectron = typeof window !== 'undefined' && /Electron/i.test(window.navigator.userAgent);
@@ -134,7 +143,7 @@ export default function LoginPage() {
         const nameGuess = emailToCheck.split('@')[0];
         await logNewUser({ name: nameGuess, email: emailToCheck });
         sendWelcomeEmailAction(emailToCheck, nameGuess).catch(console.error);
-        router.push('/admin');
+        router.push(redirectTo);
       }
     } catch (error: any) {
       mapFirebaseError(error);
@@ -152,7 +161,7 @@ export default function LoginPage() {
         const emailToCheck = result.user.email.toLowerCase();
         const isAdmin = await isAdminEmail(emailToCheck);
         if (!isAdmin) await registerAdmin(emailToCheck);
-        router.push('/admin');
+        router.push(redirectTo);
       }
     } catch (error: any) {
       mapFirebaseError(error);
@@ -218,7 +227,7 @@ export default function LoginPage() {
               </h1>
             </div>
 
-            <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">
+            <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
               {isSignUp ? (otpSent ? `> Enter code sent to: ${email}` : '> Create a new account') : '> Sign in to your account'}
             </p>
           </div>
@@ -237,12 +246,12 @@ export default function LoginPage() {
               <div className="space-y-4">
 
                 <div className="space-y-1 group">
-                  <label className="text-[10px] font-mono text-gray-500 uppercase tracking-widest group-focus-within:text-[#ccff00] transition-colors">Email Address</label>
+                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-widest group-focus-within:text-[#ccff00] transition-colors">Email Address</label>
                   <div className="relative">
                     <input
                       type="email"
                       required
-                      className="w-full bg-[#0a0a0a] border border-[#333] p-4 text-white font-mono placeholder:text-gray-800 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.2)] transition-all"
+                      className="w-full bg-[#0a0a0a] border border-[#333] p-4 text-white font-mono placeholder:text-gray-500 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.2)] transition-all"
                       placeholder="hello@example.com"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
@@ -252,12 +261,12 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-1 group">
-                  <label className="text-[10px] font-mono text-gray-500 uppercase tracking-widest group-focus-within:text-[#ccff00] transition-colors">Password</label>
+                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-widest group-focus-within:text-[#ccff00] transition-colors">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       required
-                      className="w-full bg-[#0a0a0a] border border-[#333] p-4 text-white font-mono placeholder:text-gray-800 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.2)] transition-all"
+                      className="w-full bg-[#0a0a0a] border border-[#333] p-4 text-white font-mono placeholder:text-gray-500 focus:border-[#ccff00] focus:outline-none focus:shadow-[0_0_15px_rgba(204,255,0,0.2)] transition-all"
                       placeholder="••••••••"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -328,7 +337,7 @@ export default function LoginPage() {
 
           {/* Footer Switch */}
           <div className="mt-8 text-center">
-            <p className="text-xs font-mono text-gray-600 uppercase mb-2">
+            <p className="text-xs font-mono text-gray-400 uppercase mb-2">
               {isSignUp ? '> Already have an account?' : '> New user?'}
             </p>
             <button

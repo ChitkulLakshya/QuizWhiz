@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { getQuiz, getLeaderboard } from '@/lib/firebase-service';
+import { getQuiz, getLeaderboard, getQuestions } from '@/lib/firebase-service';
 import { Quiz, LeaderboardEntry } from '@/types/quiz';
 import { Trophy, Medal, Award, ArrowLeft, Terminal, Cpu, Share2 } from 'lucide-react';
 import Link from 'next/link';
@@ -20,6 +20,7 @@ export default function AdminLeaderboard({ quizId: propQuizId }: AdminLeaderboar
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -27,12 +28,14 @@ export default function AdminLeaderboard({ quizId: propQuizId }: AdminLeaderboar
 
   const loadData = async () => {
     try {
-      const [quizData, leaderboardData] = await Promise.all([
+      const [quizData, leaderboardData, questionsData] = await Promise.all([
         getQuiz(quizId),
-        getLeaderboard(quizId)
+        getLeaderboard(quizId),
+        getQuestions(quizId)
       ]);
       setQuiz(quizData);
       setLeaderboard(leaderboardData);
+      setTotalQuestions(questionsData.length);
     } catch (error) {
       console.error('Error loading leaderboard:', error);
     } finally {
@@ -149,7 +152,7 @@ export default function AdminLeaderboard({ quizId: propQuizId }: AdminLeaderboar
                     </h3>
                     <div className="flex gap-4 mt-1 text-[10px] font-mono uppercase text-gray-500">
                       <span>Correct: {entry.correctAnswers}</span>
-                      <span>Accuracy: {entry.correctAnswers > 0 ? Math.round((entry.correctAnswers / (quiz.questions?.length || 1)) * 100) : 0}%</span>
+                      <span>Accuracy: {entry.correctAnswers > 0 ? Math.round((entry.correctAnswers / (totalQuestions || 1)) * 100) : 0}%</span>
                     </div>
                   </div>
 

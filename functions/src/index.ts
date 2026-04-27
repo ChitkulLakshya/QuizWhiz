@@ -53,17 +53,52 @@ export const submitAnswerSecure = onCall<SubmitAnswerRequest>({ cors: true }, as
         }
 
         const question = questionDoc.data();
-        const isCorrect = selectedOptionIndex === question.correctOptionIndex;
+        const correctIndex = typeof question.correctOptionIndex === 'string'
+            ? parseInt(question.correctOptionIndex, 10)
+            : question.correctOptionIndex;
+        const isCorrect = selectedOptionIndex === correctIndex;
         const points = isCorrect ? (question.points || 100) : 0;
 
-        const participantRef = db.collection('quizzes').doc(quizId).collection('participants').doc(participantId);
-        await participantRef.update({
-            [`answers.${questionIndex}`]: selectedOptionIndex,
-            totalScore: admin.firestore.FieldValue.increment(points)
+        const quizRef = db.collection('quizzes').doc(quizId);
+        const participantRef = quizRef.collection('participants').doc(participantId);
+
+        const result = await db.runTransaction(async (tx) => {
+            const participantSnap = await tx.get(participantRef);
+            const existingAnswer = participantSnap.exists
+                ? participantSnap.data()?.answers?.[questionIndex]
+                : undefined;
+
+            if (typeof existingAnswer === 'number') {
+                const alreadyCorrect = existingAnswer === correctIndex;
+                const alreadyPoints = alreadyCorrect ? (question.points || 100) : 0;
+                return { isCorrect: alreadyCorrect, pointsEarned: alreadyPoints, alreadyAnswered: true };
+            }
+
+            if (!participantSnap.exists) {
+                tx.set(participantRef, {
+                    quizId,
+                    name: 'Player',
+                    joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    totalScore: 0,
+                    currentStreak: 0,
+                    answers: {}
+                }, { merge: true });
+            }
+
+            tx.update(participantRef, {
+                [`answers.${questionIndex}`]: selectedOptionIndex,
+                totalScore: admin.firestore.FieldValue.increment(points)
+            });
+
+            tx.update(quizRef, {
+                answeredCount: admin.firestore.FieldValue.increment(1)
+            });
+
+            return { isCorrect, pointsEarned: points, alreadyAnswered: false };
         });
 
-        Logger.info(`Submit Answer: Success`, { quizId, participantId, isCorrect, points });
-        return { success: true, isCorrect, pointsEarned: points };
+        Logger.info(`Submit Answer: Success`, { quizId, participantId, isCorrect: result.isCorrect, points: result.pointsEarned });
+        return { success: true, isCorrect: result.isCorrect, pointsEarned: result.pointsEarned };
     } catch (error) {
         Logger.error('Submit Answer: Internal Error', error, { quizId, participantId });
         throw new HttpsError('internal', 'Submission failed');
@@ -159,7 +194,7 @@ export const generateQuestions = onCall<GenerateQuestionsRequest>({ cors: true }
         Logger.info(`Generate Questions: Starting generation`, { subject, skillLevel, numberOfQuestions });
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
 

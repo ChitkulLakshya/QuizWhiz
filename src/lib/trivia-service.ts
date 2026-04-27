@@ -8,15 +8,27 @@ import he from 'he';
  */
 export const TRIVIA_CATEGORIES = {
     GENERAL_KNOWLEDGE: 9,
+    BOOKS: 10,
     MOVIES: 11,
     MUSIC: 12,
+    MUSICALS: 13,
     TV: 14,
     VIDEO_GAMES: 15,
+    BOARD_GAMES: 16,
     SCIENCE_NATURE: 17,
     COMPUTERS: 18,
+    MATHEMATICS: 19,
+    MYTHOLOGY: 20,
     SPORTS: 21,
     GEOGRAPHY: 22,
     HISTORY: 23,
+    POLITICS: 24,
+    ART: 25,
+    CELEBRITIES: 26,
+    ANIMALS: 27,
+    VEHICLES: 28,
+    COMICS: 29,
+    GADGETS: 30,
     ANIME: 31,
     CARTOONS: 32,
 };
@@ -24,11 +36,17 @@ const CATEGORY_MAP: Record<string, number> = {
     'general': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
     'gk': TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE,
 
+    'books': TRIVIA_CATEGORIES.BOOKS,
+    'literature': TRIVIA_CATEGORIES.BOOKS,
+
     'movies': TRIVIA_CATEGORIES.MOVIES,
     'film': TRIVIA_CATEGORIES.MOVIES,
     'cinema': TRIVIA_CATEGORIES.MOVIES,
 
     'music': TRIVIA_CATEGORIES.MUSIC,
+
+    'musicals': TRIVIA_CATEGORIES.MUSICALS,
+    'theatre': TRIVIA_CATEGORIES.MUSICALS,
 
     'tv': TRIVIA_CATEGORIES.TV,
     'television': TRIVIA_CATEGORIES.TV,
@@ -36,11 +54,18 @@ const CATEGORY_MAP: Record<string, number> = {
     'videogames': TRIVIA_CATEGORIES.VIDEO_GAMES,
     'games': TRIVIA_CATEGORIES.VIDEO_GAMES,
 
+    'boardgames': TRIVIA_CATEGORIES.BOARD_GAMES,
+
     'science': TRIVIA_CATEGORIES.SCIENCE_NATURE,
     'nature': TRIVIA_CATEGORIES.SCIENCE_NATURE,
 
     'computers': TRIVIA_CATEGORIES.COMPUTERS,
     'tech': TRIVIA_CATEGORIES.COMPUTERS,
+
+    'mathematics': TRIVIA_CATEGORIES.MATHEMATICS,
+    'math': TRIVIA_CATEGORIES.MATHEMATICS,
+
+    'mythology': TRIVIA_CATEGORIES.MYTHOLOGY,
 
     'sports': TRIVIA_CATEGORIES.SPORTS,
     'sport': TRIVIA_CATEGORIES.SPORTS,
@@ -48,6 +73,21 @@ const CATEGORY_MAP: Record<string, number> = {
     'geography': TRIVIA_CATEGORIES.GEOGRAPHY,
 
     'history': TRIVIA_CATEGORIES.HISTORY,
+
+    'politics': TRIVIA_CATEGORIES.POLITICS,
+
+    'art': TRIVIA_CATEGORIES.ART,
+
+    'celebrities': TRIVIA_CATEGORIES.CELEBRITIES,
+
+    'animals': TRIVIA_CATEGORIES.ANIMALS,
+
+    'vehicles': TRIVIA_CATEGORIES.VEHICLES,
+    'cars': TRIVIA_CATEGORIES.VEHICLES,
+
+    'comics': TRIVIA_CATEGORIES.COMICS,
+
+    'gadgets': TRIVIA_CATEGORIES.GADGETS,
 
     'anime': TRIVIA_CATEGORIES.ANIME,
     'manga': TRIVIA_CATEGORIES.ANIME,
@@ -103,16 +143,35 @@ export const fetchQuestionsFromAPI = async (
         } else {
             categoryId = category;
         }
-        const url = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&type=multiple&difficulty=${difficulty}`;
-        console.log(`🌐 Fetching trivia from: ${url}`);
-        const response = await fetch(url);
-        const data: OpenTDBResponse = await response.json();
+        // Attempt 1: Exact match
+        let fetchUrl = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&type=multiple&difficulty=${difficulty}`;
+        console.log(`🌐 Fetching trivia (Attempt 1): ${fetchUrl}`);
+        let response = await fetch(fetchUrl);
+        let data: OpenTDBResponse = await response.json();
+
+        // Attempt 2: Relax difficulty
+        if (data.response_code === 1) {
+            console.warn(`⚠️ Not enough questions at ${difficulty} difficulty. Relaxing difficulty constraint...`);
+            fetchUrl = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&type=multiple`;
+            response = await fetch(fetchUrl);
+            data = await response.json();
+        }
+
+        // Attempt 3: Relax amount (limit to 5)
+        if (data.response_code === 1 && amount > 5) {
+            console.warn(`⚠️ Still not enough questions. Reducing amount to 5...`);
+            fetchUrl = `https://opentdb.com/api.php?amount=5&category=${categoryId}&type=multiple`;
+            response = await fetch(fetchUrl);
+            data = await response.json();
+        }
 
         if (data.response_code !== 0) {
             if (data.response_code === 1) {
-                throw new Error("We couldn't find enough questions for this topic. Try another one!");
+                throw new Error(`We couldn't find enough questions for this topic on OpenTDB. Try another one!`);
+            } else if (data.response_code === 5) {
+                throw new Error(`Too many requests to the trivia database. Please wait a moment and try again.`);
             }
-            throw new Error(`Failed to fetch questions from the trivia database.`);
+            throw new Error(`Failed to fetch questions from the trivia database (Error Code: ${data.response_code}).`);
         }
         return data.results.map((q, index) => {
             const correctAnswer = decodeText(q.correct_answer);

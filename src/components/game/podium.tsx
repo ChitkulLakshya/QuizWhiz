@@ -44,20 +44,34 @@ export function Podium({ participants, isHost, onRestart }: PodiumProps) {
                 <main className={`flex-1 flex flex-col justify-end px-6 overflow-y-auto scrollbar-hide ${isHost ? 'pb-32' : 'pb-6'}`}>
 
                     {/* Performance Metrics (Visual Equalizer) */}
-                    <div className="mt-4 mb-8 opacity-60 hover:opacity-100 transition-opacity">
-                        <div className="flex items-center gap-2 mb-3 px-1">
-                            <BarChart2 className="text-[#b00b69] w-4 h-4" />
-                            <p className="text-white/70 text-xs font-mono font-bold tracking-widest uppercase">Performance Metrics</p>
-                        </div>
-                        <div className="flex items-end justify-between h-16 gap-3 px-2 bg-[#0a0a0a] p-2 border border-[#222]">
-                            {[0.4, 0.8, 0.3, 0.6].map((h, i) => (
-                                <div key={i} className="flex-1 h-full flex items-end overflow-hidden relative group">
-                                    <div className="absolute bottom-0 w-full bg-[#ccff00] opacity-20 h-full"></div>
-                                    <div style={{ height: `${h * 100}%` }} className="w-full bg-[#ccff00] shadow-[0_0_8px_rgba(204,255,0,0.5)] relative z-10"></div>
+                    {sorted.length > 0 && (() => {
+                        const maxScore = sorted[0]?.totalScore || 1;
+                        const avgScore = sorted.reduce((sum, p) => sum + p.totalScore, 0) / sorted.length;
+                        const topStreak = Math.max(...sorted.map(p => p.currentStreak || 0), 0);
+                        const metrics = [
+                            { label: 'AVG', value: Math.min(avgScore / maxScore, 1) || 0.1 },
+                            { label: 'TOP', value: 1 },
+                            { label: 'STK', value: Math.min(topStreak / 5, 1) || 0.1 },
+                            { label: 'PLR', value: Math.min(sorted.length / 10, 1) || 0.2 },
+                        ];
+                        return (
+                            <div className="mt-4 mb-8 opacity-60 hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <BarChart2 className="text-[#b00b69] w-4 h-4" />
+                                    <p className="text-white/70 text-xs font-mono font-bold tracking-widest uppercase">Performance Metrics</p>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                                <div className="flex items-end justify-between h-16 gap-3 px-2 bg-[#0a0a0a] p-2 border border-[#222]">
+                                    {metrics.map((m, i) => (
+                                        <div key={i} className="flex-1 h-full flex flex-col items-center justify-end overflow-hidden relative group gap-1">
+                                            <div className="absolute bottom-0 w-full bg-[#ccff00] opacity-20 h-full"></div>
+                                            <div style={{ height: `${m.value * 100}%` }} className="w-full bg-[#ccff00] shadow-[0_0_8px_rgba(204,255,0,0.5)] relative z-10"></div>
+                                            <span className="text-[8px] font-mono text-white/40 tracking-wider">{m.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
 
                     {/* PODIUM SECTION */}

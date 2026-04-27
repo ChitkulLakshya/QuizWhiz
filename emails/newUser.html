@@ -1,25 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New User Signup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
     <style>
         /* Resets */
-        body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; background-color: #000000; }
-        img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; display: block; }
-        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            background-color: #000000;
+        }
+
+        img {
+            border: 0;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+            display: block;
+        }
+
         /* Font Family */
-        body, td, th, p, div, a { font-family: 'Inter', Helvetica, Arial, sans-serif !important; }
-        .mono { font-family: 'JetBrains Mono', 'Courier New', monospace !important; }
+        body,
+        td,
+        th,
+        p,
+        div,
+        a {
+            font-family: 'Inter', Helvetica, Arial, sans-serif !important;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+        }
 
         /* Dark Mode Support */
         @media (prefers-color-scheme: dark) {
-            body, .email-bg { background-color: #000000 !important; }
+
+            body,
+            .email-bg {
+                background-color: #000000 !important;
+            }
         }
 
         /* Status Badge */
@@ -36,22 +67,30 @@
         }
     </style>
 </head>
+
 <body style="margin: 0; padding: 0; background-color: #000000; color: #ffffff;">
 
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #000000; width: 100%;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+        style="background-color: #000000; width: 100%;">
         <tr>
             <td align="center" style="padding: 40px 10px;">
-                
-                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #09090b; border: 1px solid #27272a; border-radius: 16px; box-shadow: 0 0 40px rgba(188, 235, 11, 0.05);">
-                    
+
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+                    style="max-width: 600px; background-color: #09090b; border: 1px solid #27272a; border-radius: 16px; box-shadow: 0 0 40px rgba(188, 235, 11, 0.05);">
+
                     <tr>
                         <td align="left" style="padding: 30px 40px; border-bottom: 1px solid #27272a;">
                             <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                                 <tr>
                                     <td>
-                                        <a href="https://quizwhiz-live.vercel.app" style="text-decoration: none; display: flex; align-items: center;">
-                                            <img src="https://quizwhiz-live.vercel.app/logo.png" alt="QW" width="24" height="24" style="border-radius: 4px; display: inline-block; vertical-align: middle;">
-                                            <span style="font-size: 16px; font-weight: 700; color: #71717a; margin-left: 12px; vertical-align: middle; letter-spacing: -0.5px;">QuizWhiz Admin</span>
+                                        <a href="https://quizwhiz-live.vercel.app"
+                                            style="text-decoration: none; display: flex; align-items: center;">
+                                            <img src="https://quizwhiz-live.vercel.app/logo.png" alt="QW" width="24"
+                                                height="24"
+                                                style="border-radius: 4px; display: inline-block; vertical-align: middle;">
+                                            <span
+                                                style="font-size: 16px; font-weight: 700; color: #71717a; margin-left: 12px; vertical-align: middle; letter-spacing: -0.5px;">QuizWhiz
+                                                Admin</span>
                                         </a>
                                     </td>
                                     <td align="right">
@@ -64,20 +103,24 @@
 
                     <tr>
                         <td align="left" style="padding: 40px 40px;">
-                            
-                            <h1 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
-                                <span style="font-size: 28px; margin-right: 8px;">👤</span> New User Signed Up
+
+                            <h1
+                                style="margin: 0 0 24px 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                &#128100; New User Signed Up
                             </h1>
 
                             <p style="margin: 0 0 32px 0; font-size: 15px; line-height: 1.6; color: #a1a1aa;">
-                                A new user has just registered on the platform. Here are the details captured from the signup event:
+                                A new user has just registered on the platform. Here are the details captured from the
+                                signup event:
                             </p>
 
-                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #000000; border: 1px dashed #333333; border-radius: 8px; overflow: hidden;">
-                                
+                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                style="background-color: #000000; border: 1px dashed #333333; border-radius: 8px; overflow: hidden;">
+
                                 <tr>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a; width: 30%;">
-                                        <span style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Name</span>
+                                        <span
+                                            style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Name</span>
                                     </td>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a;">
                                         <span style="color: #ffffff; font-weight: 600;">{{USER_NAME}}</span>
@@ -86,25 +129,31 @@
 
                                 <tr>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a;">
-                                        <span style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Email</span>
+                                        <span
+                                            style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Email</span>
                                     </td>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a;">
-                                        <span class="mono" style="color: #BCEB0B; font-size: 14px;">{{USER_EMAIL}}</span>
+                                        <span class="mono"
+                                            style="color: #BCEB0B; font-size: 14px;">{{USER_EMAIL}}</span>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a;">
-                                        <span style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Time</span>
+                                        <span
+                                            style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Time</span>
                                     </td>
                                     <td style="padding: 16px 24px; border-bottom: 1px solid #1a1a1a;">
-                                        <span class="mono" style="color: #a1a1aa; font-size: 13px;">{{SIGNUP_TIMESTAMP}}</span>
+                                        <span class="mono"
+                                            style="color: #a1a1aa; font-size: 13px;">{{SIGNUP_TIMESTAMP}}</span>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="padding: 16px 24px; background-color: #050505;">
-                                        <span style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">User ID</span>
+                                        <span
+                                            style="font-size: 12px; color: #52525b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">User
+                                            ID</span>
                                     </td>
                                     <td style="padding: 16px 24px; background-color: #050505;">
                                         <span class="mono" style="color: #71717a; font-size: 13px;">#{{USER_ID}}</span>
@@ -117,8 +166,10 @@
                     </tr>
 
                     <tr>
-                        <td align="center" style="padding: 20px; background-color: #09090b; border-top: 1px solid #27272a; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
-                            <p style="margin: 0; color: #52525b; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+                        <td align="center"
+                            style="padding: 20px; background-color: #09090b; border-top: 1px solid #27272a; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                            <p
+                                style="margin: 0; color: #52525b; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
                                 SYSTEM NOTIFICATION • <span style="color: #BCEB0B;">SENT FROM SERVER</span>
                             </p>
                         </td>
@@ -129,4 +180,5 @@
         </tr>
     </table>
 </body>
+
 </html>

@@ -10,7 +10,6 @@ import {
     subscribeToQuiz,
     subscribeToParticipants,
     subscribeToQuestions,
-    updateQuizStatus,
     startQuestion,
     endQuiz,
     joinQuiz,
@@ -84,14 +83,14 @@ export default function GameClient() {
             unsubQuestions();
         };
     }, [quizId]);
-    useEffect(() => {
-        if (isHost && user && quiz && quiz.status === 'lobby' && quizId) {
-            const amIJoined = participants.some(p => p.id === user.uid);
-            if (!amIJoined) {
-                joinQuiz(quizId, user.displayName || "Host").catch(console.error);
-            }
-        }
-    }, [isHost, user, quiz, participants, quizId]);
+    // useEffect(() => {
+    //     if (isHost && user && quiz && quiz.status === 'lobby' && quizId) {
+    //         const amIJoined = participants.some(p => p.id === user.uid);
+    //         if (!amIJoined) {
+    //             joinQuiz(quizId, user.displayName || "Host").catch(console.error);
+    //         }
+    //     }
+    // }, [isHost, user, quiz, participants, quizId]);
     useEffect(() => {
         if (!quiz || !currentQuestion || quiz.status !== 'active' || !quiz.questionStartTime) {
             return;
@@ -159,7 +158,7 @@ export default function GameClient() {
             if (viewState === 'results' && currentQuestion) {
                 const correctOption = currentQuestion.options[currentQuestion.correctOptionIndex];
                 if (selectedAnswer === correctOption) {
-                    setTimeout(() => playCorrect(), 300); 
+                    setTimeout(() => playCorrect(), 300);
                 } else {
                     setTimeout(() => playWrong(), 300);
                 }
@@ -203,7 +202,7 @@ export default function GameClient() {
     };
 
     const handleAnswerSubmit = async (option: string, index: number) => {
-        if (!currentParticipant || !currentQuestion || isAnswerSubmitted || !quizId) return;
+        if (!currentParticipant || !currentQuestion || !quizId) return;
         if (timeRemaining <= 0) return; // Don't allow answer after time expires
 
         setSelectedAnswer(option);
@@ -234,10 +233,13 @@ export default function GameClient() {
 
     const hostStartGame = async () => {
         if (questions.length === 0) return toast({ title: "No questions loaded!" });
+        if (!currentParticipant) {
+            toast({ variant: 'destructive', title: "Join check failed", description: "Please join the quiz with your name first" });
+            return;
+        }
         if (isProcessing || !quizId) return;
         setIsProcessing(true);
         try {
-            await updateQuizStatus(quizId, 'lobby');
             await startQuestion(quizId, 0);
         } finally {
             setIsProcessing(false);

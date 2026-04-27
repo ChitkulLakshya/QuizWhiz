@@ -28,11 +28,12 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { generateQuestionsAction } from './actions';
+import { generateQuestionsServerAction as generateQuestionsAction } from '@/app/actions/generate-quiz';
 import { PlusCircle, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createQuiz, addQuestions } from '@/lib/firebase-service';
 import { Question } from '@/types/quiz';
+import { auth } from '@/firebase';
 
 const questionSchema = z.object({
   question: z.string().min(1, 'Question cannot be empty'),
@@ -108,7 +109,12 @@ export function QuizForm() {
 
       console.log(' Form data validated:', { title: formData.title, questionCount: formData.questions.length });
       console.log(' Creating quiz document...');
-      const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, 'anonymous', 'anonymous-user');
+
+      const user = auth.currentUser;
+      const userEmail = user?.email || 'anonymous';
+      const userId = user?.uid || 'anonymous-user';
+
+      const quizId = await createQuiz(formData.title, description || `A quiz about ${formData.title}`, userEmail, userId);
       console.log(' Quiz created with ID:', quizId);
       console.log(' Preparing questions for batch write...');
       const questionsToAdd: Omit<Question, 'id' | 'quizId'>[] = formData.questions.map((q, i) => {
@@ -156,13 +162,13 @@ export function QuizForm() {
 
     const formData = new FormData(e.currentTarget);
     try {
-        const result = await generateQuestionsAction({ status: 'idle', message: '' }, formData);
-        setGenerateState(result);
+      const result = await generateQuestionsAction({ status: 'idle', message: '' }, formData);
+      setGenerateState(result);
     } catch (error) {
-        console.error("AI Generation failed", error);
-        setGenerateState({ status: 'error', message: 'Failed to generate questions' });
+      console.error("AI Generation failed", error);
+      setGenerateState({ status: 'error', message: 'Failed to generate questions' });
     } finally {
-        setIsGenerating(false);
+      setIsGenerating(false);
     }
   }
 
@@ -270,7 +276,7 @@ export function QuizForm() {
             <Card key={field.id}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-headline text-xl">Question {index + 1}</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => remove(index)}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardHeader>

@@ -67,3 +67,34 @@ export async function sendWelcomeEmailAction(email: string, name: string) {
     }
 }
 
+export async function sendSupportEmail(data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    category: string;
+}) {
+    if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron()) {
+        console.log('[Electron] Skipping server-side support email');
+        return { success: true };
+    }
+    try {
+        const response = await fetch(`${API_BASE_URL}/contact-support`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to send support email');
+        }
+
+        return { success: true, warning: result.warning };
+    } catch (error) {
+        console.error('Failed to send support email:', error);
+        return { success: false, error: 'Failed to send support email. Please try again.' };
+    }
+}
+

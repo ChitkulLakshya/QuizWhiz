@@ -49,9 +49,10 @@ export const generateQuizCode = (): string =>
  */
 export const createQuickGame = async (
   topic: string,
+  categoryId?: number | string,
   difficulty: 'easy' | 'medium' | 'hard' = 'medium'
 ): Promise<string> => {
-  console.log("🚀 createQuickGame called:", { topic, difficulty });
+  console.log("🚀 createQuickGame called:", { topic, categoryId, difficulty });
 
   try {
     let user = auth.currentUser;
@@ -66,7 +67,8 @@ export const createQuickGame = async (
     const quizId = quizDocRef.id;
 
     console.log("🌍 Fetching questions for quiz:", quizId);
-    const questions = await fetchQuestionsFromAPI(quizId, topic, 10, difficulty);
+    const fetchCategory = categoryId !== undefined ? categoryId : topic;
+    const questions = await fetchQuestionsFromAPI(quizId, fetchCategory, 10, difficulty);
     const quizData: Omit<Quiz, "id" | "createdAt"> & { createdAt: FieldValue } = {
       title: `${topic} Trivia`,
       description: `A ${difficulty} ${topic} quiz generated for you.`,
@@ -548,13 +550,20 @@ export const joinQuiz = async (
       quizId,
       "participants"
     );
-    const batch = writeBatch(db);
+
+    // Use UID as Document ID and increment participant count only once
     const userDocRef = doc(participantsRef, user.uid);
+    const existing = await getDoc(userDocRef);
+    if (existing.exists()) {
+      return user.uid;
+    }
+
+    const batch = writeBatch(db);
     const quizRef = doc(db, "quizzes", quizId);
-    
+
     batch.set(userDocRef, participantData);
     batch.update(quizRef, { participantCount: increment(1) });
-    
+
     await batch.commit();
     console.log("✅ Participant joined and count incremented");
 
@@ -717,38 +726,38 @@ export const startQuestion = async (
  * End the current question early (e.g. all users answered) for everyone
  */
 export const endQuestionNow = async (quizId: string): Promise<void> => {
-    try {
-        const quizRef = doc(db, "quizzes", quizId);
-        await updateDoc(quizRef, {
-            questionStartTime: 0
-        });
-    } catch (error) {
-        console.error("Error ending question:", error);
-    }
+  try {
+    const quizRef = doc(db, "quizzes", quizId);
+    await updateDoc(quizRef, {
+      questionStartTime: 0
+    });
+  } catch (error) {
+    console.error("Error ending question:", error);
+  }
 };
 
 /**
  * Vote to skip to results (requires all participants to vote)
  */
 export const voteToSkip = async (quizId: string, participantId: string): Promise<void> => {
-    try {
-        const participantRef = doc(db, "quizzes", quizId, "participants", participantId);
-        const quizRef = doc(db, "quizzes", quizId);
-        const participantDoc = await getDoc(participantRef);
-        if (participantDoc.data()?.votedToSkip) {
-            return; // Already voted, don't increment
-        }
-
-        const batch = writeBatch(db);
-        batch.update(participantRef, { votedToSkip: true });
-        batch.update(quizRef, { skipVoteCount: increment(1) });
-        await batch.commit();
-        
-        console.log("✅ Participant voted to skip:", participantId);
-    } catch (error) {
-        console.error("Error voting to skip:", error);
-        throw error;
+  try {
+    const participantRef = doc(db, "quizzes", quizId, "participants", participantId);
+    const quizRef = doc(db, "quizzes", quizId);
+    const participantDoc = await getDoc(participantRef);
+    if (participantDoc.data()?.votedToSkip) {
+      return; // Already voted, don't increment
     }
+
+    const batch = writeBatch(db);
+    batch.update(participantRef, { votedToSkip: true });
+    batch.update(quizRef, { skipVoteCount: increment(1) });
+    await batch.commit();
+
+    console.log("✅ Participant voted to skip:", participantId);
+  } catch (error) {
+    console.error("Error voting to skip:", error);
+    throw error;
+  }
 };
 
 /**
@@ -792,7 +801,7 @@ export const restartGame = async (quizId: string): Promise<void> => {
     const batch = writeBatch(db);
     batch.update(quizRef, {
       status: 'lobby',
-      currentQuestionIndex: 0,
+      currentQuestionIndex: -1,
       stateUpdatedAt: serverTimestamp()
     });
     const participantsRef = collection(db, "quizzes", quizId, "participants");
@@ -802,7 +811,8 @@ export const restartGame = async (quizId: string): Promise<void> => {
       batch.update(doc.ref, {
         totalScore: 0,
         currentStreak: 0,
-        answers: {}
+        answers: {},
+        votedToSkip: false
       });
     });
     await batch.commit();
@@ -914,7 +924,7 @@ export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]
 
     const leaderboard: LeaderboardEntry[] = participants.map(p => {
       let correctCount = 0;
-      Object.entries(p.answers).forEach(([qIdxStr, aIdx]) => {
+      Object.entries(p.answers || {}).forEach(([qIdxStr, aIdx]) => {
         const qIdx = parseInt(qIdxStr);
         if (questions[qIdx] && questions[qIdx].correctOptionIndex === aIdx) {
           correctCount++;

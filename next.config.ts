@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  output: process.env.NODE_ENV === 'production' && !process.env.VERCEL ? 'export' : undefined,
   trailingSlash: true,
   typescript: {
     ignoreBuildErrors: true,

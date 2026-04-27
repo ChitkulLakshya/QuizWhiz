@@ -11,7 +11,7 @@ import { getQuiz, getQuestions, addQuestion, deleteQuestion, deleteQuiz, addQues
 import { Quiz, Question } from '@/types/quiz';
 import { ArrowLeft, Plus, Trash2, Sparkles, Loader2, Check, X, Terminal, Cpu, Save, Clock, Target, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { generateQuestionsAction } from '@/app/host/create/actions';
+import { generateQuestionsServerAction as generateQuestionsAction } from '@/app/actions/generate-quiz';
 import {
   Select,
   SelectContent,

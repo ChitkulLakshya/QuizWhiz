@@ -50,7 +50,7 @@ export function ResultsChart({ participants, question, questionIndex }: ResultsC
                                 "flex-shrink-0 ml-2 tracking-widest",
                                 isCorrect ? "text-[#ccff00]" : "text-gray-600"
                             )}>
-                                {count} <span className="text-[10px] opacity-50">AGENTS</span>
+                                {count} <span className="text-[10px] opacity-50">PLAYERS</span>
                             </span>
                         </div>
 

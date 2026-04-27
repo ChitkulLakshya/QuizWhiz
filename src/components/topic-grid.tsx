@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles, Rocket, Target, Gamepad2, Palette, Atom } from 'lucide-react';
+import { Zap, Film, Trophy, Globe, BookOpen, Monitor, Sparkles, Rocket, Target, Gamepad2, Palette, Atom, Music, Tv, Dice5, Calculator, Landmark, Star, PawPrint, Car, BookMarked, Cpu, Swords } from 'lucide-react';
 import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
 import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
 import {
@@ -24,9 +24,22 @@ const TOPICS = [
     { id: TRIVIA_CATEGORIES.MOVIES, name: 'Movies', icon: Film, borderColor: 'border-violet-200', iconColor: 'text-violet-600', iconBg: 'bg-violet-50', hoverBorder: 'hover:border-violet-400' },
     { id: TRIVIA_CATEGORIES.SPORTS, name: 'Sports', icon: Trophy, borderColor: 'border-orange-200', iconColor: 'text-orange-600', iconBg: 'bg-orange-50', hoverBorder: 'hover:border-orange-400' },
     { id: TRIVIA_CATEGORIES.GEOGRAPHY, name: 'Geography', icon: Globe, borderColor: 'border-emerald-200', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50', hoverBorder: 'hover:border-emerald-400' },
-    { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Monitor, borderColor: 'border-fuchsia-200', iconColor: 'text-fuchsia-600', iconBg: 'bg-fuchsia-50', hoverBorder: 'hover:border-fuchsia-400' },
+    { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Gamepad2, borderColor: 'border-fuchsia-200', iconColor: 'text-fuchsia-600', iconBg: 'bg-fuchsia-50', hoverBorder: 'hover:border-fuchsia-400' },
     { id: TRIVIA_CATEGORIES.HISTORY, name: 'History', icon: BookOpen, borderColor: 'border-amber-200', iconColor: 'text-amber-600', iconBg: 'bg-amber-50', hoverBorder: 'hover:border-amber-400' },
-    { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science', icon: Atom, borderColor: 'border-teal-200', iconColor: 'text-teal-600', iconBg: 'bg-teal-50', hoverBorder: 'hover:border-teal-400' },
+    { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science & Nature', icon: Atom, borderColor: 'border-teal-200', iconColor: 'text-teal-600', iconBg: 'bg-teal-50', hoverBorder: 'hover:border-teal-400' },
+    { id: TRIVIA_CATEGORIES.MUSIC, name: 'Music', icon: Music, borderColor: 'border-pink-200', iconColor: 'text-pink-600', iconBg: 'bg-pink-50', hoverBorder: 'hover:border-pink-400' },
+    { id: TRIVIA_CATEGORIES.TV, name: 'Television', icon: Tv, borderColor: 'border-sky-200', iconColor: 'text-sky-600', iconBg: 'bg-sky-50', hoverBorder: 'hover:border-sky-400' },
+    { id: TRIVIA_CATEGORIES.COMPUTERS, name: 'Computers', icon: Cpu, borderColor: 'border-slate-200', iconColor: 'text-slate-600', iconBg: 'bg-slate-50', hoverBorder: 'hover:border-slate-400' },
+    { id: TRIVIA_CATEGORIES.BOOKS, name: 'Books', icon: BookOpen, borderColor: 'border-rose-200', iconColor: 'text-rose-600', iconBg: 'bg-rose-50', hoverBorder: 'hover:border-rose-400' },
+    { id: TRIVIA_CATEGORIES.MATHEMATICS, name: 'Mathematics', icon: Calculator, borderColor: 'border-indigo-200', iconColor: 'text-indigo-600', iconBg: 'bg-indigo-50', hoverBorder: 'hover:border-indigo-400' },
+    { id: TRIVIA_CATEGORIES.MYTHOLOGY, name: 'Mythology', icon: Swords, borderColor: 'border-yellow-200', iconColor: 'text-yellow-600', iconBg: 'bg-yellow-50', hoverBorder: 'hover:border-yellow-400' },
+    { id: TRIVIA_CATEGORIES.ART, name: 'Art', icon: Palette, borderColor: 'border-red-200', iconColor: 'text-red-600', iconBg: 'bg-red-50', hoverBorder: 'hover:border-red-400' },
+    { id: TRIVIA_CATEGORIES.ANIMALS, name: 'Animals', icon: PawPrint, borderColor: 'border-green-200', iconColor: 'text-green-600', iconBg: 'bg-green-50', hoverBorder: 'hover:border-green-400' },
+    { id: TRIVIA_CATEGORIES.VEHICLES, name: 'Vehicles', icon: Car, borderColor: 'border-zinc-200', iconColor: 'text-zinc-600', iconBg: 'bg-zinc-50', hoverBorder: 'hover:border-zinc-400' },
+    { id: TRIVIA_CATEGORIES.CELEBRITIES, name: 'Celebrities', icon: Star, borderColor: 'border-purple-200', iconColor: 'text-purple-600', iconBg: 'bg-purple-50', hoverBorder: 'hover:border-purple-400' },
+    { id: TRIVIA_CATEGORIES.COMICS, name: 'Comics', icon: BookMarked, borderColor: 'border-cyan-200', iconColor: 'text-cyan-600', iconBg: 'bg-cyan-50', hoverBorder: 'hover:border-cyan-400' },
+    { id: TRIVIA_CATEGORIES.ANIME, name: 'Anime & Manga', icon: Sparkles, borderColor: 'border-lime-200', iconColor: 'text-lime-600', iconBg: 'bg-lime-50', hoverBorder: 'hover:border-lime-400' },
+    { id: TRIVIA_CATEGORIES.CARTOONS, name: 'Cartoons', icon: Tv, borderColor: 'border-orange-200', iconColor: 'text-orange-600', iconBg: 'bg-orange-50', hoverBorder: 'hover:border-orange-400' },
 ];
 
 export default function TopicGrid() {
@@ -39,7 +52,7 @@ export default function TopicGrid() {
         setLoading(categoryId);
         try {
             console.log(`🎮 Starting Quick Game: ${topicName}`);
-            const quizId = await createQuickGame(topicName, 'medium');
+            const quizId = await createQuickGame(topicName, categoryId, 'medium');
             router.push(`/play/${quizId}`);
 
         } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, Settings, Smartphone, Trophy, Zap, BookOpen, Film, Globe, Monitor, Sparkles, Brain, History as HistoryIcon, Gamepad2, Plane, Atom } from 'lucide-react';
+import { Home, Settings, Smartphone, Trophy, Zap, BookOpen, Film, Globe, Monitor, Sparkles, Brain, History as HistoryIcon, Gamepad2, Plane, Atom, Music, Tv, Dice5, Calculator, Landmark, Palette, Star, PawPrint, Car, BookMarked, Cpu, Swords } from 'lucide-react';
 import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
 import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
 import {
@@ -18,50 +18,154 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import clsx from 'clsx';
+
+const DEFAULT_THEME = {
+  bleedingText: "",
+  bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+  aspect: "aspect-[3/4]"
+};
+
 const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingClass: string; aspect: string }> = {
   [TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE]: {
-    bgImage: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1000&auto=format&fit=crop", // Abstract Neon/Brain vibe
+    bgImage: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1000&auto=format&fit=crop",
     bleedingText: "TRIVIA",
     bleedingClass: "absolute -top-4 -left-8 text-8xl font-black text-white/5 uppercase rotate-90 origin-bottom-left whitespace-nowrap select-none",
     aspect: "aspect-[3/4]"
   },
+  [TRIVIA_CATEGORIES.BOOKS]: {
+    bgImage: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "PAGES",
+    bleedingClass: "absolute -bottom-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
   [TRIVIA_CATEGORIES.MOVIES]: {
-    bgImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000&auto=format&fit=crop", // Cinema/Movie Theater
+    bgImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000&auto=format&fit=crop",
     bleedingText: "CINEMA",
     bleedingClass: "absolute -right-8 top-10 text-8xl font-black text-white/10 uppercase tracking-tighter leading-none select-none writing-vertical-rl",
     aspect: "aspect-[3/4]"
   },
+  [TRIVIA_CATEGORIES.MUSIC]: {
+    bgImage: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "SOUND",
+    bleedingClass: "absolute -top-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.MUSICALS]: {
+    bgImage: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "STAGE",
+    bleedingClass: "absolute -bottom-8 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.TV]: {
+    bgImage: "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "BINGE",
+    bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
   [TRIVIA_CATEGORIES.SPORTS]: {
-    bgImage: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop", // Dark Stadium/Action
+    bgImage: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop",
     bleedingText: "SPORT",
     bleedingClass: "absolute top-0 right-0 text-7xl font-black text-white/5 uppercase rotate-180 writing-mode-vertical origin-top-right whitespace-nowrap select-none",
     aspect: "aspect-[3/4]"
   },
   [TRIVIA_CATEGORIES.GEOGRAPHY]: {
-    bgImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop", // Earth from space/Global
+    bgImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop",
     bleedingText: "WORLD",
     bleedingClass: "absolute -bottom-12 -left-4 text-8xl font-black text-white/5 uppercase select-none",
     aspect: "aspect-[3/4]"
   },
   [TRIVIA_CATEGORIES.VIDEO_GAMES]: {
-    bgImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop", // Retro Arcade/Neon
+    bgImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop",
     bleedingText: "8-BIT",
     bleedingClass: "absolute -bottom-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
     aspect: "aspect-[3/4]"
   },
+  [TRIVIA_CATEGORIES.BOARD_GAMES]: {
+    bgImage: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "DICE",
+    bleedingClass: "absolute -top-4 -right-8 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
   [TRIVIA_CATEGORIES.HISTORY]: {
-    bgImage: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1000&auto=format&fit=crop", // Old Technology/Camera/History
-    bleedingText: "HISTORY",
+    bgImage: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "PAST",
     bleedingClass: "absolute top-0 -right-8 text-7xl font-black text-white/5 uppercase rotate-90 origin-top-right whitespace-nowrap select-none",
     aspect: "aspect-[3/4]"
   },
   [TRIVIA_CATEGORIES.SCIENCE_NATURE]: {
-    bgImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000&auto=format&fit=crop", // Lab/DNA/Science
-    bleedingText: "SCIENCE",
+    bgImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "LAB",
     bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
     aspect: "aspect-[3/4]"
-  }
+  },
+  [TRIVIA_CATEGORIES.COMPUTERS]: {
+    bgImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "CODE",
+    bleedingClass: "absolute -bottom-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.MATHEMATICS]: {
+    bgImage: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "CALC",
+    bleedingClass: "absolute -top-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.MYTHOLOGY]: {
+    bgImage: "https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "MYTHS",
+    bleedingClass: "absolute -bottom-8 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.POLITICS]: {
+    bgImage: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "POWER",
+    bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.ART]: {
+    bgImage: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "PAINT",
+    bleedingClass: "absolute -bottom-4 -left-8 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.CELEBRITIES]: {
+    bgImage: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "FAME",
+    bleedingClass: "absolute -top-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.ANIMALS]: {
+    bgImage: "https://images.unsplash.com/photo-1474511320723-9a56873571b7?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "WILD",
+    bleedingClass: "absolute -bottom-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.VEHICLES]: {
+    bgImage: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "SPEED",
+    bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.COMICS]: {
+    bgImage: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "POW",
+    bleedingClass: "absolute -bottom-8 -left-4 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.ANIME]: {
+    bgImage: "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "OTAKU",
+    bleedingClass: "absolute -top-4 -right-8 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
+  [TRIVIA_CATEGORIES.CARTOONS]: {
+    bgImage: "https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?q=80&w=1000&auto=format&fit=crop",
+    bleedingText: "TOON",
+    bleedingClass: "absolute -bottom-4 -right-8 text-8xl font-black text-white/5 uppercase select-none",
+    aspect: "aspect-[3/4]"
+  },
 };
+
 const TOPICS = [
   { id: TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE, name: 'General Knowledge', icon: Brain },
   { id: TRIVIA_CATEGORIES.MOVIES, name: 'Movies', icon: Film },
@@ -69,7 +173,23 @@ const TOPICS = [
   { id: TRIVIA_CATEGORIES.GEOGRAPHY, name: 'Geography', icon: Globe },
   { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Gamepad2 },
   { id: TRIVIA_CATEGORIES.HISTORY, name: 'History', icon: HistoryIcon },
-  { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science', icon: Atom },
+  { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science & Nature', icon: Atom },
+  { id: TRIVIA_CATEGORIES.MUSIC, name: 'Music', icon: Music },
+  { id: TRIVIA_CATEGORIES.TV, name: 'Television', icon: Tv },
+  { id: TRIVIA_CATEGORIES.COMPUTERS, name: 'Computers', icon: Cpu },
+  { id: TRIVIA_CATEGORIES.BOOKS, name: 'Books', icon: BookOpen },
+  { id: TRIVIA_CATEGORIES.MATHEMATICS, name: 'Mathematics', icon: Calculator },
+  { id: TRIVIA_CATEGORIES.MYTHOLOGY, name: 'Mythology', icon: Swords },
+  { id: TRIVIA_CATEGORIES.ART, name: 'Art', icon: Palette },
+  { id: TRIVIA_CATEGORIES.ANIMALS, name: 'Animals', icon: PawPrint },
+  { id: TRIVIA_CATEGORIES.VEHICLES, name: 'Vehicles', icon: Car },
+  { id: TRIVIA_CATEGORIES.CELEBRITIES, name: 'Celebrities', icon: Star },
+  { id: TRIVIA_CATEGORIES.COMICS, name: 'Comics', icon: BookMarked },
+  { id: TRIVIA_CATEGORIES.ANIME, name: 'Anime & Manga', icon: Sparkles },
+  { id: TRIVIA_CATEGORIES.CARTOONS, name: 'Cartoons', icon: Tv },
+  { id: TRIVIA_CATEGORIES.BOARD_GAMES, name: 'Board Games', icon: Dice5 },
+  { id: TRIVIA_CATEGORIES.MUSICALS, name: 'Musicals & Theatre', icon: Music },
+  { id: TRIVIA_CATEGORIES.POLITICS, name: 'Politics', icon: Landmark },
 ];
 
 export default function HomePage() {
@@ -82,7 +202,7 @@ export default function HomePage() {
     if (loading) return;
     setLoading(categoryId);
     try {
-      const quizId = await createQuickGame(topicName, 'medium');
+      const quizId = await createQuickGame(topicName, categoryId, 'medium');
       router.push(`/play/game?quizId=${quizId}`);
     } catch (error) {
       console.error('Error starting game:', error);
@@ -149,7 +269,7 @@ export default function HomePage() {
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 px-6 gap-6 items-start pb-40">
           {TOPICS.map((topic) => {
-            const theme = THEMES[topic.id];
+            const theme = THEMES[topic.id] || DEFAULT_THEME;
             return (
               <div
                 key={topic.id}

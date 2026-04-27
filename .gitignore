@@ -118,3 +118,4 @@ local.properties
 .vibe/
 .windsurf/
 .zencoder/
+google-credentials.json
