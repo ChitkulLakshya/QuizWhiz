@@ -13,7 +13,7 @@ type GenerateQuestionsState = {
     data?: GenerateQuizQuestionsOutput['questions'];
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = ''; // Use local /api routes
 
 export async function generateQuestionsServerAction(
     prevState: GenerateQuestionsState,
@@ -38,7 +38,7 @@ export async function generateQuestionsServerAction(
     try {
         const { subject, skillLevel, numberOfQuestions } = validatedFields.data;
 
-        const response = await fetch(`${API_BASE_URL}/generate-quiz`, {
+        const response = await fetch(`${API_BASE_URL}/api/generate-quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ subject, skillLevel, numberOfQuestions }),
@@ -50,7 +50,7 @@ export async function generateQuestionsServerAction(
             throw new Error(result.error || 'API returned an error.');
         }
 
-        console.log('✅ AI response received from Express Server');
+        console.log('✅ AI response received from local API');
 
         return {
             status: 'success',

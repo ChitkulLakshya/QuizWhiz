@@ -14,29 +14,31 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { topic } = body;
+        const { subject, topic, skillLevel = 'medium', numberOfQuestions = 10 } = body;
+        const finalSubject = subject || topic;
 
-        if (!topic) {
+        if (!finalSubject) {
             return NextResponse.json(
-                { error: 'Topic is required' },
+                { error: 'Subject or Topic is required' },
                 { status: 400, headers: corsHeaders }
             );
         }
 
-        console.log(`🤖 Generating AI quiz for topic: ${topic}`);
+        console.log(`🤖 Generating AI quiz for subject: ${finalSubject} (${skillLevel}, ${numberOfQuestions} questions)`);
 
         const output = await generateQuizQuestions({
-            subject: topic,
-            skillLevel: 'medium',
-            numberOfQuestions: 10,
+            subject: finalSubject,
+            skillLevel: skillLevel,
+            numberOfQuestions: numberOfQuestions,
         });
 
-        return NextResponse.json({ questions: output.questions }, { headers: corsHeaders });
-    } catch (error) {
+        return NextResponse.json({ success: true, data: output.questions }, { headers: corsHeaders });
+    } catch (error: any) {
         console.error('❌ Error generating quiz:', error);
+        console.error('❌ Detailed Error Message:', error.message);
         return NextResponse.json(
-            { error: 'Failed to generate quiz' },
-            { status: 500, headers: corsHeaders }
+             { error: error.message || 'Failed to generate quiz' },
+             { status: 500, headers: corsHeaders }
         );
     }
 }

@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use local API routes for Vercel deployment
+const API_BASE_URL = '/api';
+
 const isElectron = () => {
     if (typeof window === 'undefined') return false;
     return /Electron/i.test(window.navigator.userAgent);
@@ -10,7 +12,7 @@ export async function sendOtp(email: string, code: string) {
         return { success: true };
     }
     try {
-        const response = await fetch(`${API_BASE_URL}/send-otp`, {
+        const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, code }),
@@ -35,7 +37,7 @@ export async function logNewUser(userData: { name: string; email: string; phone?
         return { success: true };
     }
     try {
-        const response = await fetch(`${API_BASE_URL}/log-user`, {
+        const response = await fetch(`${API_BASE_URL}/auth/log-user`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
@@ -48,8 +50,8 @@ export async function logNewUser(userData: { name: string; email: string; phone?
         }
 
         return { success: true };
-    } catch (error) {
-        console.error('Failed in logNewUser:', error);
+    } catch (error: any) {
+        console.error('Failed in logNewUser:', error.message);
         return { success: true };
     }
 }
@@ -57,13 +59,13 @@ export async function logNewUser(userData: { name: string; email: string; phone?
 export async function sendWelcomeEmailAction(email: string, name: string) {
     if (process.env.NEXT_PUBLIC_ELECTRON_BUILD === 'true' || isElectron()) return;
     try {
-        await fetch(`${API_BASE_URL}/send-welcome`, {
+        await fetch(`${API_BASE_URL}/auth/send-welcome`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name }),
         });
-    } catch (error) {
-        console.error('Failed to send welcome email:', error);
+    } catch (error: any) {
+        console.error('Failed to send welcome email:', error.message);
     }
 }
 
@@ -92,8 +94,8 @@ export async function sendSupportEmail(data: {
         }
 
         return { success: true, warning: result.warning };
-    } catch (error) {
-        console.error('Failed to send support email:', error);
+    } catch (error: any) {
+        console.error('Failed to send support email:', error.message);
         return { success: false, error: 'Failed to send support email. Please try again.' };
     }
 }

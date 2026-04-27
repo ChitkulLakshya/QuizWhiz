@@ -70,9 +70,30 @@ function JoinQuizContent() {
   };
 
   useEffect(() => {
-    if (codeFromUrl && codeFromUrl.length === 6 && !quiz && !loading) {
-    }
-  }, [codeFromUrl, quiz, loading]);
+    const autoJoin = async () => {
+      if (codeFromUrl && codeFromUrl.length === 6 && !quiz && !loading && !error) {
+        setLoading(true);
+        try {
+          const foundQuiz = await getQuizByCode(codeFromUrl);
+          if (foundQuiz) {
+            if (foundQuiz.status !== 'lobby') {
+              setError('Session Ended');
+            } else {
+              setQuiz(foundQuiz);
+            }
+          } else {
+            setError('Invalid Game Code');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Connection Failed');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    autoJoin();
+  }, [codeFromUrl, quiz, loading, error]);
 
 
   return (
@@ -91,50 +112,48 @@ function JoinQuizContent() {
 
 
       {/* Header / Status Bar Area */}
-      <div className="flex items-center justify-between p-6 z-20 relative">
+      <div className="flex items-center justify-between px-6 py-4 z-20 relative bg-black/40 backdrop-blur-md border-b border-[#ccff00]/10">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-[#ccff00] animate-pulse"></div>
-          <span className="text-[10px] tracking-[0.2em] text-[#ccff00]/80 font-mono">
-            {quiz ? 'Game Found' : 'Enter Code'}
+          <div className={clsx("h-2 w-2 rounded-full animate-pulse", quiz ? "bg-[#ccff00]" : "bg-electric-purple")} />
+          <span className={clsx("text-[10px] tracking-[0.2em] font-mono", quiz ? "text-[#ccff00]/80" : "text-electric-purple/80")}>
+            {quiz ? `ESTABLISHED: ${quiz.title.toUpperCase()}` : 'WAITING FOR UPLINK...'}
           </span>
         </div>
-        <Wifi className="text-[#ccff00]/60 w-5 h-5" />
+        <div className="flex items-center gap-4">
+          <Wifi className="text-[#ccff00]/40 w-4 h-4" />
+        </div>
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="flex-1 relative flex flex-col justify-center w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto px-6 z-10 pb-24">
+      <div className="flex-1 relative flex flex-col justify-center w-full max-w-sm mx-auto px-6 z-10 -mt-12">
 
         {/* Back Button */}
         <button
           onClick={() => router.push('/')}
-          className="absolute top-4 left-6 z-50 text-white/50 hover:text-[#ccff00] transition-colors"
+          className="absolute -top-12 left-6 z-50 text-white/30 hover:text-[#ccff00] transition-colors flex items-center gap-2 text-[10px] font-mono tracking-widest uppercase"
           aria-label="Back to Home"
         >
-          <ArrowLeft className="w-8 h-8" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Exit</span>
         </button>
 
-        {/* Floating Side Label (Game Code) */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 opacity-20 pointer-events-none select-none hidden md:block">
-          <h1 className="text-[120px] leading-none font-bold text-vertical font-mono tracking-tighter text-white whitespace-nowrap" style={{ writingMode: 'vertical-rl' }}>
-            {quiz ? 'NAME' : 'GAME CODE'}
-          </h1>
-        </div>
-
         {/* Central Interaction Area */}
-        <div className="w-full space-y-12">
+        <div className="w-full space-y-8">
 
           {/* Terminal Prompt Text */}
-          <div className="text-left space-y-2">
-            <p className="text-[#ccff00] text-sm font-mono tracking-widest uppercase mb-1">
-            </p>
-            <h2 className="text-white text-3xl md:text-5xl font-bold leading-tight uppercase tracking-tight font-display">
-              {quiz ? 'Enter Name' : 'Enter Code'}
+          <div className="text-left space-y-1">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-[1px] w-8 bg-[#ccff00]/40" />
+              <span className="text-[#ccff00] text-[10px] font-mono tracking-[0.3em] uppercase">
+                {quiz ? 'Identity Verification' : 'Protocol Entry'}
+              </span>
+            </div>
+            <h2 className="text-white text-4xl font-black leading-none uppercase tracking-tight font-display">
+              {quiz ? 'Join' : 'Enter'} <br />
+              <span className="text-outline-white text-[#050505] drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]">
+                {quiz ? 'Session' : 'Uplink'}
+              </span>
             </h2>
-            {quiz && (
-              <div className="inline-block px-2 py-1 bg-[#1a1a1a] border border-[#ccff00]/30 text-[#ccff00] text-xs font-mono">
-                Playing: {quiz.title}
-              </div>
-            )}
           </div>
 
           {/* Input Container */}
@@ -145,71 +164,79 @@ function JoinQuizContent() {
 
             {/* Input Wrapper */}
             <div className={clsx(
-              "relative flex items-center justify-center backdrop-blur-sm border-[4px] rounded-full h-24 w-full transition-all duration-300",
-              error ? "border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "border-electric-purple shadow-[0_0_10px_rgba(176,11,105,0.4),inset_0_0_10px_rgba(176,11,105,0.2)] bg-deep-black/50"
+              "relative flex items-center justify-center backdrop-blur-xl border-[2px] rounded-xl h-20 w-full transition-all duration-500 overflow-hidden",
+              error 
+                ? "border-red-500/50 bg-red-500/5" 
+                : "border-white/10 bg-white/5 hover:border-[#ccff00]/40 group-focus-within:border-[#ccff00]/60"
             )}>
+              {/* Animated corner accents */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#ccff00] opacity-0 group-focus-within:opacity-100 transition-opacity" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#ccff00] opacity-0 group-focus-within:opacity-100 transition-opacity" />
+
               <input
                 id="variable-input"
                 autoComplete="off"
-                className="w-full bg-transparent border-none text-center text-white text-4xl md:text-5xl font-mono tracking-[0.1em] placeholder:text-white/10 focus:ring-0 focus:outline-none h-full pt-2 uppercase"
+                className="w-full bg-transparent border-none text-center text-white text-3xl font-mono tracking-[0.15em] placeholder:text-white/5 focus:ring-0 focus:outline-none h-full pt-1 uppercase"
                 type="text"
                 inputMode={quiz ? "text" : "numeric"}
                 pattern={quiz ? undefined : "[0-9]*"}
                 maxLength={quiz ? 15 : 6}
-                placeholder={quiz ? "Your Name" : "00 00 00"}
+                placeholder={quiz ? "IDENTITY" : "000000"}
                 value={quiz ? name : code}
                 onChange={quiz ? handleNameChange : handleCodeChange}
                 onKeyDown={(e) => e.key === 'Enter' && handleAction()}
                 autoFocus
               />
+              
+              {/* Background Glow */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.05)_0%,transparent_100%)] pointer-events-none" />
             </div>
-
-            {/* Helper Text / Error Message */}
-            <div className="flex justify-between items-center mt-4 px-4 h-6">
-              {error ? (
-                <div className="flex items-center gap-2 text-red-500 animate-pulse">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-xs font-mono font-bold tracking-wider">{error}</span>
-                </div>
-              ) : (
-                <>
-                  <span className="text-xs text-white/40 font-mono">
-                    {quiz ? 'Max Length: 15' : 'SECURE ENTRY'}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs text-electric-purple">
-                    <Lock className="w-3 h-3" />
-                    <span className="font-mono">SECURE</span>
-                  </div>
-                </>
-              )}
-
-            </div>
-          </div>
 
           {/* Action Button */}
           <button
             onClick={handleAction}
             disabled={loading || (quiz ? !name.trim() : code.length !== 6)}
-            className="w-full bg-[#ccff00] hover:bg-[#bbee00] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-200 h-16 flex items-center justify-center rounded-none shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] group"
+            className={clsx(
+              "w-full h-14 relative flex items-center justify-center transition-all duration-300 active:scale-[0.98] group overflow-hidden",
+              quiz 
+                ? "bg-[#ccff00] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)]" 
+                : "bg-white/10 hover:bg-white/20 border border-white/10"
+            )}
           >
-            <span className="text-black text-xl font-bold tracking-[0.1em] group-hover:tracking-[0.15em] transition-all font-display uppercase">
-              {loading ? 'Joining...' : (quiz ? 'Join Game' : 'Find Game')}
+            {/* Button Inner Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
+            
+            <span className={clsx(
+              "text-sm font-bold tracking-[0.2em] transition-all uppercase font-mono",
+              quiz ? "text-black" : "text-white/60 group-hover:text-white"
+            )}>
+              {loading ? 'Processing...' : (quiz ? 'Secure Entry' : 'Verify Uplink')}
             </span>
-            {!loading && <ArrowRight className="ml-2 text-black font-bold group-hover:translate-x-1 transition-transform w-6 h-6" />}
+            {!loading && <ArrowRight className={clsx("ml-3 w-4 h-4 transition-transform group-hover:translate-x-1", quiz ? "text-black" : "text-white/40")} />}
           </button>
 
           {/* Back / Cancel */}
-          {quiz && (
+          {quiz && !loading && (
             <button
               onClick={() => { setQuiz(null); setCode(''); setError(''); }}
-              className="w-full text-white/40 hover:text-white text-xs font-mono tracking-widest text-center uppercase mt-4 transition-colors"
+              className="w-full text-white/20 hover:text-red-500/60 text-[10px] font-mono tracking-[0.3em] text-center uppercase transition-colors"
             >
-              Cancel
+              Abort Protocol
             </button>
           )}
 
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .text-outline-white {
+          -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+        }
+      `}</style>
     </div>
   );
 }
