@@ -192,12 +192,24 @@ function JoinQuizContent() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.05)_0%,transparent_100%)] pointer-events-none" />
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 flex items-center gap-2 text-red-500 font-mono text-[10px] uppercase tracking-wider justify-center"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                {error}
+              </motion.div>
+            )}
+
           {/* Action Button */}
           <button
             onClick={handleAction}
             disabled={loading || (quiz ? !name.trim() : code.length !== 6)}
             className={clsx(
-              "w-full h-14 relative flex items-center justify-center transition-all duration-300 active:scale-[0.98] group overflow-hidden",
+              "w-full h-14 relative flex items-center justify-center transition-all duration-300 active:scale-[0.98] group overflow-hidden mt-8",
               quiz 
                 ? "bg-[#ccff00] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)]" 
                 : "bg-white/10 hover:bg-white/20 border border-white/10"
@@ -219,25 +231,25 @@ function JoinQuizContent() {
           {quiz && !loading && (
             <button
               onClick={() => { setQuiz(null); setCode(''); setError(''); }}
-              className="w-full text-white/20 hover:text-red-500/60 text-[10px] font-mono tracking-[0.3em] text-center uppercase transition-colors"
+              className="w-full text-white/20 hover:text-red-500/60 text-[10px] font-mono tracking-[0.3em] text-center uppercase transition-colors mt-4"
             >
               Abort Protocol
             </button>
           )}
-
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .text-outline-white {
-          -webkit-text-stroke: 1px rgba(255,255,255,0.2);
-        }
-      `}</style>
     </div>
+
+    <style jsx global>{`
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+      .text-outline-white {
+        -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+      }
+    `}</style>
+  </div>
   );
 }
 

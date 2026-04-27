@@ -14,6 +14,9 @@ import {
 import { Quiz, Question, LeaderboardEntry } from '@/types/quiz';
 import { Clock, Trophy } from 'lucide-react';
 
+import { Clock, Trophy, ChevronLeft, MoreHorizontal, User, Layout, Search, Home, Settings as SettingsIcon, Medal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 export default function PlayClient() {
   const params = useParams();
   const router = useRouter();
@@ -27,6 +30,7 @@ export default function PlayClient() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardTab, setLeaderboardTab] = useState<'Week' | 'Month' | 'Year'>('Week');
 
   useEffect(() => {
     const storedId = localStorage.getItem('participantId');
@@ -49,10 +53,12 @@ export default function PlayClient() {
       unsubQuestions();
     };
   }, [quizId, router]);
+
   useEffect(() => {
     setSelectedOption(null);
     setHasAnswered(false);
   }, [quiz?.currentQuestionIndex]);
+
   useEffect(() => {
     if (quiz?.status === 'completed') {
       loadLeaderboard();
@@ -63,6 +69,7 @@ export default function PlayClient() {
     const data = await getLeaderboard(quizId);
     setLeaderboard(data);
   };
+
   useEffect(() => {
     if (!quiz || quiz.status !== 'active' || !quiz.questionStartTime || hasAnswered) return;
 
@@ -84,24 +91,20 @@ export default function PlayClient() {
 
   const handleTimeout = async () => {
     if (!quiz || hasAnswered) return;
-    setHasAnswered(true); // Prevent double submission
+    setHasAnswered(true);
 
     const currentQuestion = questions[quiz.currentQuestionIndex];
     if (!currentQuestion) return;
 
     try {
-      await submitAnswer(
-        quizId,
-        participantId,
-        {
-          questionId: currentQuestion.id,
-          selectedOptionIndex: -1, // -1 indicates no answer/timeout
-          answeredAt: Date.now(),
-          isCorrect: false,
-          pointsEarned: 0,
-          timeToAnswer: currentQuestion.timeLimit * 1000
-        }
-      );
+      await submitAnswer(quizId, participantId, {
+        questionId: currentQuestion.id,
+        selectedOptionIndex: -1,
+        answeredAt: Date.now(),
+        isCorrect: false,
+        pointsEarned: 0,
+        timeToAnswer: currentQuestion.timeLimit * 1000
+      });
     } catch (error) {
       console.error('Error submitting timeout:', error);
     }
@@ -122,18 +125,14 @@ export default function PlayClient() {
     }
 
     try {
-      await submitAnswer(
-        quizId,
-        participantId,
-        {
-          questionId: currentQuestion.id,
-          selectedOptionIndex: selectedOption,
-          answeredAt: Date.now(),
-          isCorrect,
-          pointsEarned,
-          timeToAnswer
-        }
-      );
+      await submitAnswer(quizId, participantId, {
+        questionId: currentQuestion.id,
+        selectedOptionIndex: selectedOption,
+        answeredAt: Date.now(),
+        isCorrect,
+        pointsEarned,
+        timeToAnswer
+      });
       setHasAnswered(true);
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -144,136 +143,235 @@ export default function PlayClient() {
 
   const currentQuestion = quiz.currentQuestionIndex >= 0 ? questions[quiz.currentQuestionIndex] : null;
 
-  return (
-    <div className="flex flex-col w-full min-h-screen">
-      <Header />
-      <main className="flex-1 p-4 md:p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-6 text-center">
-            <h1 className="font-headline text-3xl mb-2">{quiz.title}</h1>
-            <p className="text-muted-foreground">Welcome, {participantName}!</p>
-          </div>
-
-          {quiz.status === 'lobby' && (
-            <Card>
-              <CardContent className="text-center py-12">
-                <h2 className="text-2xl font-bold mb-4">Waiting to Start...</h2>
-                <p className="text-muted-foreground">
-                  The quiz will begin shortly. Get ready!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {quiz.status === 'active' && currentQuestion && (
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl">
-                    Question {quiz.currentQuestionIndex + 1} of {questions.length}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 text-2xl font-bold">
-                    <Clock className="h-6 w-6" />
-                    {timeRemaining}s
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-2xl font-semibold text-center py-4">
-                  {currentQuestion.questionText}
-                </p>
-
-                <div className="space-y-3">
-                  {currentQuestion.options.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => !hasAnswered && setSelectedOption(index)}
-                      disabled={hasAnswered}
-                      className={`w-full p-4 rounded-lg text-left transition-all ${
-                        selectedOption === index
-                          ? 'bg-primary text-primary-foreground border-2 border-primary'
-                          : 'bg-muted hover:bg-muted/80'
-                      } ${hasAnswered ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <span className="font-semibold text-lg">
-                        {String.fromCharCode(65 + index)}. {option}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {!hasAnswered ? (
-                  <Button
-                    onClick={handleSubmitAnswer}
-                    disabled={selectedOption === null}
-                    className="w-full"
-                    size="lg"
-                  >
-                    Submit Answer
-                  </Button>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-lg font-semibold text-muted-foreground">
-                      Answer submitted! Waiting for results...
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {quiz.status === 'completed' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center text-3xl flex items-center justify-center gap-2">
-                  <Trophy className="h-8 w-8 text-yellow-500" />
-                  Quiz Completed!
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <p className="text-xl mb-6">Final Leaderboard</p>
-                </div>
-
-                <div className="space-y-3">
-                  {leaderboard.map((entry) => (
-                    <div
-                      key={entry.participantId}
-                      className={`p-4 rounded-lg ${
-                        entry.participantId === participantId
-                          ? 'bg-primary text-primary-foreground border-2 border-primary'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl font-bold">#{entry.rank}</span>
-                          <div>
-                            <p className="font-semibold">{entry.name}</p>
-                            <p className="text-sm opacity-80">
-                              {entry.correctAnswers} correct
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold">{entry.totalScore}</p>
-                          <p className="text-sm opacity-80">points</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="text-center pt-4">
-                  <Button asChild>
-                    <a href="/join">Join Another Quiz</a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+  // ══════════════════════════════════════════════════════════════════════════
+  // LOBBY VIEW
+  // ══════════════════════════════════════════════════════════════════════════
+  if (quiz.status === 'lobby') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mb-8 animate-pulse">
+           <Trophy className="w-12 h-12 text-primary" />
         </div>
-      </main>
-    </div>
-  );
+        <h1 className="text-4xl font-black mb-4 uppercase tracking-tighter italic">Lobby Phase</h1>
+        <p className="text-slate-500 max-w-xs mb-12">Waiting for the host to initiate the quiz. Hang tight, {participantName}!</p>
+        <div className="w-full max-w-xs h-2 bg-slate-200 rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-1/2 h-full bg-primary"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ACTIVE QUIZ VIEW (Matches Screen 2)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (quiz.status === 'active') {
+    if (!currentQuestion) {
+      return (
+        <div className="min-h-screen bg-[#f0eaff] flex items-center justify-center p-6 text-center">
+           <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="font-black italic uppercase tracking-tighter text-slate-400">Loading Question...</p>
+           </div>
+        </div>
+      );
+    }
+    
+    const progress = ((quiz.currentQuestionIndex + 1) / questions.length) * 100;
+
+    return (
+      <div className="min-h-[100dvh] bg-[#f0eaff] flex flex-col pt-12 pb-10 px-6 overflow-hidden text-slate-900">
+        {/* Header */}
+        <header className="flex justify-between items-center mb-8">
+           <button onClick={() => router.back()} className="w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center border border-slate-100">
+              <ChevronLeft className="w-6 h-6" />
+           </button>
+           <div className="w-16 h-12 bg-white rounded-full shadow-xl flex items-center justify-center border border-slate-100 font-bold">
+              {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
+           </div>
+        </header>
+
+        {/* Question Header */}
+        <div className="mb-6 flex flex-col gap-2">
+           <p className="text-2xl font-black tracking-tighter">Q. {quiz.currentQuestionIndex + 1}</p>
+           <div className="w-full h-1 bg-white/50 rounded-full overflow-hidden">
+              <motion.div 
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-primary"
+              />
+           </div>
+        </div>
+
+        {/* Question Text */}
+        <div className="flex-1 flex flex-col">
+           <h2 className="text-3xl font-black leading-tight mb-12 text-slate-800">
+             {currentQuestion.questionText}
+           </h2>
+
+           {/* Options Grid */}
+           <div className="space-y-4 mb-20">
+             {currentQuestion.options.map((option, index) => (
+               <button
+                 key={index}
+                 onClick={() => !hasAnswered && setSelectedOption(index)}
+                 disabled={hasAnswered}
+                 className={`w-full p-4 rounded-3xl text-left transition-all flex items-center gap-4 border-2 shadow-lg ${
+                   selectedOption === index
+                     ? 'bg-purple-100 border-purple-400'
+                     : 'bg-white border-transparent'
+                 } ${hasAnswered ? 'opacity-70' : 'active:scale-[0.98]'}`}
+               >
+                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                   selectedOption === index ? 'border-primary bg-primary' : 'border-slate-200'
+                 }`}>
+                    {selectedOption === index && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
+                 </div>
+                 <span className="font-bold text-lg text-slate-700">{option}</span>
+               </button>
+             ))}
+           </div>
+
+           {/* Bottom Buttons */}
+           <div className="flex gap-4 mt-auto">
+             <button className="flex-1 h-16 bg-white rounded-3xl font-black text-slate-400 tracking-tighter border border-slate-100 shadow-xl opacity-50 cursor-not-allowed">Previous</button>
+             <button 
+                onClick={handleSubmitAnswer}
+                disabled={selectedOption === null || hasAnswered}
+                className={`flex-1 h-16 rounded-3xl font-black tracking-tighter shadow-[0_10px_30px_-5px_rgba(var(--primary),0.3)] hover:scale-105 transition-all text-black ${
+                  selectedOption === null || hasAnswered ? 'bg-slate-300' : 'bg-primary'
+                }`}
+              >
+                {hasAnswered ? 'Wait...' : 'Next'}
+              </button>
+           </div>
+        </div>
+
+        {/* Background illustration */}
+        <div className="absolute bottom-12 right-0 opacity-20 pointer-events-none translate-x-12">
+            <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M100 180C144.183 180 180 144.183 180 100C180 55.8172 144.183 20 100 20C55.8172 20 20 55.8172 20 100C20 144.183 55.8172 180 100 180Z" stroke="#ccff00" strokeWidth="2" strokeDasharray="10 10" />
+              <path d="M60 100L90 130L140 70" stroke="#ccff00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // COMPLETED VIEW / LEADERBOARD (Matches Screen 3)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (quiz.status === 'completed') {
+    const topThree = leaderboard.slice(0, 3);
+    const userRank = leaderboard.find(e => e.participantId === participantId);
+
+    return (
+      <div className="min-h-[100dvh] bg-[#f0f954] flex flex-col pt-12 pb-24 px-6 overflow-hidden text-slate-900 relative">
+        <header className="flex justify-between items-center mb-8">
+           <p className="text-3xl font-black uppercase tracking-tighter">Leaderboard</p>
+           <button className="w-12 h-12 rounded-full bg-slate-900/10 flex items-center justify-center">
+              <Grid className="w-6 h-6" />
+           </button>
+        </header>
+
+        {/* Tabs */}
+        <div className="bg-white/50 backdrop-blur-xl p-1.5 rounded-3xl flex mb-12 shadow-sm">
+           {['Week', 'Month', 'Year'].map((tab) => (
+             <button
+                key={tab}
+                onClick={() => setLeaderboardTab(tab as any)}
+                className={`flex-1 py-3 rounded-[1.25rem] font-bold text-sm transition-all ${
+                  leaderboardTab === tab ? 'bg-purple-300 text-slate-800 shadow-md' : 'text-slate-500'
+                }`}
+             >
+                {tab}
+             </button>
+           ))}
+        </div>
+
+        {/* Podium */}
+        <div className="flex items-end justify-center gap-2 mb-12">
+            {/* Rank 3 */}
+            {topThree[2] && (
+              <div className="flex flex-col items-center flex-1">
+                 <div className="w-16 h-16 rounded-full border-2 border-white overflow-hidden mb-2 bg-white shadow-lg">
+                    <User className="w-full h-full text-slate-300" />
+                 </div>
+                 <p className="font-bold text-xs mb-2">{topThree[2].name}</p>
+                 <div className="w-full h-24 bg-white/40 rounded-t-3xl relative flex flex-col items-center pt-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold mb-1">{topThree[2].totalScore}</div>
+                    <p className="font-black text-xl text-slate-500">#3</p>
+                 </div>
+              </div>
+            )}
+
+            {/* Rank 1 */}
+            {topThree[0] && (
+              <div className="flex flex-col items-center flex-1">
+                 <div className="relative">
+                    <Medal className="w-8 h-8 text-slate-800 absolute -top-4 -right-1 z-10 transform rotate-12" />
+                    <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-2 bg-white shadow-2xl relative z-0">
+                        <User className="w-full h-full text-slate-400" />
+                    </div>
+                 </div>
+                 <p className="font-black text-sm mb-2">{topThree[0].name}</p>
+                 <div className="w-full h-40 bg-purple-300 rounded-t-3xl relative flex flex-col items-center pt-2 shadow-2xl">
+                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold mb-2">{topThree[0].totalScore}</div>
+                    <Trophy className="w-8 h-8 text-slate-800 mb-1" />
+                    <p className="font-black text-2xl text-slate-900">#1</p>
+                 </div>
+              </div>
+            )}
+
+            {/* Rank 2 */}
+            {topThree[1] && (
+              <div className="flex flex-col items-center flex-1">
+                 <div className="w-16 h-16 rounded-full border-2 border-white overflow-hidden mb-2 bg-white shadow-lg">
+                    <User className="w-full h-full text-slate-300" />
+                 </div>
+                 <p className="font-bold text-xs mb-2">{topThree[1].name}</p>
+                 <div className="w-full h-32 bg-white/60 rounded-t-3xl relative flex flex-col items-center pt-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold mb-2">{topThree[1].totalScore}</div>
+                    <p className="font-black text-xl text-slate-700">#2</p>
+                 </div>
+              </div>
+            )}
+        </div>
+
+        {/* User Status Card */}
+        <div className="bg-white/90 p-6 rounded-[2.5rem] shadow-xl border border-white flex items-center justify-between mb-8">
+           <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-slate-900">
+                 <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                 <p className="font-black text-sm uppercase tracking-tighter">Your Score: {userRank?.totalScore || 0}</p>
+                 <p className="text-[10px] text-slate-500 font-bold uppercase">Keep it up! Reach for the top.</p>
+              </div>
+           </div>
+        </div>
+
+        {/* Bottom Nav */}
+        <nav className="fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 border border-white/10 backdrop-blur-sm z-50">
+          <button className="p-4 text-slate-400 hover:text-white transition-colors" onClick={() => router.push('/')}>
+            <Home className="w-6 h-6" />
+          </button>
+          <button className="p-4 text-slate-400 hover:text-white transition-colors">
+            <Search className="w-6 h-6" />
+          </button>
+          <button className="p-4 bg-primary rounded-full text-black">
+            <TrophyIcon className="w-6 h-6" />
+          </button>
+          <button className="p-4 text-slate-400 hover:text-white transition-colors">
+            <SettingsIcon className="w-6 h-6" />
+          </button>
+        </nav>
+      </div>
+    );
+  }
+
+  return null;
 }

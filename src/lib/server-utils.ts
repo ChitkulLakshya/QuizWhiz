@@ -67,9 +67,21 @@ export async function sendGmail({ to, subject, text, html }: { to: string; subje
 
 // ─── Sheets Client ──────────────────────────────────────────────────
 export function getSheetsClient() {
-    if (!hasServiceAccountCreds) return null;
-
     try {
+        const jsonPath = path.join(process.cwd(), 'google-credentials.json');
+        
+        // Priority 1: Use local JSON file if it exists (Most reliable)
+        if (fs.existsSync(jsonPath)) {
+            const auth = new google.auth.GoogleAuth({
+                keyFile: jsonPath,
+                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+            });
+            return google.sheets({ version: 'v4', auth });
+        }
+
+        // Priority 2: Use environment variables
+        if (!hasServiceAccountCreds) return null;
+
         let privateKey = GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!;
         if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
             privateKey = privateKey.slice(1, -1);
