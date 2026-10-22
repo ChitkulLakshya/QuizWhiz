@@ -5,8 +5,8 @@
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 import { getFunctions, Functions } from 'firebase/functions';
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -56,6 +56,32 @@ export const db: Firestore = firebaseConfig.apiKey ? getFirestore(app) : ({} as 
 export const auth: Auth = firebaseConfig.apiKey ? getAuth(app) : ({} as Auth);
 export const functions: Functions = firebaseConfig.apiKey ? getFunctions(app, 'us-central1') : ({} as Functions);
 export { app };
+
+/**
+ * Optional: connect to the local Firebase Emulator Suite.
+ * Opt in with NEXT_PUBLIC_USE_FIREBASE_EMULATORS=1 (see .env.local.example).
+ * No behaviour change when the flag is unset. The flag lives on globalThis so
+ * HMR (module re-eval) or double imports can't connect the same instance twice.
+ */
+const useFirebaseEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === '1';
+
+if (typeof window !== 'undefined' && useFirebaseEmulators && firebaseConfig.apiKey) {
+  const globalForEmulators = globalThis as typeof globalThis & {
+    __QUIZWHIZ_FIREBASE_EMULATORS_CONNECTED__?: boolean;
+  };
+  if (!globalForEmulators.__QUIZWHIZ_FIREBASE_EMULATORS_CONNECTED__) {
+    globalForEmulators.__QUIZWHIZ_FIREBASE_EMULATORS_CONNECTED__ = true;
+    try {
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8087);
+      console.log('🧪 Firebase Emulator Suite connected (auth :9099, firestore :8087)');
+    } catch (e) {
+      globalForEmulators.__QUIZWHIZ_FIREBASE_EMULATORS_CONNECTED__ = false;
+      console.warn('⚠️ Could not connect to Firebase emulators:', e);
+    }
+  }
+}
+
 if (typeof window !== 'undefined') {
   (window as any).db = db;
   console.log('🔧 db available in window.db for debugging');

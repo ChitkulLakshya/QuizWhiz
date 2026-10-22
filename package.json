@@ -32,6 +32,7 @@
     "sync": "npx cap sync",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "seed:demo": "node scripts/seed-demo.mjs",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:9002 && electron .\""
   },
   "main": "electron-main.js",
