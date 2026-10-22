@@ -8,6 +8,11 @@ import clsx from 'clsx';
 export default function MobileNav() {
     const pathname = usePathname();
 
+    // The mobile home screen has its own floating bottom pill (MobileDashboard
+    // in src/app/page.tsx) which stacks on top of this bar. Hide this bar on
+    // "/" only, so every other mobile page still keeps the global nav.
+    if (pathname === '/') return null;
+
     return (
         <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-background/80 backdrop-blur-lg border-t border-border">
             <div className="max-w-md mx-auto flex justify-between items-center px-6 py-4">

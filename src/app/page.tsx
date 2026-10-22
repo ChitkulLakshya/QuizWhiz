@@ -36,7 +36,7 @@ const steps = [
 
 const categories = ['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'];
 
-import { Search, Trophy as TrophyIcon, User, Grid, Home, Layout, Settings as SettingsIcon } from 'lucide-react';
+import { LogIn, User, Grid, Home, Shield, Settings as SettingsIcon } from 'lucide-react';
 
 const mobileCategories = [
   { id: 'bird', icon: '🐦', label: 'Bird', color: 'bg-orange-500/20 text-orange-500' },
@@ -51,24 +51,28 @@ const featuredQuizzes = [
     title: 'Marine Marvels Quiz Challenge',
     questions: 20,
     time: '15 Min',
-    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=400&auto=format&fit=crop',
-    color: 'from-purple-100 to-purple-300'
+    emoji: '🐬',
+    color: 'from-cyan-500/30 to-blue-600/40'
   }
 ];
 
 function MobileDashboard({ router }: { router: any }) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 pb-20 overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-background text-foreground pb-20 overflow-hidden">
       {/* Mobile Top Nav */}
-      <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-white/50 backdrop-blur-xl sticky top-0 z-30">
+      <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-background/50 backdrop-blur-xl sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-            <User className="w-6 h-6 text-slate-400" />
+          <div className="w-10 h-10 rounded-full bg-card border-2 border-white/10 shadow-sm flex items-center justify-center overflow-hidden">
+            <User className="w-6 h-6 text-muted-foreground" />
           </div>
-          <p className="text-slate-400 text-sm font-medium">It's Quiz Time!</p>
+          <p className="text-muted-foreground text-sm font-medium">It's Quiz Time!</p>
         </div>
-        <button className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center border border-slate-100">
-          <Grid className="w-5 h-5 text-slate-900" />
+        <button
+          aria-label="Host dashboard"
+          onClick={() => router.push('/admin')}
+          className="w-10 h-10 rounded-xl bg-card shadow-sm flex items-center justify-center border border-border"
+        >
+          <Grid className="w-5 h-5 text-foreground" />
         </button>
       </header>
 
@@ -82,7 +86,7 @@ function MobileDashboard({ router }: { router: any }) {
           {mobileCategories.map(cat => (
             <button
               key={cat.id}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 shadow-sm whitespace-nowrap bg-white hover:bg-slate-50 transition-colors font-bold text-sm`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border border-border whitespace-nowrap bg-card hover:bg-white/5 transition-colors font-bold text-sm`}
             >
               <span className="text-lg">{cat.icon}</span>
               {cat.label}
@@ -92,25 +96,27 @@ function MobileDashboard({ router }: { router: any }) {
 
         {/* Featured Quiz Card */}
         <div className="relative mt-4 group">
-          <div className="absolute inset-0 bg-purple-500/20 blur-3xl transform -rotate-6 scale-90 -z-10 group-hover:scale-100 transition-transform duration-500" />
-          <motion.div 
+          <div className="absolute inset-0 bg-cyan-500/20 blur-3xl transform -rotate-6 scale-90 -z-10 group-hover:scale-100 transition-transform duration-500" />
+          <motion.div
             whileTap={{ scale: 0.98 }}
-            className={`w-full aspect-[4/5] rounded-[3rem] bg-gradient-to-br ${featuredQuizzes[0].color} p-8 relative overflow-hidden shadow-2xl shadow-purple-500/20 flex flex-col items-center justify-end text-center`}
+            className={`w-full aspect-[4/5] rounded-[3rem] bg-gradient-to-br ${featuredQuizzes[0].color} p-8 relative overflow-hidden shadow-2xl shadow-cyan-500/20 flex flex-col items-center justify-end text-center border border-border`}
           >
-            {/* Dolphin-like illustration container */}
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-white/30 rounded-full blur-2xl animate-pulse" />
-            <img 
-              src={featuredQuizzes[0].image} 
-              alt="Quiz" 
-              className="absolute top-10 left-1/2 -translate-x-1/2 w-56 h-56 object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-500"
-            />
+            {/* Emoji illustration */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-400/30 rounded-full blur-2xl animate-pulse" />
+            <span
+              role="img"
+              aria-label="Marine marvels"
+              className="absolute top-16 left-1/2 -translate-x-1/2 text-[10rem] leading-none drop-shadow-2xl select-none hover:scale-110 transition-transform duration-500"
+            >
+              {featuredQuizzes[0].emoji}
+            </span>
 
-            <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl w-full border border-white shadow-xl relative z-10">
-              <h3 className="text-xl font-bold mb-1">{featuredQuizzes[0].title}</h3>
-              <p className="text-slate-500 text-xs font-medium mb-4 uppercase tracking-widest">
+            <div className="bg-card/80 backdrop-blur-md p-6 rounded-3xl w-full border border-border shadow-xl relative z-10">
+              <h3 className="text-xl font-bold mb-1 text-foreground">{featuredQuizzes[0].title}</h3>
+              <p className="text-muted-foreground text-xs font-medium mb-4 uppercase tracking-widest">
                 {featuredQuizzes[0].questions} Que | {featuredQuizzes[0].time}
               </p>
-              <Button 
+              <Button
                 onClick={() => router.push('/play/' + featuredQuizzes[0].id)}
                 className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-tighter hover:scale-105 transition-transform"
               >
@@ -121,22 +127,22 @@ function MobileDashboard({ router }: { router: any }) {
         </div>
 
         <div className="mt-12 mb-8">
-           <h2 className="text-2xl font-black italic uppercase tracking-tighter text-slate-300 transform -rotate-1">Let the Quiz Games Begin</h2>
+           <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white/20 transform -rotate-1">Let the Quiz Games Begin</h2>
         </div>
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 border border-white/10 backdrop-blur-sm z-50">
-        <button className="p-4 bg-primary rounded-full text-black">
+      <nav className="fixed bottom-6 left-6 right-6 h-20 bg-card rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 border border-border backdrop-blur-sm z-50">
+        <button aria-label="Home" className="p-4 bg-primary text-black rounded-full" onClick={() => router.push('/')}>
           <Home className="w-6 h-6" />
         </button>
-        <button className="p-4 text-slate-400 hover:text-white transition-colors">
-          <Search className="w-6 h-6" />
+        <button aria-label="Join a game" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/join')}>
+          <LogIn className="w-6 h-6" />
         </button>
-        <button className="p-4 text-slate-400 hover:text-white transition-colors" onClick={() => router.push('/quiz/leaderboard')}>
-          <TrophyIcon className="w-6 h-6" />
+        <button aria-label="Host dashboard" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/admin')}>
+          <Shield className="w-6 h-6" />
         </button>
-        <button className="p-4 text-slate-400 hover:text-white transition-colors">
+        <button aria-label="Settings" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/settings')}>
           <SettingsIcon className="w-6 h-6" />
         </button>
       </nav>
