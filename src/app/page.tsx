@@ -36,7 +36,7 @@ const steps = [
 
 const categories = ['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'];
 
-import { Search, Trophy as TrophyIcon, User, Grid, Home, Layout, Settings as SettingsIcon } from 'lucide-react';
+import { LogIn, User, Grid, Home, Shield, Settings as SettingsIcon } from 'lucide-react';
 
 const mobileCategories = [
   { id: 'bird', icon: '🐦', label: 'Bird', color: 'bg-orange-500/20 text-orange-500' },
@@ -67,7 +67,11 @@ function MobileDashboard({ router }: { router: any }) {
           </div>
           <p className="text-muted-foreground text-sm font-medium">It's Quiz Time!</p>
         </div>
-        <button className="w-10 h-10 rounded-xl bg-card shadow-sm flex items-center justify-center border border-border">
+        <button
+          aria-label="Host dashboard"
+          onClick={() => router.push('/admin')}
+          className="w-10 h-10 rounded-xl bg-card shadow-sm flex items-center justify-center border border-border"
+        >
           <Grid className="w-5 h-5 text-foreground" />
         </button>
       </header>
@@ -132,11 +136,11 @@ function MobileDashboard({ router }: { router: any }) {
         <button aria-label="Home" className="p-4 bg-primary text-black rounded-full" onClick={() => router.push('/')}>
           <Home className="w-6 h-6" />
         </button>
-        <button aria-label="Join or browse quizzes" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/join')}>
-          <Search className="w-6 h-6" />
+        <button aria-label="Join a game" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/join')}>
+          <LogIn className="w-6 h-6" />
         </button>
-        <button aria-label="Leaderboard" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/quiz/leaderboard')}>
-          <TrophyIcon className="w-6 h-6" />
+        <button aria-label="Host dashboard" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/admin')}>
+          <Shield className="w-6 h-6" />
         </button>
         <button aria-label="Settings" className="p-4 text-muted-foreground hover:text-foreground transition-colors" onClick={() => router.push('/settings')}>
           <SettingsIcon className="w-6 h-6" />
